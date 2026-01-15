@@ -1,0 +1,78 @@
+You are a Replit Agent. Build a complete, deployable Express app that creates a lead magnet funnel.
+
+GOAL:
+Landing page collects an email and sends a lead magnet email (Self Coaching Matrix PDF). The email must include:
+1) CTA button to download the PDF (MATRIX_URL)
+2) CTA button to the App Store (APP_STORE_URL)
+3) A Pro upsell message: “Upgrade to Pro inside the app for $4.99/mo”
+4) Optional scarcity: only mention “before it goes up to $14.99/mo” if PRICE_INCREASE_DATE is set AND is in the future. Otherwise do NOT mention the $14.99.
+
+TECH:
+- Node.js + Express
+- @replit/database for lead storage
+- Resend for sending email (resend npm package)
+- Serve /public static assets
+
+ROUTES:
+- GET / -> public/index.html landing page with email form
+- POST /lead -> validate email, store lead, send email via Resend, redirect to /thanks
+- GET /thanks -> public/thanks.html
+- GET /unsubscribe?email=...&token=... -> validate token, mark lead unsubscribed, show confirmation text/page
+
+DATA MODEL (Replit DB):
+Key: lead:<email>
+Value JSON:
+{
+  email: string,
+  createdAt: ISO string,
+  unsubscribed: boolean,
+  unsubscribedAt?: ISO string,
+  lastSentAt?: ISO string
+}
+
+RULES:
+- If email is unsubscribed, do NOT send email; show a message like “You are unsubscribed.”
+- Must include an unsubscribe link in the email footer. Use a token generated as SHA256(email + UNSUBSCRIBE_SECRET).
+- Basic email validation with regex.
+- Handle errors gracefully (no server crash). If email send fails, show a friendly error page.
+
+SECRETS (must be referenced in code):
+RESEND_API_KEY
+FROM_EMAIL
+APP_STORE_URL
+MATRIX_URL
+UNSUBSCRIBE_SECRET
+Optional:
+PRO_PRICE (default 4.99)
+FUTURE_PRICE (default 14.99)
+PRICE_INCREASE_DATE (YYYY-MM-DD)
+SUPPORT_EMAIL (optional)
+
+FILES TO CREATE:
+- index.js (Express server)
+- public/index.html (landing page)
+- public/thanks.html
+- package.json with necessary dependencies
+- README.md with setup instructions:
+  - where to set Secrets in Replit
+  - how to run
+  - how to deploy
+  - how to test end-to-end
+Optionally include public/styles.css
+
+LANDING PAGE COPY (simple, direct):
+Headline: “Get the Self Coaching Matrix (PDF)”
+Subhead: “Enter your email and I’ll send it instantly.”
+Button: “Send Me The Matrix”
+Small consent text: “You’ll receive the PDF + occasional follow-ups. Unsubscribe anytime.”
+
+EMAIL TEMPLATE (HTML):
+- Title: “Your Self Coaching Matrix”
+- Button 1: “Download the Self Coaching Matrix (PDF)” -> MATRIX_URL
+- Button 2: “Get the App” -> APP_STORE_URL
+- Upsell line: “Upgrade to Pro in the app for $4.99/mo.”
+- Optional line about price increase ONLY if future date configured
+- Unsubscribe footer link
+
+DELIVERABLE:
+Produce working code in the Replit workspace. Ensure the app starts successfully and routes work.
