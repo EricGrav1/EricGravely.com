@@ -1,37 +1,54 @@
-import { type User, type InsertUser } from "@shared/schema";
-import { randomUUID } from "crypto";
-
-// modify the interface with any CRUD methods
-// you might need
+import { type Lead, type InsertLead } from "@shared/schema";
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  getLead(email: string): Promise<Lead | undefined>;
+  createLead(lead: InsertLead): Promise<Lead>;
+  updateLead(email: string, updates: Partial<Lead>): Promise<Lead | undefined>;
+  markUnsubscribed(email: string): Promise<Lead | undefined>;
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<string, User>;
+  private leads: Map<string, Lead>;
 
   constructor() {
-    this.users = new Map();
+    this.leads = new Map();
   }
 
-  async getUser(id: string): Promise<User | undefined> {
-    return this.users.get(id);
+  async getLead(email: string): Promise<Lead | undefined> {
+    return this.leads.get(email.toLowerCase());
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+  async createLead(insertLead: InsertLead): Promise<Lead> {
+    const email = insertLead.email.toLowerCase();
+    const lead: Lead = {
+      email,
+      createdAt: new Date().toISOString(),
+      unsubscribed: false,
+    };
+    this.leads.set(email, lead);
+    return lead;
   }
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = randomUUID();
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+  async updateLead(email: string, updates: Partial<Lead>): Promise<Lead | undefined> {
+    const lead = this.leads.get(email.toLowerCase());
+    if (!lead) return undefined;
+    
+    const updatedLead = { ...lead, ...updates };
+    this.leads.set(email.toLowerCase(), updatedLead);
+    return updatedLead;
+  }
+
+  async markUnsubscribed(email: string): Promise<Lead | undefined> {
+    const lead = this.leads.get(email.toLowerCase());
+    if (!lead) return undefined;
+    
+    const updatedLead = {
+      ...lead,
+      unsubscribed: true,
+      unsubscribedAt: new Date().toISOString(),
+    };
+    this.leads.set(email.toLowerCase(), updatedLead);
+    return updatedLead;
   }
 }
 

@@ -37,3 +37,14 @@ author = "agent"
 task = "shell.exec"
 args = "npm run dev"
 waitForPort = 5000
+
+[agent]
+integrations = ["resend:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+APP_STORE_URL = "https://apps.apple.com/us/app/sales-coach-ai/id6748286535"
+UNSUBSCRIBE_SECRET = "scm-funnel-secret-2024"
+PRO_PRICE = "4.99"
+FUTURE_PRICE = "14.99"
