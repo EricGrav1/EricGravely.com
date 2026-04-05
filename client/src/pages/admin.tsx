@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Plus, Pencil, Eye, TrendingUp, Users, ToggleLeft, ToggleRight,
   BarChart2, Loader2, CheckCircle2, Trash2, GripVertical,
+  type LucideIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,7 +61,7 @@ interface AnalyticsStat {
 }
 
 function StatCard({ icon: Icon, label, value, color }: {
-  icon: any;
+  icon: LucideIcon;
   label: string;
   value: string | number;
   color: string;

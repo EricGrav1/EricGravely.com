@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Path } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
@@ -154,12 +154,18 @@ export default function Landing() {
     setStep("form");
   };
 
+  interface LeadSubmitResponse {
+    success: boolean;
+    unsubscribed?: boolean;
+    message?: string;
+  }
+
   const submitMutation = useMutation({
-    mutationFn: async (data: InsertLead) => {
+    mutationFn: async (data: InsertLead): Promise<LeadSubmitResponse> => {
       const response = await apiRequest("POST", "/api/lead", data);
-      return response.json();
+      return response.json() as Promise<LeadSubmitResponse>;
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: LeadSubmitResponse) => {
       if (data.unsubscribed) {
         setIsUnsubscribed(true);
       } else {
@@ -348,7 +354,7 @@ export default function Landing() {
                         <FormField
                           key={qf.id}
                           control={form.control}
-                          name={`questionnaireAnswers.${qf.id}` as any}
+                          name={`questionnaireAnswers.${qf.id}` as Path<InsertLead>}
                           render={({ field }) => (
                             <FormItem>
                               <FormLabel>
