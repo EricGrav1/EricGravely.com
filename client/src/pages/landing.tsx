@@ -1,43 +1,124 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { Mail, Lock, Loader2, CheckCircle2 } from "lucide-react";
+import {
+  Mail, Lock, Loader2, CheckCircle2, Phone, ArrowLeft,
+  BookOpen, FileText, BarChart2, Lightbulb, Star, Gift,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Form,
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { insertLeadSchema, type InsertLead } from "@shared/schema";
+import { insertLeadSchema, type InsertLead, type LeadMagnet } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
+
+const ICONS = [BookOpen, FileText, BarChart2, Lightbulb, Star, Gift];
+const ICON_COLORS = [
+  "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
+  "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400",
+  "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
+  "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
+  "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400",
+  "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400",
+];
+
+function ResourceCard({
+  magnet,
+  onSelect,
+  onViewed,
+}: {
+  magnet: LeadMagnet;
+  onSelect: (m: LeadMagnet) => void;
+  onViewed: (id: number) => void;
+}) {
+  const iconIndex = (magnet.id - 1) % ICONS.length;
+  const Icon = ICONS[iconIndex];
+  const colorClass = ICON_COLORS[iconIndex];
+
+  useEffect(() => {
+    onViewed(magnet.id);
+  }, [magnet.id]);
+
+  return (
+    <Card
+      className="p-6 flex flex-col gap-4 cursor-pointer hover:shadow-lg hover:border-ring/50 transition-all duration-200 group"
+      data-testid={`card-resource-${magnet.id}`}
+      onClick={() => onSelect(magnet)}
+    >
+      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClass}`}>
+        <Icon className="w-6 h-6" />
+      </div>
+      <div className="flex-1">
+        <h3 className="font-semibold text-foreground text-lg leading-snug mb-2 group-hover:text-ring transition-colors">
+          {magnet.title}
+        </h3>
+        <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
+          {magnet.description}
+        </p>
+      </div>
+      <div className="flex items-center justify-between">
+        <Badge variant="secondary" className="text-xs">Free</Badge>
+        <span className="text-sm font-medium text-ring opacity-0 group-hover:opacity-100 transition-opacity">
+          Get it →
+        </span>
+      </div>
+    </Card>
+  );
+}
 
 export default function Landing() {
   const [, setLocation] = useLocation();
+  const [step, setStep] = useState<"select" | "form">("select");
+  const [selectedMagnet, setSelectedMagnet] = useState<LeadMagnet | null>(null);
   const [isUnsubscribed, setIsUnsubscribed] = useState(false);
+  const viewedIds = useRef<Set<number>>(new Set());
+
+  const { data: magnets = [], isLoading } = useQuery<LeadMagnet[]>({
+    queryKey: ["/api/lead-magnets"],
+  });
 
   const form = useForm<InsertLead>({
     resolver: zodResolver(insertLeadSchema),
     defaultValues: {
       email: "",
+      phone: "",
+      leadMagnetId: 0,
     },
   });
+
+  const handleViewed = (id: number) => {
+    if (viewedIds.current.has(id)) return;
+    viewedIds.current.add(id);
+    fetch(`/api/lead-magnets/${id}/view`, { method: "POST" }).catch(() => {});
+  };
+
+  const handleSelect = (magnet: LeadMagnet) => {
+    setSelectedMagnet(magnet);
+    form.setValue("leadMagnetId", magnet.id);
+    setStep("form");
+  };
 
   const submitMutation = useMutation({
     mutationFn: async (data: InsertLead) => {
       const response = await apiRequest("POST", "/api/lead", data);
-      return response;
+      return response.json();
     },
     onSuccess: (data: any) => {
       if (data.unsubscribed) {
         setIsUnsubscribed(true);
       } else {
-        setLocation("/thanks");
+        const resourceName = selectedMagnet?.title ?? "";
+        setLocation(`/thanks?resource=${encodeURIComponent(resourceName)}`);
       }
     },
     onError: (error: Error) => {
@@ -46,7 +127,10 @@ export default function Landing() {
   });
 
   const onSubmit = (data: InsertLead) => {
-    submitMutation.mutate(data);
+    submitMutation.mutate({
+      ...data,
+      phone: data.phone?.trim() || undefined,
+    });
   };
 
   if (isUnsubscribed) {
@@ -60,7 +144,7 @@ export default function Landing() {
             You're Unsubscribed
           </h1>
           <p className="text-muted-foreground">
-            This email address has been unsubscribed from our list. If you'd like to receive the Self Coaching Matrix, please use a different email address.
+            This email address has been unsubscribed. To receive a resource, please use a different email address.
           </p>
         </Card>
       </div>
@@ -69,78 +153,180 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-4 py-20 md:py-32">
-        <div className="text-center mb-12">
-          <h1 className="font-serif text-5xl md:text-6xl font-bold text-foreground mb-6 leading-tight" data-testid="text-hero-headline">
-            Get the Self Coaching Matrix
-            <span className="text-muted-foreground"> (PDF)</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground" data-testid="text-hero-subheadline">
-            Enter your email and I'll send it instantly.
-          </p>
-        </div>
+      <div className="max-w-4xl mx-auto px-4 py-16 md:py-24">
 
-        <Card className="p-8 md:p-10 shadow-lg">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                        <Input
-                          {...field}
-                          type="email"
-                          placeholder="Enter your email address"
-                          className="pl-12 text-base border-2 focus:border-ring focus:ring-2 focus:ring-ring/20"
-                          disabled={submitMutation.isPending}
-                          data-testid="input-email"
-                        />
-                        {form.formState.isValid && field.value && (
-                          <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />
-                        )}
-                      </div>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full font-semibold"
-                disabled={submitMutation.isPending}
-                data-testid="button-submit"
+        {step === "select" && (
+          <>
+            <div className="text-center mb-12">
+              <h1
+                className="font-serif text-4xl md:text-5xl font-bold text-foreground mb-4 leading-tight"
+                data-testid="text-hero-headline"
               >
-                {submitMutation.isPending ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Sending...
-                  </>
-                ) : (
-                  "Send Me The Matrix"
-                )}
-              </Button>
-            </form>
-          </Form>
+                Free Resources for Sales Professionals
+              </h1>
+              <p
+                className="text-xl text-muted-foreground max-w-xl mx-auto"
+                data-testid="text-hero-subheadline"
+              >
+                Pick a free resource below and we'll send it straight to your inbox.
+              </p>
+            </div>
 
-          <div className="mt-6 flex items-start gap-3 text-sm text-muted-foreground">
-            <Lock className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <p data-testid="text-consent">
-              You'll receive the PDF + occasional follow-ups. Unsubscribe anytime.
-            </p>
+            {isLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className="p-6 animate-pulse">
+                    <div className="w-12 h-12 rounded-xl bg-muted mb-4" />
+                    <div className="h-5 bg-muted rounded w-3/4 mb-3" />
+                    <div className="h-4 bg-muted rounded w-full mb-2" />
+                    <div className="h-4 bg-muted rounded w-5/6" />
+                  </Card>
+                ))}
+              </div>
+            ) : magnets.length === 0 ? (
+              <div className="text-center py-20 text-muted-foreground">
+                No resources available right now. Check back soon.
+              </div>
+            ) : (
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                data-testid="grid-resources"
+              >
+                {magnets.map((magnet) => (
+                  <ResourceCard
+                    key={magnet.id}
+                    magnet={magnet}
+                    onSelect={handleSelect}
+                    onViewed={handleViewed}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="mt-12 text-center text-sm text-muted-foreground">
+              All resources are 100% free — no credit card required.
+            </div>
+          </>
+        )}
+
+        {step === "form" && selectedMagnet && (
+          <div className="max-w-xl mx-auto">
+            <button
+              onClick={() => setStep("select")}
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
+              data-testid="button-back"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back to resources
+            </button>
+
+            <div className="text-center mb-10">
+              <div
+                className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${
+                  ICON_COLORS[(selectedMagnet.id - 1) % ICON_COLORS.length]
+                }`}
+              >
+                {(() => {
+                  const Icon = ICONS[(selectedMagnet.id - 1) % ICONS.length];
+                  return <Icon className="w-8 h-8" />;
+                })()}
+              </div>
+              <h1
+                className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-3"
+                data-testid="text-form-headline"
+              >
+                Get {selectedMagnet.title}
+              </h1>
+              <p className="text-muted-foreground text-lg" data-testid="text-form-description">
+                {selectedMagnet.description}
+              </p>
+            </div>
+
+            <Card className="p-8 shadow-lg">
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email address</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                            <Input
+                              {...field}
+                              type="email"
+                              placeholder="you@example.com"
+                              className="pl-12 text-base border-2 focus:border-ring"
+                              disabled={submitMutation.isPending}
+                              data-testid="input-email"
+                            />
+                            {form.formState.dirtyFields.email && !form.formState.errors.email && field.value && (
+                              <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />
+                            )}
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Phone number{" "}
+                          <span className="text-muted-foreground font-normal">(optional)</span>
+                        </FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                            <Input
+                              {...field}
+                              type="tel"
+                              placeholder="+1 (555) 000-0000"
+                              className="pl-12 text-base border-2 focus:border-ring"
+                              disabled={submitMutation.isPending}
+                              data-testid="input-phone"
+                            />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full font-semibold"
+                    disabled={submitMutation.isPending}
+                    data-testid="button-submit"
+                  >
+                    {submitMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      `Send Me ${selectedMagnet.title}`
+                    )}
+                  </Button>
+                </form>
+              </Form>
+
+              <div className="mt-6 flex items-start gap-3 text-sm text-muted-foreground">
+                <Lock className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <p data-testid="text-consent">
+                  We'll email you the resource and occasional follow-ups. Unsubscribe anytime.
+                </p>
+              </div>
+            </Card>
           </div>
-        </Card>
-
-        <div className="mt-12 text-center">
-          <p className="text-sm text-muted-foreground">
-            Transform your sales conversations with proven coaching frameworks
-          </p>
-        </div>
+        )}
       </div>
     </div>
   );
