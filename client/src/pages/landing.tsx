@@ -5,12 +5,13 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import {
   Mail, Lock, Loader2, CheckCircle2, Phone, ArrowLeft,
-  BookOpen, FileText, BarChart2, Lightbulb, Star, Gift,
+  BookOpen, FileText, BarChart2, Lightbulb, Star, Gift, MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
   FormControl,
@@ -19,7 +20,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { insertLeadSchema, type InsertLead, type LeadMagnet } from "@shared/schema";
+import {
+  insertLeadSchema,
+  type InsertLead,
+  type LeadMagnet,
+  type QuestionnaireField,
+} from "@shared/schema";
+import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 
 const ICONS = [BookOpen, FileText, BarChart2, Lightbulb, Star, Gift];
@@ -32,6 +39,13 @@ const ICON_COLORS = [
   "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400",
 ];
 
+function getIcon(id: number) {
+  return ICONS[(id - 1) % ICONS.length];
+}
+function getColor(id: number) {
+  return ICON_COLORS[(id - 1) % ICON_COLORS.length];
+}
+
 function ResourceCard({
   magnet,
   onSelect,
@@ -41,9 +55,9 @@ function ResourceCard({
   onSelect: (m: LeadMagnet) => void;
   onViewed: (id: number) => void;
 }) {
-  const iconIndex = (magnet.id - 1) % ICONS.length;
-  const Icon = ICONS[iconIndex];
-  const colorClass = ICON_COLORS[iconIndex];
+  const Icon = getIcon(magnet.id);
+  const colorClass = getColor(magnet.id);
+  const fields = (magnet.questionnaireFields as QuestionnaireField[] | null) ?? [];
 
   useEffect(() => {
     onViewed(magnet.id);
@@ -67,13 +81,33 @@ function ResourceCard({
         </p>
       </div>
       <div className="flex items-center justify-between">
-        <Badge variant="secondary" className="text-xs">Free</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-xs">Free</Badge>
+          {fields.length > 0 && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <MessageSquare className="w-3 h-3" />
+              Quick questions
+            </span>
+          )}
+        </div>
         <span className="text-sm font-medium text-ring opacity-0 group-hover:opacity-100 transition-opacity">
           Get it →
         </span>
       </div>
     </Card>
   );
+}
+
+function buildDynamicSchema(fields: QuestionnaireField[]) {
+  const base = insertLeadSchema;
+  if (fields.length === 0) return base;
+  const answers: Record<string, z.ZodTypeAny> = {};
+  for (const f of fields) {
+    answers[f.id] = f.required
+      ? z.string().min(1, `${f.label} is required`)
+      : z.string().optional();
+  }
+  return base.extend({ questionnaireAnswers: z.object(answers).optional() });
 }
 
 export default function Landing() {
@@ -87,12 +121,19 @@ export default function Landing() {
     queryKey: ["/api/lead-magnets"],
   });
 
+  const questionnaireFields: QuestionnaireField[] = selectedMagnet
+    ? ((selectedMagnet.questionnaireFields as QuestionnaireField[] | null) ?? [])
+    : [];
+
+  const dynamicSchema = buildDynamicSchema(questionnaireFields);
+
   const form = useForm<InsertLead>({
-    resolver: zodResolver(insertLeadSchema),
+    resolver: zodResolver(dynamicSchema),
     defaultValues: {
       email: "",
       phone: "",
       leadMagnetId: 0,
+      questionnaireAnswers: {},
     },
   });
 
@@ -104,7 +145,12 @@ export default function Landing() {
 
   const handleSelect = (magnet: LeadMagnet) => {
     setSelectedMagnet(magnet);
-    form.setValue("leadMagnetId", magnet.id);
+    form.reset({
+      email: "",
+      phone: "",
+      leadMagnetId: magnet.id,
+      questionnaireAnswers: {},
+    });
     setStep("form");
   };
 
@@ -117,8 +163,7 @@ export default function Landing() {
       if (data.unsubscribed) {
         setIsUnsubscribed(true);
       } else {
-        const resourceName = selectedMagnet?.title ?? "";
-        setLocation(`/thanks?resource=${encodeURIComponent(resourceName)}`);
+        setLocation(`/thanks?resourceId=${selectedMagnet?.id ?? ""}`);
       }
     },
     onError: (error: Error) => {
@@ -140,9 +185,7 @@ export default function Landing() {
           <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
             <Mail className="w-8 h-8 text-muted-foreground" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground mb-3">
-            You're Unsubscribed
-          </h1>
+          <h1 className="text-2xl font-bold text-foreground mb-3">You're Unsubscribed</h1>
           <p className="text-muted-foreground">
             This email address has been unsubscribed. To receive a resource, please use a different email address.
           </p>
@@ -221,15 +264,8 @@ export default function Landing() {
             </button>
 
             <div className="text-center mb-10">
-              <div
-                className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${
-                  ICON_COLORS[(selectedMagnet.id - 1) % ICON_COLORS.length]
-                }`}
-              >
-                {(() => {
-                  const Icon = ICONS[(selectedMagnet.id - 1) % ICONS.length];
-                  return <Icon className="w-8 h-8" />;
-                })()}
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${getColor(selectedMagnet.id)}`}>
+                {(() => { const Icon = getIcon(selectedMagnet.id); return <Icon className="w-8 h-8" />; })()}
               </div>
               <h1
                 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-3"
@@ -245,6 +281,7 @@ export default function Landing() {
             <Card className="p-8 shadow-lg">
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                  {/* Email */}
                   <FormField
                     control={form.control}
                     name="email"
@@ -272,6 +309,7 @@ export default function Landing() {
                     )}
                   />
 
+                  {/* Phone */}
                   <FormField
                     control={form.control}
                     name="phone"
@@ -299,6 +337,44 @@ export default function Landing() {
                     )}
                   />
 
+                  {/* Dynamic questionnaire fields */}
+                  {questionnaireFields.length > 0 && (
+                    <div className="border-t border-border pt-5 space-y-4">
+                      <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4" />
+                        A few quick questions
+                      </p>
+                      {questionnaireFields.map((qf) => (
+                        <FormField
+                          key={qf.id}
+                          control={form.control}
+                          name={`questionnaireAnswers.${qf.id}` as any}
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                {qf.label}
+                                {!qf.required && (
+                                  <span className="text-muted-foreground font-normal ml-1">(optional)</span>
+                                )}
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  value={field.value ?? ""}
+                                  placeholder={`Your answer...`}
+                                  className="text-base border-2 focus:border-ring"
+                                  disabled={submitMutation.isPending}
+                                  data-testid={`input-questionnaire-${qf.id}`}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  )}
+
                   <Button
                     type="submit"
                     size="lg"
@@ -307,10 +383,7 @@ export default function Landing() {
                     data-testid="button-submit"
                   >
                     {submitMutation.isPending ? (
-                      <>
-                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                        Sending...
-                      </>
+                      <><Loader2 className="w-5 h-5 mr-2 animate-spin" />Sending...</>
                     ) : (
                       `Send Me ${selectedMagnet.title}`
                     )}

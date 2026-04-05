@@ -11,6 +11,8 @@ export const leadMagnets = pgTable("lead_magnets", {
   active: boolean("active").notNull().default(true),
   viewCount: integer("view_count").notNull().default(0),
   submissionCount: integer("submission_count").notNull().default(0),
+  questionnaireFields: jsonb("questionnaire_fields"),
+  nextSteps: text("next_steps"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -26,11 +28,22 @@ export const leads = pgTable("leads", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const questionnaireFieldSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  required: z.boolean().default(false),
+});
+
+export type QuestionnaireField = z.infer<typeof questionnaireFieldSchema>;
+
 export const insertLeadMagnetSchema = createInsertSchema(leadMagnets).omit({
   id: true,
   viewCount: true,
   submissionCount: true,
   createdAt: true,
+}).extend({
+  questionnaireFields: z.array(questionnaireFieldSchema).optional(),
+  nextSteps: z.string().optional(),
 });
 
 export const insertLeadSchema = createInsertSchema(leads).omit({

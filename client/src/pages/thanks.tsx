@@ -1,14 +1,28 @@
-import { CheckCircle2, Smartphone, Mail } from "lucide-react";
+import { CheckCircle2, Smartphone, Mail, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useSearch } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { type LeadMagnet } from "@shared/schema";
 
 const APP_STORE_URL = "https://apps.apple.com/us/app/sales-coach-ai/id6748286535";
 
 export default function Thanks() {
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
-  const resourceName = params.get("resource") || "your resource";
+  const resourceId = params.get("resourceId");
+
+  const { data: magnets = [] } = useQuery<LeadMagnet[]>({
+    queryKey: ["/api/lead-magnets"],
+  });
+
+  const resource = resourceId
+    ? magnets.find((m) => m.id === parseInt(resourceId, 10))
+    : undefined;
+
+  const resourceName = resource?.title ?? "your resource";
+  const resourceDesc = resource?.description ?? "";
+  const nextSteps = resource?.nextSteps ?? null;
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -26,11 +40,30 @@ export default function Thanks() {
           </h1>
 
           <p
-            className="text-lg text-muted-foreground mb-10"
+            className="text-lg text-muted-foreground mb-3"
             data-testid="text-success-message"
           >
-            <strong className="text-foreground">{resourceName}</strong> is on its way to your inbox. Check your email (and spam folder) for the download link.
+            <strong className="text-foreground">{resourceName}</strong> is on its way to your inbox.
           </p>
+
+          {resourceDesc && (
+            <p className="text-sm text-muted-foreground mb-8" data-testid="text-resource-description">
+              {resourceDesc}
+            </p>
+          )}
+
+          {nextSteps && (
+            <div
+              className="bg-muted/50 rounded-xl p-5 text-left mb-8"
+              data-testid="section-next-steps"
+            >
+              <h2 className="font-semibold text-foreground text-sm mb-2 flex items-center gap-2">
+                <ArrowRight className="w-4 h-4" />
+                Next steps
+              </h2>
+              <p className="text-sm text-muted-foreground whitespace-pre-line">{nextSteps}</p>
+            </div>
+          )}
 
           <div className="space-y-4">
             <Button

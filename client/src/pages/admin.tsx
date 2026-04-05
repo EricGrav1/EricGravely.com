@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Plus, Pencil, Eye, TrendingUp, Users, ToggleLeft, ToggleRight,
-  BarChart2, Loader2, CheckCircle2,
+  BarChart2, Loader2, CheckCircle2, Trash2, GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -41,7 +42,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import { insertLeadMagnetSchema, type LeadMagnet, type InsertLeadMagnet } from "@shared/schema";
+import { Separator } from "@/components/ui/separator";
+import {
+  insertLeadMagnetSchema,
+  type LeadMagnet,
+  type InsertLeadMagnet,
+  type QuestionnaireField,
+} from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface AnalyticsStat {
@@ -71,6 +78,10 @@ function StatCard({ icon: Icon, label, value, color }: {
   );
 }
 
+type FormValues = InsertLeadMagnet & {
+  questionnaireFields: QuestionnaireField[];
+};
+
 function LeadMagnetForm({
   defaultValues,
   onSuccess,
@@ -78,13 +89,13 @@ function LeadMagnetForm({
   isEditing,
   editId,
 }: {
-  defaultValues?: Partial<InsertLeadMagnet>;
+  defaultValues?: Partial<FormValues>;
   onSuccess: () => void;
   onCancel: () => void;
   isEditing: boolean;
   editId?: number;
 }) {
-  const form = useForm<InsertLeadMagnet>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(insertLeadMagnetSchema),
     defaultValues: {
       title: "",
@@ -92,45 +103,57 @@ function LeadMagnetForm({
       resourceUrl: "",
       deliveryMethod: "email",
       active: true,
+      nextSteps: "",
+      questionnaireFields: [],
       ...defaultValues,
     },
   });
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "questionnaireFields",
+  });
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/lead-magnets"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/analytics"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/lead-magnets"] });
+  };
+
   const createMutation = useMutation({
-    mutationFn: async (data: InsertLeadMagnet) => {
+    mutationFn: async (data: FormValues) => {
       const res = await apiRequest("POST", "/api/admin/lead-magnets", data);
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/lead-magnets"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/analytics"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/lead-magnets"] });
-      onSuccess();
-    },
+    onSuccess: () => { invalidateAll(); onSuccess(); },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: Partial<InsertLeadMagnet>) => {
+    mutationFn: async (data: Partial<FormValues>) => {
       const res = await apiRequest("PATCH", `/api/admin/lead-magnets/${editId}`, data);
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/lead-magnets"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/analytics"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/lead-magnets"] });
-      onSuccess();
-    },
+    onSuccess: () => { invalidateAll(); onSuccess(); },
   });
 
   const isPending = createMutation.isPending || updateMutation.isPending;
   const error = createMutation.error || updateMutation.error;
 
-  const onSubmit = (data: InsertLeadMagnet) => {
+  const onSubmit = (data: FormValues) => {
+    const payload = {
+      ...data,
+      questionnaireFields: data.questionnaireFields?.length ? data.questionnaireFields : undefined,
+      nextSteps: data.nextSteps?.trim() || undefined,
+    };
     if (isEditing && editId) {
-      updateMutation.mutate(data);
+      updateMutation.mutate(payload);
     } else {
-      createMutation.mutate(data);
+      createMutation.mutate(payload);
     }
+  };
+
+  const addField = () => {
+    append({ id: `field_${Date.now()}`, label: "", required: false });
   };
 
   return (
@@ -214,6 +237,119 @@ function LeadMagnetForm({
           )}
         />
 
+        <FormField
+          control={form.control}
+          name="nextSteps"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Next steps{" "}
+                <span className="text-muted-foreground font-normal">(shown on thank-you page)</span>
+              </FormLabel>
+              <FormControl>
+                <Textarea
+                  {...field}
+                  value={field.value ?? ""}
+                  placeholder={"1. Open the PDF\n2. Work through Section 1 first\n3. Book a free coaching call..."}
+                  rows={3}
+                  data-testid="input-next-steps"
+                  disabled={isPending}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <Separator />
+
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-sm font-medium text-foreground">Questionnaire fields</p>
+              <p className="text-xs text-muted-foreground">Optional questions shown in the contact form</p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={addField}
+              disabled={isPending}
+              data-testid="button-add-field"
+            >
+              <Plus className="w-3 h-3 mr-1" />
+              Add field
+            </Button>
+          </div>
+
+          {fields.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4 border border-dashed border-border rounded-lg">
+              No questionnaire fields. Click "Add field" to collect extra info from leads.
+            </p>
+          )}
+
+          <div className="space-y-3">
+            {fields.map((field, index) => (
+              <div
+                key={field.id}
+                className="flex items-start gap-3 p-3 rounded-lg border border-border bg-muted/30"
+                data-testid={`field-row-${index}`}
+              >
+                <GripVertical className="w-4 h-4 mt-2 text-muted-foreground shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <FormField
+                    control={form.control}
+                    name={`questionnaireFields.${index}.label`}
+                    render={({ field: f }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            {...f}
+                            placeholder="e.g. What is your biggest sales challenge?"
+                            className="text-sm"
+                            disabled={isPending}
+                            data-testid={`input-field-label-${index}`}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`questionnaireFields.${index}.required`}
+                    render={({ field: f }) => (
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={f.value}
+                            onCheckedChange={f.onChange}
+                            disabled={isPending}
+                            data-testid={`checkbox-field-required-${index}`}
+                          />
+                        </FormControl>
+                        <FormLabel className="text-xs font-normal text-muted-foreground cursor-pointer">
+                          Required
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => remove(index)}
+                  disabled={isPending}
+                  data-testid={`button-remove-field-${index}`}
+                >
+                  <Trash2 className="w-4 h-4 text-destructive" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {error && (
           <p className="text-sm text-destructive">{(error as Error).message}</p>
         )}
@@ -226,12 +362,18 @@ function LeadMagnetForm({
             data-testid="button-save-resource"
           >
             {isPending ? (
-              <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Saving...</>
+              <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>
             ) : (
-              <><CheckCircle2 className="w-4 h-4 mr-2" /> {isEditing ? "Save Changes" : "Add Resource"}</>
+              <><CheckCircle2 className="w-4 h-4 mr-2" />{isEditing ? "Save Changes" : "Add Resource"}</>
             )}
           </Button>
-          <Button type="button" variant="outline" onClick={onCancel} disabled={isPending} data-testid="button-cancel-form">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onCancel}
+            disabled={isPending}
+            data-testid="button-cancel-form"
+          >
             Cancel
           </Button>
         </div>
@@ -281,7 +423,6 @@ export default function Admin() {
     <div className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto px-4 py-12">
 
-        {/* Header */}
         <div className="flex items-center justify-between mb-10">
           <div>
             <h1 className="text-3xl font-bold text-foreground" data-testid="text-admin-headline">
@@ -295,7 +436,6 @@ export default function Admin() {
           </Button>
         </div>
 
-        {/* Summary Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
           <StatCard
             icon={Eye}
@@ -317,7 +457,6 @@ export default function Admin() {
           />
         </div>
 
-        {/* Analytics Table */}
         <Card className="mb-10 overflow-hidden">
           <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
             <BarChart2 className="w-5 h-5 text-muted-foreground" />
@@ -366,7 +505,6 @@ export default function Admin() {
           )}
         </Card>
 
-        {/* Resource Management */}
         <Card className="overflow-hidden">
           <div className="flex items-center gap-2 px-6 py-4 border-b border-border">
             <Users className="w-5 h-5 text-muted-foreground" />
@@ -383,61 +521,68 @@ export default function Admin() {
                 <TableRow>
                   <TableHead>Title</TableHead>
                   <TableHead>Delivery</TableHead>
+                  <TableHead>Fields</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {magnets.map((magnet) => (
-                  <TableRow key={magnet.id} data-testid={`row-resource-${magnet.id}`}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{magnet.title}</p>
-                        <p className="text-xs text-muted-foreground line-clamp-1 max-w-xs">
-                          {magnet.description}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="capitalize">
-                        {magnet.deliveryMethod}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={magnet.active ? "default" : "secondary"} data-testid={`badge-status-${magnet.id}`}>
-                        {magnet.active ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => openEdit(magnet)}
-                          data-testid={`button-edit-${magnet.id}`}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => toggleMutation.mutate({ id: magnet.id, active: !magnet.active })}
-                          disabled={toggleMutation.isPending}
-                          data-testid={`button-toggle-${magnet.id}`}
-                          title={magnet.active ? "Deactivate" : "Activate"}
-                        >
-                          {magnet.active
-                            ? <ToggleRight className="w-5 h-5 text-green-600" />
-                            : <ToggleLeft className="w-5 h-5 text-muted-foreground" />
-                          }
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {magnets.map((magnet) => {
+                  const qFields = (magnet.questionnaireFields as QuestionnaireField[] | null) ?? [];
+                  return (
+                    <TableRow key={magnet.id} data-testid={`row-resource-${magnet.id}`}>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{magnet.title}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1 max-w-xs">
+                            {magnet.description}
+                          </p>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="capitalize">{magnet.deliveryMethod}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {qFields.length > 0 ? `${qFields.length} question${qFields.length > 1 ? "s" : ""}` : "—"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={magnet.active ? "default" : "secondary"} data-testid={`badge-status-${magnet.id}`}>
+                          {magnet.active ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => openEdit(magnet)}
+                            data-testid={`button-edit-${magnet.id}`}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => toggleMutation.mutate({ id: magnet.id, active: !magnet.active })}
+                            disabled={toggleMutation.isPending}
+                            data-testid={`button-toggle-${magnet.id}`}
+                            title={magnet.active ? "Deactivate" : "Activate"}
+                          >
+                            {magnet.active
+                              ? <ToggleRight className="w-5 h-5 text-green-600" />
+                              : <ToggleLeft className="w-5 h-5 text-muted-foreground" />
+                            }
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
                 {magnets.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                       No resources yet. Click "Add Resource" to get started.
                     </TableCell>
                   </TableRow>
@@ -448,7 +593,6 @@ export default function Admin() {
         </Card>
       </div>
 
-      {/* Add / Edit Sheet */}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent className="w-full sm:max-w-md overflow-y-auto">
           <SheetHeader>
@@ -467,6 +611,8 @@ export default function Admin() {
               resourceUrl: editingMagnet.resourceUrl ?? "",
               deliveryMethod: editingMagnet.deliveryMethod,
               active: editingMagnet.active,
+              nextSteps: editingMagnet.nextSteps ?? "",
+              questionnaireFields: ((editingMagnet.questionnaireFields as QuestionnaireField[] | null) ?? []),
             } : undefined}
             isEditing={!!editingMagnet}
             editId={editingMagnet?.id}
