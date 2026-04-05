@@ -3,7 +3,6 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertLeadSchema, insertLeadMagnetSchema } from "@shared/schema";
 import { sendLeadMagnetEmail, validateUnsubscribeToken } from "./email";
-import { z } from "zod";
 
 export async function registerRoutes(
   httpServer: Server,

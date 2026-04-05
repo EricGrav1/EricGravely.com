@@ -43,7 +43,7 @@ export const insertLeadSchema = createInsertSchema(leads).omit({
   email: z.string().email("Please enter a valid email address"),
   phone: z.string().optional(),
   leadMagnetId: z.number().int().positive("Please select a resource"),
-  questionnaireAnswers: z.record(z.string()).optional(),
+  questionnaireAnswers: z.record(z.unknown()).optional(),
 });
 
 export type LeadMagnet = typeof leadMagnets.$inferSelect;
