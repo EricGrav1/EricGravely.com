@@ -30,20 +30,10 @@ import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 
 const ICONS = [BookOpen, FileText, BarChart2, Lightbulb, Star, Gift];
-const ICON_COLORS = [
-  "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
-  "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400",
-  "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
-  "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
-  "bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400",
-  "bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400",
-];
+const ICON_COLOR = "bg-muted text-foreground";
 
 function getIcon(id: number) {
   return ICONS[(id - 1) % ICONS.length];
-}
-function getColor(id: number) {
-  return ICON_COLORS[(id - 1) % ICON_COLORS.length];
 }
 
 function ResourceCard({
@@ -56,7 +46,6 @@ function ResourceCard({
   onViewed: (id: number) => void;
 }) {
   const Icon = getIcon(magnet.id);
-  const colorClass = getColor(magnet.id);
   const fields = (magnet.questionnaireFields as QuestionnaireField[] | null) ?? [];
 
   useEffect(() => {
@@ -65,15 +54,15 @@ function ResourceCard({
 
   return (
     <Card
-      className="p-6 flex flex-col gap-4 cursor-pointer hover:shadow-lg hover:border-ring/50 transition-all duration-200 group"
+      className="p-6 flex flex-col gap-4 cursor-pointer hover:shadow-md hover:border-foreground/20 transition-all duration-150 group"
       data-testid={`card-resource-${magnet.id}`}
       onClick={() => onSelect(magnet)}
     >
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorClass}`}>
-        <Icon className="w-6 h-6" />
+      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${ICON_COLOR}`}>
+        <Icon className="w-5 h-5" />
       </div>
       <div className="flex-1">
-        <h3 className="font-semibold text-foreground text-lg leading-snug mb-2 group-hover:text-ring transition-colors">
+        <h3 className="font-semibold text-foreground text-lg leading-snug mb-2 group-hover:text-foreground/70 transition-colors">
           {magnet.title}
         </h3>
         <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
@@ -270,8 +259,8 @@ export default function Landing() {
             </button>
 
             <div className="text-center mb-10">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 ${getColor(selectedMagnet.id)}`}>
-                {(() => { const Icon = getIcon(selectedMagnet.id); return <Icon className="w-8 h-8" />; })()}
+              <div className={`w-16 h-16 rounded-lg flex items-center justify-center mx-auto mb-6 ${ICON_COLOR}`}>
+                {(() => { const Icon = getIcon(selectedMagnet.id); return <Icon className="w-7 h-7" />; })()}
               </div>
               <h1
                 className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-3"
@@ -306,7 +295,7 @@ export default function Landing() {
                               data-testid="input-email"
                             />
                             {form.formState.dirtyFields.email && !form.formState.errors.email && field.value && (
-                              <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />
+                              <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-foreground/50" />
                             )}
                           </div>
                         </FormControl>

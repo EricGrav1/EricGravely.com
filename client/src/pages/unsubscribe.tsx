@@ -60,8 +60,8 @@ export default function Unsubscribe() {
 
         {status === "success" && (
           <>
-            <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 className="w-8 h-8 text-green-600 dark:text-green-400" />
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-8 h-8 text-foreground" />
             </div>
             <h1 className="text-2xl font-bold text-foreground mb-3" data-testid="text-unsubscribe-headline">
               You're Unsubscribed

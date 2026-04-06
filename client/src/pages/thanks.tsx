@@ -28,8 +28,8 @@ export default function Thanks() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-xl w-full">
         <Card className="p-8 md:p-12 text-center">
-          <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-8">
-            <CheckCircle2 className="w-10 h-10 text-green-600 dark:text-green-400" />
+          <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mx-auto mb-8">
+            <CheckCircle2 className="w-10 h-10 text-foreground" />
           </div>
 
           <h1

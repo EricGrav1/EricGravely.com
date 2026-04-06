@@ -442,19 +442,19 @@ export default function Admin() {
             icon={Eye}
             label="Total Views"
             value={analyticsLoading ? "—" : totalViews.toLocaleString()}
-            color="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+            color="bg-muted text-foreground"
           />
           <StatCard
             icon={Users}
             label="Total Leads"
             value={analyticsLoading ? "—" : totalSubmissions.toLocaleString()}
-            color="bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+            color="bg-muted text-foreground"
           />
           <StatCard
             icon={TrendingUp}
             label="Overall Conversion"
             value={analyticsLoading ? "—" : `${overallConversion}%`}
-            color="bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
+            color="bg-muted text-foreground"
           />
         </div>
 
@@ -572,7 +572,7 @@ export default function Admin() {
                             title={magnet.active ? "Deactivate" : "Activate"}
                           >
                             {magnet.active
-                              ? <ToggleRight className="w-5 h-5 text-green-600" />
+                              ? <ToggleRight className="w-5 h-5 text-foreground" />
                               : <ToggleLeft className="w-5 h-5 text-muted-foreground" />
                             }
                           </Button>
