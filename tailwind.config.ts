@@ -6,17 +6,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        navy: {
-          DEFAULT: "#0A0F1E",
-          light: "#111827",
-          lighter: "#1a2340",
-          border: "rgba(255,255,255,0.08)",
+        ivory: {
+          DEFAULT: "#FAF7F2",
+          warm: "#F0EDE5",
+          deeper: "#E6E3DB",
         },
-        gold: {
-          DEFAULT: "#D4A017",
-          light: "#E8B923",
-          dark: "#B88A14",
-          muted: "rgba(212,160,23,0.15)",
+        brand: {
+          red: "#C8102E",
+          "red-hover-dark": "#E01235",
+          "red-hover-light": "#A80D25",
+          black: "#0D0D0D",
+          card: "#1C1C1C",
         },
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",

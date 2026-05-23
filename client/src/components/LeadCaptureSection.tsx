@@ -56,13 +56,14 @@ export function LeadCaptureSection() {
     <section
       id="get-the-playbook"
       className="py-24 md:py-32 relative overflow-hidden"
-      style={{
-        background: "linear-gradient(180deg, #0A0F1E 0%, #0d1428 50%, #0A0F1E 100%)",
-      }}
+      style={{ background: "var(--c-bg2)" }}
     >
-      {/* Background glow */}
+      {/* Subtle red glow */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-[#D4A017]/5 blur-3xl" />
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full blur-3xl"
+          style={{ background: "rgba(200,16,46,0.05)" }}
+        />
       </div>
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -75,13 +76,13 @@ export function LeadCaptureSection() {
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
-            <span className="text-xs font-semibold tracking-widest uppercase text-[#D4A017] block mb-4">
+            <span className="text-xs font-semibold tracking-widest uppercase block mb-4" style={{ color: "#C8102E" }}>
               Free Download
             </span>
-            <h2 className="font-serif text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
+            <h2 className="font-serif text-4xl md:text-5xl font-bold mb-4 leading-tight" style={{ color: "var(--c-fg)" }}>
               {leadMagnet.formHeadline}
             </h2>
-            <p className="text-white/55 text-base leading-relaxed mb-8">
+            <p className="text-base leading-relaxed mb-8" style={{ color: "var(--c-fg-55)" }}>
               {leadMagnet.description}
             </p>
 
@@ -96,8 +97,8 @@ export function LeadCaptureSection() {
                   transition={{ delay: i * 0.1 + 0.2, duration: 0.4 }}
                   className="flex items-start gap-3"
                 >
-                  <CheckCircle2 className="w-5 h-5 text-[#D4A017] flex-shrink-0 mt-0.5" />
-                  <span className="text-white/75 text-sm leading-relaxed">{bullet}</span>
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#C8102E" }} />
+                  <span className="text-sm leading-relaxed" style={{ color: "var(--c-fg-70)" }}>{bullet}</span>
                 </motion.li>
               ))}
             </ul>
@@ -113,22 +114,26 @@ export function LeadCaptureSection() {
             <div
               className="rounded-2xl p-8"
               style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(212,160,23,0.2)",
-                boxShadow: "0 0 60px rgba(212,160,23,0.06)",
+                background: "var(--c-card)",
+                border: "1px solid rgba(200,16,46,0.20)",
+                boxShadow: "0 0 60px rgba(200,16,46,0.05)",
               }}
             >
               <div className="mb-6">
-                <h3 className="font-serif text-2xl font-bold text-white mb-1">
+                <h3 className="font-serif text-2xl font-bold mb-1" style={{ color: "var(--c-fg)" }}>
                   {leadMagnet.formCardTitle}
                 </h3>
-                <p className="text-white/45 text-sm">{leadMagnet.formSubheadline}</p>
+                <p className="text-sm" style={{ color: "var(--c-fg-45)" }}>{leadMagnet.formSubheadline}</p>
               </div>
 
               <form onSubmit={handleSubmit} noValidate>
                 <div className="space-y-4 mb-6">
                   <div>
-                    <label htmlFor="firstName" className="block text-xs font-medium text-white/60 mb-1.5 uppercase tracking-wide">
+                    <label
+                      htmlFor="firstName"
+                      className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
+                      style={{ color: "var(--c-fg-55)" }}
+                    >
                       {leadMagnet.firstNameLabel}
                     </label>
                     <input
@@ -144,8 +149,13 @@ export function LeadCaptureSection() {
                   </div>
 
                   <div>
-                    <label htmlFor="email" className="block text-xs font-medium text-white/60 mb-1.5 uppercase tracking-wide">
-                      {leadMagnet.emailLabel} <span className="text-[#D4A017]">*</span>
+                    <label
+                      htmlFor="email"
+                      className="block text-xs font-medium mb-1.5 uppercase tracking-wide"
+                      style={{ color: "var(--c-fg-55)" }}
+                    >
+                      {leadMagnet.emailLabel}{" "}
+                      <span style={{ color: "#C8102E" }}>*</span>
                     </label>
                     <input
                       id="email"
@@ -162,7 +172,15 @@ export function LeadCaptureSection() {
                 </div>
 
                 {error && (
-                  <div className="mb-4 px-4 py-3 rounded-lg bg-red-900/30 border border-red-500/30 text-red-400 text-sm" data-testid="text-form-error">
+                  <div
+                    className="mb-4 px-4 py-3 rounded-lg text-sm"
+                    style={{
+                      background: "rgba(200,16,46,0.12)",
+                      border: "1px solid rgba(200,16,46,0.30)",
+                      color: "#C8102E",
+                    }}
+                    data-testid="text-form-error"
+                  >
                     {error}
                   </div>
                 )}
@@ -170,7 +188,7 @@ export function LeadCaptureSection() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="btn-gold w-full py-3.5 rounded-lg font-bold text-base flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
+                  className="btn-accent w-full py-3.5 rounded-lg font-bold text-base flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
                   data-testid="button-submit"
                 >
                   {loading ? (
@@ -183,7 +201,7 @@ export function LeadCaptureSection() {
                   )}
                 </button>
 
-                <div className="flex items-center gap-2 justify-center mt-4 text-white/30 text-xs">
+                <div className="flex items-center gap-2 justify-center mt-4 text-xs" style={{ color: "var(--c-fg-30)" }}>
                   <Shield className="w-3 h-3" />
                   {leadMagnet.privacyNote}
                 </div>

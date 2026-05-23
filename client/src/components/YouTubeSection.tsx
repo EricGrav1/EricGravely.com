@@ -16,11 +16,11 @@ function VideoCard({ video, index }: { video: typeof site.youtube.videos[0]; ind
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
       className="group block rounded-xl overflow-hidden"
-      style={{ border: "1px solid rgba(255,255,255,0.07)" }}
+      style={{ border: "1px solid var(--c-border)" }}
       data-testid={`card-video-${index}`}
     >
       {/* Thumbnail */}
-      <div className="relative aspect-video bg-[#1a2340] overflow-hidden">
+      <div className="relative aspect-video overflow-hidden" style={{ background: "var(--c-bg3)" }}>
         <img
           src={thumbnailUrl}
           alt={video.title}
@@ -29,22 +29,29 @@ function VideoCard({ video, index }: { video: typeof site.youtube.videos[0]; ind
             (e.currentTarget as HTMLImageElement).style.display = "none";
           }}
         />
-        {/* Overlay */}
         <div className="video-overlay absolute inset-0" />
         {/* Play button */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-14 h-14 rounded-full bg-[#D4A017] flex items-center justify-center shadow-xl transition-transform duration-200 group-hover:scale-110 group-hover:bg-[#E8B923]">
-            <Play className="w-6 h-6 text-[#0A0F1E] fill-current ml-0.5" />
+          <div
+            className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-transform duration-200 group-hover:scale-110"
+            style={{ background: "#C8102E" }}
+          >
+            <Play className="w-6 h-6 fill-current ml-0.5" style={{ color: "#FAF7F2" }} />
           </div>
         </div>
       </div>
 
       {/* Info */}
-      <div className="p-5" style={{ background: "rgba(255,255,255,0.03)" }}>
-        <h3 className="font-semibold text-white text-base leading-snug mb-2 group-hover:text-[#D4A017] transition-colors">
+      <div className="p-5" style={{ background: "var(--c-card)" }}>
+        <h3
+          className="font-semibold text-base leading-snug mb-2 transition-colors"
+          style={{ color: "var(--c-fg)" }}
+          onMouseEnter={e => (e.currentTarget.style.color = "#C8102E")}
+          onMouseLeave={e => (e.currentTarget.style.color = "var(--c-fg)")}
+        >
           {video.title}
         </h3>
-        <p className="text-white/45 text-sm leading-relaxed line-clamp-2">
+        <p className="text-sm leading-relaxed line-clamp-2" style={{ color: "var(--c-fg-45)" }}>
           {video.description}
         </p>
       </div>
@@ -57,7 +64,7 @@ export function YouTubeSection() {
     <section
       id="videos"
       className="py-24 md:py-32"
-      style={{ background: "#0A0F1E" }}
+      style={{ background: "var(--c-bg2)" }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
@@ -69,13 +76,13 @@ export function YouTubeSection() {
           className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12"
         >
           <div>
-            <span className="text-xs font-semibold tracking-widest uppercase text-[#D4A017] block mb-4">
+            <span className="text-xs font-semibold tracking-widest uppercase block mb-4" style={{ color: "#C8102E" }}>
               Content
             </span>
-            <h2 className="font-serif text-4xl md:text-5xl font-bold text-white mb-3">
+            <h2 className="font-serif text-4xl md:text-5xl font-bold mb-3" style={{ color: "var(--c-fg)" }}>
               {site.youtube.sectionTitle}
             </h2>
-            <p className="text-white/50 text-base max-w-lg">
+            <p className="text-base max-w-lg" style={{ color: "var(--c-fg-55)" }}>
               {site.youtube.sectionSubtitle}
             </p>
           </div>
@@ -83,7 +90,7 @@ export function YouTubeSection() {
             href={site.youtube.channelUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-outline-gold px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 flex-shrink-0 self-start md:self-auto"
+            className="btn-outline-accent px-5 py-2.5 rounded-lg text-sm font-semibold flex items-center gap-2 flex-shrink-0 self-start md:self-auto"
             data-testid="link-youtube-channel"
           >
             <Youtube className="w-4 h-4" />
@@ -110,7 +117,7 @@ export function YouTubeSection() {
             href={site.youtube.channelUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn-gold px-8 py-3.5 rounded-lg text-sm font-bold inline-flex items-center gap-2"
+            className="btn-accent px-8 py-3.5 rounded-lg text-sm font-bold inline-flex items-center gap-2"
           >
             <Youtube className="w-4 h-4" />
             Watch More on YouTube

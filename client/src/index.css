@@ -2,28 +2,90 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Color tokens ─────────────────────────────────────────────────────────── */
 :root {
-  --background: 228 52% 8%;
-  --foreground: 0 0% 98%;
-  --border: 228 30% 16%;
-  --input: 228 30% 14%;
-  --card: 228 40% 11%;
-  --card-foreground: 0 0% 95%;
-  --primary: 43 84% 47%;
-  --primary-foreground: 228 52% 8%;
-  --secondary: 228 30% 16%;
-  --secondary-foreground: 0 0% 90%;
-  --muted: 228 30% 14%;
-  --muted-foreground: 220 14% 55%;
-  --accent: 43 70% 20%;
-  --accent-foreground: 43 84% 70%;
-  --destructive: 0 72% 51%;
+  /* Light mode: ivory background, black text */
+  --c-bg:           #FAF7F2;
+  --c-bg2:          #F0EDE5;
+  --c-bg3:          #E6E3DB;
+  --c-fg:           #0D0D0D;
+  --c-fg-70:        rgba(13, 13, 13, 0.70);
+  --c-fg-55:        rgba(13, 13, 13, 0.55);
+  --c-fg-45:        rgba(13, 13, 13, 0.45);
+  --c-fg-30:        rgba(13, 13, 13, 0.30);
+  --c-fg-20:        rgba(13, 13, 13, 0.20);
+  --c-accent:       #C8102E;
+  --c-accent-h:     #A80D25;
+  --c-accent-15:    rgba(200, 16, 46, 0.15);
+  --c-accent-10:    rgba(200, 16, 46, 0.10);
+  --c-accent-06:    rgba(200, 16, 46, 0.06);
+  --c-border:       rgba(0, 0, 0, 0.10);
+  --c-border-2:     rgba(0, 0, 0, 0.06);
+  --c-card:         rgba(0, 0, 0, 0.04);
+  --c-card-border:  rgba(0, 0, 0, 0.08);
+
+  /* shadcn tokens — light */
+  --background:     46 50% 95%;
+  --foreground:     0 0% 5%;
+  --border:         30 10% 88%;
+  --input:          30 10% 88%;
+  --card:           40 40% 97%;
+  --card-foreground: 0 0% 5%;
+  --primary:        350 88% 42%;
+  --primary-foreground: 0 0% 98%;
+  --secondary:      30 10% 88%;
+  --secondary-foreground: 0 0% 10%;
+  --muted:          30 10% 90%;
+  --muted-foreground: 0 0% 45%;
+  --accent:         350 88% 42%;
+  --accent-foreground: 0 0% 98%;
+  --destructive:    0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --ring: 43 84% 47%;
-  --radius: 0.5rem;
-  --font-sans: 'DM Sans', sans-serif;
-  --font-serif: 'Playfair Display', Georgia, serif;
-  --font-mono: 'IBM Plex Mono', monospace;
+  --ring:           350 88% 42%;
+  --radius:         0.5rem;
+  --font-sans:      'DM Sans', sans-serif;
+  --font-serif:     'Playfair Display', Georgia, serif;
+}
+
+.dark {
+  /* Dark mode: near-black background, ivory text */
+  --c-bg:           #0D0D0D;
+  --c-bg2:          #141414;
+  --c-bg3:          #1C1C1C;
+  --c-fg:           #FAF7F2;
+  --c-fg-70:        rgba(250, 247, 242, 0.70);
+  --c-fg-55:        rgba(250, 247, 242, 0.55);
+  --c-fg-45:        rgba(250, 247, 242, 0.45);
+  --c-fg-30:        rgba(250, 247, 242, 0.30);
+  --c-fg-20:        rgba(250, 247, 242, 0.20);
+  --c-accent:       #C8102E;
+  --c-accent-h:     #E01235;
+  --c-accent-15:    rgba(200, 16, 46, 0.15);
+  --c-accent-10:    rgba(200, 16, 46, 0.10);
+  --c-accent-06:    rgba(200, 16, 46, 0.06);
+  --c-border:       rgba(255, 255, 255, 0.08);
+  --c-border-2:     rgba(255, 255, 255, 0.05);
+  --c-card:         rgba(255, 255, 255, 0.03);
+  --c-card-border:  rgba(255, 255, 255, 0.07);
+
+  /* shadcn tokens — dark */
+  --background:     0 0% 5%;
+  --foreground:     40 40% 96%;
+  --border:         0 0% 15%;
+  --input:          0 0% 13%;
+  --card:           0 0% 9%;
+  --card-foreground: 40 40% 95%;
+  --primary:        350 88% 42%;
+  --primary-foreground: 40 40% 96%;
+  --secondary:      0 0% 15%;
+  --secondary-foreground: 40 40% 90%;
+  --muted:          0 0% 13%;
+  --muted-foreground: 0 0% 55%;
+  --accent:         350 60% 18%;
+  --accent-foreground: 350 88% 70%;
+  --destructive:    0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+  --ring:           350 88% 42%;
 }
 
 @layer base {
@@ -37,13 +99,14 @@
 
   body {
     @apply font-sans antialiased;
-    background-color: #0A0F1E;
-    color: #F9FAFB;
+    background-color: var(--c-bg);
+    color: var(--c-fg);
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   ::selection {
-    background-color: rgba(212, 160, 23, 0.3);
-    color: #fff;
+    background-color: rgba(200, 16, 46, 0.25);
+    color: var(--c-fg);
   }
 }
 
@@ -52,118 +115,105 @@
     font-family: 'Playfair Display', Georgia, serif;
   }
 
-  .text-gold {
-    color: #D4A017;
+  .text-accent {
+    color: var(--c-accent);
   }
 
-  .text-gold-light {
-    color: #E8B923;
+  .text-fg {
+    color: var(--c-fg);
   }
 
-  .bg-navy {
-    background-color: #0A0F1E;
+  .text-fg-70 { color: var(--c-fg-70); }
+  .text-fg-55 { color: var(--c-fg-55); }
+  .text-fg-45 { color: var(--c-fg-45); }
+  .text-fg-30 { color: var(--c-fg-30); }
+
+  .bg-site {
+    background-color: var(--c-bg);
   }
 
-  .bg-navy-light {
-    background-color: #111827;
+  .bg-site-2 {
+    background-color: var(--c-bg2);
   }
 
-  .bg-navy-lighter {
-    background-color: #1a2340;
-  }
-
-  .border-navy-border {
-    border-color: rgba(255, 255, 255, 0.08);
-  }
-
-  .gold-gradient {
-    background: linear-gradient(135deg, #D4A017, #E8B923, #B88A14);
-  }
-
-  .navy-gradient {
-    background: linear-gradient(135deg, #0A0F1E 0%, #111827 50%, #0A0F1E 100%);
-  }
-
-  .hero-gradient {
-    background: radial-gradient(ellipse at 60% 0%, rgba(212, 160, 23, 0.12) 0%, transparent 60%),
-                radial-gradient(ellipse at 0% 80%, rgba(26, 35, 64, 0.8) 0%, transparent 60%),
-                linear-gradient(180deg, #0A0F1E 0%, #0F1728 100%);
-  }
-
-  .section-gradient {
-    background: linear-gradient(180deg, #0A0F1E 0%, #0d1428 50%, #0A0F1E 100%);
+  .bg-site-3 {
+    background-color: var(--c-bg3);
   }
 
   .card-surface {
-    background-color: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
+    background-color: var(--c-card);
+    border: 1px solid var(--c-card-border);
   }
 
-  .gold-underline {
-    text-decoration: underline;
-    text-decoration-color: #D4A017;
-    text-underline-offset: 4px;
-  }
-
-  .input-dark {
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    color: #fff;
-    transition: border-color 0.2s, background-color 0.2s;
-  }
-
-  .input-dark::placeholder {
-    color: rgba(255, 255, 255, 0.35);
-  }
-
-  .input-dark:focus {
-    outline: none;
-    border-color: #D4A017;
-    background-color: rgba(255, 255, 255, 0.07);
-  }
-
-  .btn-gold {
-    background-color: #D4A017;
-    color: #0A0F1E;
+  .btn-accent {
+    background-color: var(--c-accent);
+    color: #FAF7F2;
     font-weight: 700;
     transition: all 0.2s;
     cursor: pointer;
   }
 
-  .btn-gold:hover {
-    background-color: #E8B923;
+  .btn-accent:hover {
+    background-color: var(--c-accent-h);
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(212, 160, 23, 0.35);
+    box-shadow: 0 8px 24px rgba(200, 16, 46, 0.35);
   }
 
-  .btn-gold:active {
+  .btn-accent:active {
     transform: translateY(0);
   }
 
-  .btn-outline-gold {
-    border: 1.5px solid #D4A017;
-    color: #D4A017;
+  .btn-outline-accent {
+    border: 1.5px solid var(--c-accent);
+    color: var(--c-accent);
     background: transparent;
     font-weight: 600;
     transition: all 0.2s;
     cursor: pointer;
   }
 
-  .btn-outline-gold:hover {
-    background-color: rgba(212, 160, 23, 0.1);
-    box-shadow: 0 4px 16px rgba(212, 160, 23, 0.2);
+  .btn-outline-accent:hover {
+    background-color: var(--c-accent-10);
+    box-shadow: 0 4px 16px rgba(200, 16, 46, 0.2);
+  }
+
+  /* Keep legacy names as aliases so existing classes don't break */
+  .btn-gold { @apply btn-accent; }
+  .btn-outline-gold { @apply btn-outline-accent; }
+
+  .input-dark {
+    background-color: var(--c-card);
+    border: 1px solid var(--c-border);
+    color: var(--c-fg);
+    transition: border-color 0.2s, background-color 0.2s;
+  }
+
+  .input-dark::placeholder {
+    color: var(--c-fg-30);
+  }
+
+  .input-dark:focus {
+    outline: none;
+    border-color: var(--c-accent);
+    background-color: var(--c-card);
   }
 
   .timeline-line {
-    background: linear-gradient(180deg, transparent, #D4A017 20%, #D4A017 80%, transparent);
+    background: linear-gradient(180deg, transparent, var(--c-accent) 20%, var(--c-accent) 80%, transparent);
   }
 
   .stat-border {
-    border: 1px solid rgba(212, 160, 23, 0.2);
-    background: rgba(212, 160, 23, 0.04);
+    border: 1px solid var(--c-accent-15);
+    background: var(--c-accent-06);
   }
 
   .video-overlay {
-    background: linear-gradient(0deg, rgba(10, 15, 30, 0.9) 0%, rgba(10, 15, 30, 0.3) 50%, transparent 100%);
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.25) 50%, transparent 100%);
+  }
+
+  .accent-underline {
+    text-decoration: underline;
+    text-decoration-color: var(--c-accent);
+    text-underline-offset: 4px;
   }
 }
