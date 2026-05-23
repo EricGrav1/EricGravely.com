@@ -1,0 +1,143 @@
+Build me a personal brand website with an integrated lead capture funnel. 
+This is for Nicholas Andrews — Sales Leadership Coach, founder of SalesCoachAI, 
+and creator of The Sales Commandments YouTube channel.
+
+---
+
+## TECH STACK
+- Next.js 14 (App Router)
+- Tailwind CSS
+- Framer Motion for animations
+- ConvertKit API for email capture and funnel triggering
+- Resend or Nodemailer for transactional emails (confirmation + lead magnet delivery)
+- Vercel-ready deployment config
+
+---
+
+## BRAND IDENTITY
+- Name: Nicholas Andrews / The Sales Commandments
+- Tone: Bold, direct, no-fluff. Think: Gary Vee meets corporate sales exec who left the matrix.
+- Color palette: Deep navy (#0A0F1E), gold/amber accent (#D4A017), white text
+- Fonts: Use a strong serif for headings (Playfair Display or similar), clean sans-serif 
+  for body (DM Sans or Outfit)
+- Aesthetic: Dark, premium, authority-driven. Not startup-bubbly. Not corporate-boring. 
+  Like a high-ticket sales trainer who has receipts.
+
+---
+
+## SITE STRUCTURE (Single Page with Sections + Dedicated Pages)
+
+### HOMEPAGE SECTIONS (in order):
+
+1. **Hero Section**
+   - Headline: "I Help Sales Reps Become Sales Leaders" (editable)
+   - Subheadline: 1-2 lines about the transformation offered
+   - CTA Button: "Download the Free Sales Manager Playbook" → scrolls to lead capture
+   - Background: Dark with subtle animated gradient or geometric pattern
+   - Include professional photo placeholder (easy to swap)
+
+2. **Social Proof / Stats Bar**
+   - 3-4 metric tiles: e.g., "10+ Years in Sales Leadership", "Founder of SalesCoachAI", 
+     "X YouTube Subscribers", "X Managers Coached"
+   - Make these easy to edit in a config file
+
+3. **About / Career Journey Section**
+   - Timeline-style layout showing career milestones
+   - Pull from a JSON config array so it's easy to update without touching components
+   - End with current ventures: SalesCoachAI + The Sales Commandments
+
+4. **Content Hub Section**
+   - YouTube video grid (embed latest 4-6 videos via YouTube Data API v3 OR manual embed IDs in config)
+   - Cards with thumbnail, title, short description
+   - "Watch More" button linking to YouTube channel
+
+5. **Lead Magnet / Opt-In Section** ← THIS IS THE FUNNEL ENTRY
+   - Headline: "Free Download: The New Sales Manager Playbook" (editable title)
+   - Description: What they'll learn / get
+   - Form: First Name + Email only
+   - On submit:
+     a. POST to /api/subscribe (internal Next.js API route)
+     b. API route hits ConvertKit API to add subscriber to a specific list/tag 
+        (tag: "lead-magnet-playbook")
+     c. Send confirmation email with lead magnet download link via Resend
+     d. Redirect user to /thank-you page
+   - Show loading state and error handling on the form
+
+6. **Coaching / Offer Section**
+   - Brief overview of The Sales Leader Accelerator (6-week program)
+   - 3 feature/benefit bullets
+   - CTA: "Apply for Coaching" → links to /coaching page or opens Calendly embed
+
+7. **Footer**
+   - Links: Home, About, YouTube, SalesCoachAI (external), LinkedIn
+   - Email capture mini-form (same funnel as above, just newsletter tag instead)
+   - Copyright + "Built by The Sales Commandments"
+
+---
+
+### DEDICATED PAGES:
+
+**/thank-you**
+- Confirmation message after opt-in
+- Download button (link to hosted PDF — use a placeholder /public/lead-magnet.pdf)
+- "What happens next" — brief 3-step explainer of what emails they'll receive
+- CTA to YouTube channel and SalesCoachAI app
+
+**/coaching**
+- Headline + program overview for The Sales Leader Accelerator
+- 3-column module breakdown
+- Who it's for / who it's NOT for
+- Application CTA (Calendly embed placeholder or contact form)
+
+---
+
+## FUNNEL LOGIC (Critical — build this correctly)
+
+When a user submits the lead magnet form:
+1. Client-side: disable button, show spinner
+2. POST to /api/subscribe with { firstName, email, tag: "lead-magnet" }
+3. Server-side API route:
+   - Validate inputs
+   - Call ConvertKit API: add subscriber + apply tag
+   - Call Resend API: send transactional email with lead magnet link
+   - Return success/error JSON
+4. Client: on success → redirect to /thank-you
+5. Client: on error → show inline error message (do NOT clear the form)
+
+Store API keys in .env.local:
+- CONVERTKIT_API_KEY
+- CONVERTKIT_FORM_ID
+- RESEND_API_KEY
+- YOUTUBE_API_KEY (optional, can use static config fallback)
+
+---
+
+## CONFIG FILE
+Create a /config/site.js file with all editable content:
+- Hero headline/subheadline
+- Stats bar numbers
+- Career timeline array
+- YouTube video IDs (fallback if no API)
+- Lead magnet title/description/file path
+- Social links
+
+This way I can update all copy without touching components.
+
+---
+
+## CODE QUALITY REQUIREMENTS
+- Every component in its own file under /components
+- API routes under /app/api/
+- Mobile-first responsive design
+- Smooth scroll navigation
+- Page load animations (stagger reveals on sections)
+- Accessible (ARIA labels on forms, proper heading hierarchy)
+- README with setup instructions and how to swap API keys
+
+---
+
+## DO NOT:
+- Use a UI component library like shadcn or MUI — build custom components with Tailwind
+- Use placeholder Lorem Ipsum text — write realistic placeholder copy based on the brand
+- Skip error handling on the API route
+- Make the design look generic or "template-ish" — this needs to look like a premium personal brand
