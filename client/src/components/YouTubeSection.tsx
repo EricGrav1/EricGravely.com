@@ -1,61 +1,88 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Play, Youtube } from "lucide-react";
 import { site } from "@/config/site";
 
 function VideoCard({ video, index }: { video: typeof site.youtube.videos[0]; index: number }) {
+  const [playing, setPlaying] = useState(false);
   const thumbnailUrl = `https://img.youtube.com/vi/${video.id}/maxresdefault.jpg`;
-  const videoUrl = `https://www.youtube.com/watch?v=${video.id}`;
+  const isPlaceholder = video.id.startsWith("YOUTUBE_VIDEO_ID");
 
   return (
-    <motion.a
-      href={videoUrl}
-      target="_blank"
-      rel="noopener noreferrer"
+    <motion.div
       initial={{ opacity: 0, y: 32 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.55, delay: index * 0.08, ease: [0.22, 1, 0.36, 1] }}
-      className="group block rounded-xl overflow-hidden"
+      className="group rounded-xl overflow-hidden flex flex-col"
       style={{ border: "1px solid var(--c-border)" }}
       data-testid={`card-video-${index}`}
     >
-      {/* Thumbnail */}
+      {/* Video area */}
       <div className="relative aspect-video overflow-hidden" style={{ background: "var(--c-bg3)" }}>
-        <img
-          src={thumbnailUrl}
-          alt={video.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).style.display = "none";
-          }}
-        />
-        <div className="video-overlay absolute inset-0" />
-        {/* Play button */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div
-            className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-transform duration-200 group-hover:scale-110"
-            style={{ background: "#C8102E" }}
+        {playing && !isPlaceholder ? (
+          <iframe
+            src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1`}
+            title={video.title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+            className="absolute inset-0 w-full h-full border-0"
+          />
+        ) : (
+          <button
+            onClick={() => !isPlaceholder && setPlaying(true)}
+            className="absolute inset-0 w-full h-full focus:outline-none"
+            style={{ cursor: isPlaceholder ? "default" : "pointer" }}
+            aria-label={`Play ${video.title}`}
+            data-testid={`button-play-${index}`}
           >
-            <Play className="w-6 h-6 fill-current ml-0.5" style={{ color: "#FAF7F2" }} />
-          </div>
-        </div>
+            {/* Thumbnail */}
+            {!isPlaceholder && (
+              <img
+                src={thumbnailUrl}
+                alt={video.title}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
+              />
+            )}
+
+            {/* Dark overlay */}
+            <div
+              className="absolute inset-0 transition-opacity duration-300"
+              style={{ background: isPlaceholder ? "var(--c-bg3)" : "rgba(0,0,0,0.25)" }}
+            />
+
+            {/* Play button */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-transform duration-200 group-hover:scale-110"
+                style={{
+                  background: isPlaceholder ? "var(--c-border)" : "#C8102E",
+                  opacity: isPlaceholder ? 0.4 : 1,
+                }}
+              >
+                <Play className="w-6 h-6 fill-current ml-0.5" style={{ color: "#FAF7F2" }} />
+              </div>
+            </div>
+          </button>
+        )}
       </div>
 
       {/* Info */}
-      <div className="p-5" style={{ background: "var(--c-card)" }}>
+      <div className="p-5 flex-1 flex flex-col" style={{ background: "var(--c-card)" }}>
         <h3
           className="font-semibold text-base leading-snug mb-2 transition-colors"
           style={{ color: "var(--c-fg)" }}
-          onMouseEnter={e => (e.currentTarget.style.color = "#C8102E")}
-          onMouseLeave={e => (e.currentTarget.style.color = "var(--c-fg)")}
         >
-          {video.title}
+          {isPlaceholder ? "Coming Soon" : video.title}
         </h3>
         <p className="text-sm leading-relaxed line-clamp-2" style={{ color: "var(--c-fg-45)" }}>
-          {video.description}
+          {isPlaceholder ? "Video will appear here once a YouTube video ID is added." : video.description}
         </p>
       </div>
-    </motion.a>
+    </motion.div>
   );
 }
 
@@ -118,6 +145,7 @@ export function YouTubeSection() {
             target="_blank"
             rel="noopener noreferrer"
             className="btn-accent px-8 py-3.5 rounded-lg text-sm font-bold inline-flex items-center gap-2"
+            data-testid="link-watch-more"
           >
             <Youtube className="w-4 h-4" />
             Watch More on YouTube
