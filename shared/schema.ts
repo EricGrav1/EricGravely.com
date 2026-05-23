@@ -28,6 +28,14 @@ export const leads = pgTable("leads", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+export const subscribers = pgTable("subscribers", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  firstName: text("first_name"),
+  tag: text("tag").notNull().default("newsletter"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const questionnaireFieldSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -59,7 +67,18 @@ export const insertLeadSchema = createInsertSchema(leads).omit({
   questionnaireAnswers: z.record(z.unknown()).optional(),
 });
 
+export const insertSubscriberSchema = createInsertSchema(subscribers).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  email: z.string().email("Please enter a valid email address"),
+  firstName: z.string().min(1, "First name is required").optional(),
+  tag: z.string().default("newsletter"),
+});
+
 export type LeadMagnet = typeof leadMagnets.$inferSelect;
 export type InsertLeadMagnet = z.infer<typeof insertLeadMagnetSchema>;
 export type Lead = typeof leads.$inferSelect;
 export type InsertLead = z.infer<typeof insertLeadSchema>;
+export type Subscriber = typeof subscribers.$inferSelect;
+export type InsertSubscriber = z.infer<typeof insertSubscriberSchema>;

@@ -1,21 +1,25 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { Link } from "wouter";
+import { SiteNav } from "@/components/SiteNav";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardContent className="pt-6">
-          <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900">404 Page Not Found</h1>
-          </div>
-
-          <p className="mt-4 text-sm text-gray-600">
-            Did you forget to add the page to the router?
-          </p>
-        </CardContent>
-      </Card>
+    <div style={{ backgroundColor: "#0A0F1E", minHeight: "100vh" }}>
+      <SiteNav />
+      <main className="pt-24 flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
+        <div className="font-serif text-8xl font-bold text-[#D4A017]/20 mb-4">404</div>
+        <h1 className="font-serif text-3xl font-bold text-white mb-3">Page Not Found</h1>
+        <p className="text-white/50 text-base mb-8 max-w-md">
+          Looks like this page doesn't exist. Head back home and keep moving.
+        </p>
+        <Link
+          href="/"
+          className="btn-gold px-6 py-3 rounded-lg font-semibold text-sm inline-flex items-center gap-2"
+        >
+          ← Back to Home
+        </Link>
+      </main>
+      <SiteFooter />
     </div>
   );
 }

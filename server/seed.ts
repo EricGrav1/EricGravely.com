@@ -4,29 +4,20 @@ import { eq } from "drizzle-orm";
 
 export async function seedDatabase() {
   try {
-    const matrixUrl = process.env.MATRIX_URL || "";
-
     const existing = await db
       .select()
       .from(leadMagnets)
-      .where(eq(leadMagnets.title, "Self Coaching Matrix"));
+      .where(eq(leadMagnets.title, "The New Sales Manager Playbook"));
 
     if (existing.length === 0) {
       await db.insert(leadMagnets).values({
-        title: "Self Coaching Matrix",
-        description:
-          "A powerful framework to transform your sales conversations. Use it to coach yourself through any sales challenge and close more deals with confidence.",
-        resourceUrl: matrixUrl,
+        title: "The New Sales Manager Playbook",
+        description: "The exact framework used to take 3 different sales teams from average to top performers. Covers 1:1 frameworks, metrics that matter, coaching without micromanaging, and a 90-day onboarding blueprint.",
+        resourceUrl: "/lead-magnet.pdf",
         deliveryMethod: "email",
         active: true,
       });
-      console.log("[seed] Self Coaching Matrix created");
-    } else if (matrixUrl && existing[0].resourceUrl !== matrixUrl) {
-      await db
-        .update(leadMagnets)
-        .set({ resourceUrl: matrixUrl })
-        .where(eq(leadMagnets.title, "Self Coaching Matrix"));
-      console.log("[seed] Self Coaching Matrix URL updated");
+      console.log("[seed] Sales Manager Playbook created");
     }
   } catch (error) {
     console.error("[seed] Seed failed:", error);
