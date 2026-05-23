@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import Home from "@/pages/home";
 import ThankYou from "@/pages/thank-you";
 import Coaching from "@/pages/coaching";
+import Unsubscribe from "@/pages/unsubscribe";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -12,6 +13,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/thank-you" component={ThankYou} />
       <Route path="/coaching" component={Coaching} />
+      <Route path="/unsubscribe" component={Unsubscribe} />
       <Route component={NotFound} />
     </Switch>
   );

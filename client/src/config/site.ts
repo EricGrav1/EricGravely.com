@@ -108,7 +108,7 @@ export const site = {
       "A 90-day blueprint for your first leadership role",
     ],
     downloadUrl: "/lead-magnet.pdf",
-    convertKitTag: "lead-magnet-playbook",
+    convertKitTag: "lead-magnet",
     formCardTitle: "Get the Playbook — Free",
     firstNameLabel: "First Name",
     firstNamePlaceholder: "Your first name",
@@ -141,7 +141,6 @@ export const site = {
     ctaUrl: "/coaching",
     note: "Limited spots available each cohort. Application required.",
 
-    // Coaching page — full program details
     pageHeroTitle: "The Sales Leader",
     pageHeroTitleHighlight: "Accelerator",
     pageHeroDescription: "A 6-week intensive coaching program for new and emerging sales leaders who want to build high-performance teams — without burning out or second-guessing every decision.",
@@ -240,6 +239,14 @@ export const site = {
     youtubeDesc: "50K+ subscribers. Free sales leadership content weekly.",
     appCta: "Download SalesCoachAI",
     appDesc: "AI-powered coaching in your pocket, 24/7.",
+    backToHome: "← Back to Home",
+  },
+
+  unsubscribe: {
+    successTitle: "You're unsubscribed.",
+    successMessage: "You've been removed from the list. No more emails from us.",
+    errorTitle: "Invalid link",
+    errorMessage: "This unsubscribe link is invalid or has already been used.",
     backToHome: "← Back to Home",
   },
 
