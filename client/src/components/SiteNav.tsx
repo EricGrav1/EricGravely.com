@@ -57,7 +57,7 @@ export function SiteNav() {
                 className="w-9 h-9 rounded-lg flex items-center justify-center font-serif font-bold text-sm flex-shrink-0 transition-colors"
                 style={{ backgroundColor: "#C8102E", color: "#FAF7F2" }}
               >
-                NA
+                EG
               </div>
               <span className="font-serif font-semibold text-[color:var(--c-fg)] text-base hidden sm:block">
                 {site.name}
