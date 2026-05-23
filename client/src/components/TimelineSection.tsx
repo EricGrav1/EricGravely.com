@@ -7,13 +7,15 @@ const fadeItem = {
 };
 
 export function TimelineSection() {
+  const { timeline } = site;
+
   return (
     <section
       className="py-24 md:py-32"
       style={{ background: "linear-gradient(180deg, #111827 0%, #0A0F1E 100%)" }}
     >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section header */}
+        {/* Section header — entirely from site.ts */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -22,14 +24,14 @@ export function TimelineSection() {
           className="text-center mb-16"
         >
           <span className="text-xs font-semibold tracking-widest uppercase text-[#D4A017] block mb-4">
-            The Journey
+            {timeline.sectionLabel}
           </span>
           <h2 className="font-serif text-4xl md:text-5xl font-bold text-white mb-4">
-            From Rep to{" "}
-            <span className="italic text-[#D4A017]">Leader</span>
+            {timeline.sectionTitlePrefix}{" "}
+            <span className="italic text-[#D4A017]">{timeline.sectionTitleHighlight}</span>
           </h2>
           <p className="text-white/50 text-lg max-w-xl mx-auto">
-            10+ years in the trenches. Here's the career arc that built the Sales Commandments methodology.
+            {timeline.sectionDescription}
           </p>
         </motion.div>
 
@@ -47,7 +49,7 @@ export function TimelineSection() {
           />
 
           <div className="space-y-0">
-            {site.timeline.map((item, i) => {
+            {timeline.items.map((item, i) => {
               const isLeft = i % 2 === 0;
               return (
                 <motion.div
@@ -60,7 +62,6 @@ export function TimelineSection() {
                 >
                   {/* Mobile layout */}
                   <div className="lg:hidden flex items-start gap-6 w-full pl-12">
-                    {/* Dot */}
                     <div
                       className="absolute left-[18px] top-1 w-4 h-4 rounded-full border-2 border-[#D4A017] bg-[#0A0F1E] flex-shrink-0"
                       style={{ boxShadow: "0 0 12px rgba(212,160,23,0.4)" }}
@@ -69,9 +70,7 @@ export function TimelineSection() {
                       className="card-surface rounded-xl p-5 flex-1"
                       style={{ border: "1px solid rgba(212,160,23,0.12)" }}
                     >
-                      <div className="text-[#D4A017] text-xs font-bold tracking-widest uppercase mb-1">
-                        {item.year}
-                      </div>
+                      <div className="text-[#D4A017] text-xs font-bold tracking-widest uppercase mb-1">{item.year}</div>
                       <div className="text-white font-semibold text-lg mb-1">{item.title}</div>
                       <div className="text-[#D4A017]/70 text-xs font-medium mb-2">{item.company}</div>
                       <p className="text-white/55 text-sm leading-relaxed">{item.description}</p>
@@ -84,9 +83,7 @@ export function TimelineSection() {
                       className="card-surface rounded-xl p-6 max-w-sm w-full"
                       style={{ border: "1px solid rgba(212,160,23,0.12)" }}
                     >
-                      <div className="text-[#D4A017] text-xs font-bold tracking-widest uppercase mb-2">
-                        {item.year}
-                      </div>
+                      <div className="text-[#D4A017] text-xs font-bold tracking-widest uppercase mb-2">{item.year}</div>
                       <div className="text-white font-semibold text-xl mb-1">{item.title}</div>
                       <div className="text-[#D4A017]/70 text-sm font-medium mb-3">{item.company}</div>
                       <p className="text-white/55 text-sm leading-relaxed">{item.description}</p>
@@ -101,7 +98,6 @@ export function TimelineSection() {
                     <div className="w-2 h-2 rounded-full bg-[#D4A017]" />
                   </div>
 
-                  {/* Empty spacer — desktop */}
                   <div className="hidden lg:block w-1/2" />
                 </motion.div>
               );

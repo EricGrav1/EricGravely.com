@@ -8,6 +8,7 @@ export function SiteFooter() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const { footer, social } = site;
 
   const handleNewsletter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,12 +60,12 @@ export function SiteFooter() {
               </div>
             </Link>
             <p className="text-white/40 text-sm leading-relaxed mb-6 max-w-xs">
-              {site.footer.tagline}
+              {footer.tagline}
             </p>
             {/* Social links */}
             <div className="flex gap-3">
               <a
-                href={site.social.youtube}
+                href={social.youtube}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-9 h-9 rounded-lg flex items-center justify-center text-white/40 hover:text-[#D4A017] transition-colors"
@@ -74,7 +75,7 @@ export function SiteFooter() {
                 <Youtube className="w-4 h-4" />
               </a>
               <a
-                href={site.social.linkedin}
+                href={social.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-9 h-9 rounded-lg flex items-center justify-center text-white/40 hover:text-[#D4A017] transition-colors"
@@ -84,7 +85,7 @@ export function SiteFooter() {
                 <Linkedin className="w-4 h-4" />
               </a>
               <a
-                href={site.social.twitter}
+                href={social.twitter}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-9 h-9 rounded-lg flex items-center justify-center text-white/40 hover:text-[#D4A017] transition-colors"
@@ -102,7 +103,7 @@ export function SiteFooter() {
               Navigate
             </div>
             <nav className="space-y-3">
-              {site.footer.links.map((link) => (
+              {footer.links.map((link) => (
                 <div key={link.href}>
                   {link.external ? (
                     <a
@@ -137,15 +138,15 @@ export function SiteFooter() {
           {/* Newsletter */}
           <div>
             <div className="text-xs font-semibold tracking-widest uppercase text-[#D4A017] mb-5">
-              Stay in the Loop
+              {footer.newsletterTitle}
             </div>
             <p className="text-white/40 text-sm mb-4 leading-relaxed">
-              Sales leadership insights, straight to your inbox. No fluff.
+              {footer.newsletterDesc}
             </p>
 
             {status === "success" ? (
               <div className="px-4 py-3 rounded-lg bg-[#D4A017]/10 border border-[#D4A017]/30 text-[#D4A017] text-sm font-medium">
-                ✓ You're in! Check your inbox.
+                {footer.newsletterSuccess}
               </div>
             ) : (
               <form onSubmit={handleNewsletter} className="space-y-3">
@@ -153,7 +154,7 @@ export function SiteFooter() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
+                  placeholder={footer.newsletterPlaceholder}
                   className="input-dark w-full px-4 py-2.5 rounded-lg text-sm"
                   disabled={status === "loading"}
                   data-testid="input-footer-email"
@@ -167,7 +168,7 @@ export function SiteFooter() {
                   className="btn-gold w-full py-2.5 rounded-lg text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-60"
                   data-testid="button-footer-subscribe"
                 >
-                  {status === "loading" ? <Loader2 className="w-4 h-4 animate-spin" /> : "Subscribe →"}
+                  {status === "loading" ? <Loader2 className="w-4 h-4 animate-spin" /> : footer.newsletterCta}
                 </button>
               </form>
             )}
@@ -177,15 +178,15 @@ export function SiteFooter() {
         {/* Bottom bar */}
         <div className="border-t border-white/5 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white/25 text-xs">
-            © {new Date().getFullYear()} {site.name}. Built by The Sales Commandments.
+            © {new Date().getFullYear()} {site.name}. {footer.copyright}
           </p>
           <a
-            href={site.social.app}
+            href={social.app}
             target="_blank"
             rel="noopener noreferrer"
             className="text-white/30 hover:text-[#D4A017] text-xs transition-colors"
           >
-            Download SalesCoachAI →
+            {footer.appCta}
           </a>
         </div>
       </div>

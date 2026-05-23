@@ -26,10 +26,12 @@ export async function registerRoutes(
         await storage.createSubscriber({ email, firstName, tag });
       }
 
-      // ConvertKit — non-blocking (skip gracefully if not configured)
-      subscribeToConvertKit(email, firstName || "").catch((err: unknown) => {
-        console.error("[ConvertKit] Error:", err);
-      });
+      // ConvertKit — awaited so we can surface errors when configured
+      const ckResult = await subscribeToConvertKit(email, firstName || "", tag);
+      if (!ckResult.success && !ckResult.skipped) {
+        // CK was configured but failed — log and continue (don't block email delivery)
+        console.error("[Subscribe] ConvertKit error:", ckResult.error);
+      }
 
       // Send email
       const protocol = req.headers["x-forwarded-proto"] || "https";
@@ -63,7 +65,7 @@ export async function registerRoutes(
       if (!validateUnsubscribeToken(email, token)) return res.status(400).json({ message: "Invalid token." });
       await storage.markUnsubscribed(email);
       return res.json({ success: true, message: "You have been unsubscribed." });
-    } catch (err: unknown) {
+    } catch {
       return res.status(500).json({ message: "Something went wrong." });
     }
   });

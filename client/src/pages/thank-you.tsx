@@ -6,6 +6,8 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { site } from "@/config/site";
 
 export default function ThankYou() {
+  const { thankYou, social } = site;
+
   return (
     <div style={{ backgroundColor: "#0A0F1E", minHeight: "100vh" }}>
       <SiteNav />
@@ -53,27 +55,26 @@ export default function ThankYou() {
                 className="font-serif text-4xl md:text-5xl font-bold text-white mb-4"
                 data-testid="text-success-headline"
               >
-                {site.thankYou.headline}
+                {thankYou.headline}
               </h1>
               <p
                 className="text-white/55 text-lg mb-8 max-w-xl mx-auto leading-relaxed"
                 data-testid="text-success-message"
               >
-                {site.thankYou.subheadline}
+                {thankYou.subheadline}
               </p>
 
-              {/* Primary download button */}
               <a
-                href={site.thankYou.downloadUrl}
+                href={thankYou.downloadUrl}
                 download
                 className="btn-gold px-8 py-4 rounded-lg font-bold text-base inline-flex items-center gap-2 mb-4"
                 data-testid="button-download"
               >
                 <Download className="w-4 h-4" />
-                {site.thankYou.downloadLabel}
+                {thankYou.downloadLabel}
               </a>
               <p className="text-white/30 text-sm">
-                (Also delivered to your inbox within 2 minutes)
+                {thankYou.inboxNote}
               </p>
             </motion.div>
           </div>
@@ -93,15 +94,15 @@ export default function ThankYou() {
               className="text-center mb-12"
             >
               <h2 className="font-serif text-3xl md:text-4xl font-bold text-white mb-3">
-                What Happens Next
+                {thankYou.nextStepsTitle}
               </h2>
               <p className="text-white/45">
-                Here's exactly what to expect over the next few days.
+                {thankYou.nextStepsDescription}
               </p>
             </motion.div>
 
             <div className="grid md:grid-cols-3 gap-6">
-              {site.thankYou.nextSteps.map((step, i) => (
+              {thankYou.nextSteps.map((step, i) => (
                 <motion.div
                   key={i}
                   initial={{ opacity: 0, y: 24 }}
@@ -135,7 +136,7 @@ export default function ThankYou() {
             <div className="grid md:grid-cols-2 gap-6">
               {/* YouTube CTA */}
               <motion.a
-                href={site.social.youtube}
+                href={social.youtube}
                 target="_blank"
                 rel="noopener noreferrer"
                 initial={{ opacity: 0, y: 16 }}
@@ -154,18 +155,16 @@ export default function ThankYou() {
                 </div>
                 <div className="flex-1">
                   <div className="font-semibold text-white mb-1 group-hover:text-[#D4A017] transition-colors">
-                    Watch The Sales Commandments
+                    {thankYou.youtubeCta}
                   </div>
-                  <div className="text-white/40 text-sm">
-                    50K+ subscribers. Free sales leadership content weekly.
-                  </div>
+                  <div className="text-white/40 text-sm">{thankYou.youtubeDesc}</div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-white/30 group-hover:text-[#D4A017] transition-colors" />
               </motion.a>
 
               {/* App CTA */}
               <motion.a
-                href={site.social.app}
+                href={social.app}
                 target="_blank"
                 rel="noopener noreferrer"
                 initial={{ opacity: 0, y: 16 }}
@@ -184,11 +183,9 @@ export default function ThankYou() {
                 </div>
                 <div className="flex-1">
                   <div className="font-semibold text-white mb-1 group-hover:text-[#D4A017] transition-colors">
-                    Download SalesCoachAI
+                    {thankYou.appCta}
                   </div>
-                  <div className="text-white/40 text-sm">
-                    AI-powered coaching in your pocket, 24/7.
-                  </div>
+                  <div className="text-white/40 text-sm">{thankYou.appDesc}</div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-white/30 group-hover:text-[#D4A017] transition-colors" />
               </motion.a>
@@ -199,7 +196,7 @@ export default function ThankYou() {
                 href="/"
                 className="text-white/35 hover:text-white text-sm transition-colors inline-flex items-center gap-1"
               >
-                ← Back to Home
+                {thankYou.backToHome}
               </Link>
             </div>
           </div>

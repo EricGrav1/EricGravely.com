@@ -45,8 +45,15 @@ export function validateUnsubscribeToken(email: string, token: string): boolean 
   return token === generateUnsubscribeToken(email);
 }
 
-function leadMagnetEmailHtml(firstName: string, downloadUrl: string, baseUrl: string): string {
-  const unsubToken = generateUnsubscribeToken(firstName);
+function leadMagnetEmailHtml(
+  email: string,
+  firstName: string,
+  downloadUrl: string,
+  baseUrl: string,
+): string {
+  const unsubToken = generateUnsubscribeToken(email);
+  const unsubLink = `${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}&token=${unsubToken}`;
+
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
@@ -58,7 +65,7 @@ function leadMagnetEmailHtml(firstName: string, downloadUrl: string, baseUrl: st
           The Sales Commandments
         </div>
         <h1 style="font-size:28px;font-weight:700;color:#ffffff;margin:0 0 12px;line-height:1.3;">
-          Your Playbook Is Ready, ${firstName || "Friend"}
+          Your Playbook Is Ready${firstName ? `, ${firstName}` : ""}
         </h1>
         <p style="font-size:16px;color:#9CA3AF;margin:0;">
           The New Sales Manager Playbook — downloaded and ready to go.
@@ -75,10 +82,10 @@ function leadMagnetEmailHtml(firstName: string, downloadUrl: string, baseUrl: st
         <p style="color:#9CA3AF;font-size:15px;line-height:1.7;margin:0 0 16px;">
           Inside you'll find the exact frameworks I've used to help hundreds of new sales managers stop winging it and start leading with confidence:
         </p>
-        <ul style="color:#D4A017;padding-left:20px;margin:0;">
-          <li style="margin-bottom:8px;color:#D4A017;"><span style="color:#9CA3AF;">The 5 mistakes every new manager makes (and how to avoid them)</span></li>
-          <li style="margin-bottom:8px;color:#D4A017;"><span style="color:#9CA3AF;">A plug-and-play 1:1 framework your reps will actually respect</span></li>
-          <li style="margin-bottom:8px;color:#D4A017;"><span style="color:#9CA3AF;">Your 90-day blueprint for building a team that hits quota</span></li>
+        <ul style="padding-left:20px;margin:0;">
+          <li style="margin-bottom:8px;color:#9CA3AF;">The 5 mistakes every new manager makes (and how to avoid them)</li>
+          <li style="margin-bottom:8px;color:#9CA3AF;">A plug-and-play 1:1 framework your reps will actually respect</li>
+          <li style="margin-bottom:8px;color:#9CA3AF;">Your 90-day blueprint for building a team that hits quota</li>
         </ul>
       </div>
 
@@ -91,7 +98,7 @@ function leadMagnetEmailHtml(firstName: string, downloadUrl: string, baseUrl: st
 
       <p style="color:#6B7280;font-size:13px;text-align:center;margin:0;">
         You're receiving this because you signed up at nicholasandrews.com.<br>
-        <a href="${baseUrl}/unsubscribe?email=${encodeURIComponent(firstName)}" style="color:#6B7280;">Unsubscribe</a>
+        <a href="${unsubLink}" style="color:#6B7280;">Unsubscribe</a>
       </p>
     </div>
   </div>
@@ -110,7 +117,7 @@ function newsletterEmailHtml(firstName: string): string {
         The Sales Commandments
       </div>
       <h1 style="font-size:26px;font-weight:700;color:#ffffff;margin:0 0 12px;">
-        You're In, ${firstName || "Friend"} 👊
+        You're In${firstName ? `, ${firstName}` : ""} 👊
       </h1>
       <p style="font-size:16px;color:#9CA3AF;margin:0 0 32px;line-height:1.6;">
         Welcome to The Sales Commandments community. Expect real talk, proven frameworks, and zero fluff delivered straight to your inbox.
@@ -138,7 +145,7 @@ export async function sendLeadMagnetEmail(
       from: fromEmail,
       to: email,
       subject: `Your Sales Manager Playbook is inside 📋`,
-      html: leadMagnetEmailHtml(firstName, downloadUrl, baseUrl),
+      html: leadMagnetEmailHtml(email, firstName, downloadUrl, baseUrl),
     });
     return { success: true };
   } catch (err: unknown) {

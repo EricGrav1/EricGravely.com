@@ -10,6 +10,7 @@ export function LeadCaptureSection() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const { leadMagnet } = site;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +33,7 @@ export function LeadCaptureSection() {
         body: JSON.stringify({
           email: email.trim(),
           firstName: firstName.trim() || undefined,
-          tag: site.leadMagnet.convertKitTag,
+          tag: leadMagnet.convertKitTag,
         }),
       });
 
@@ -59,7 +60,7 @@ export function LeadCaptureSection() {
         background: "linear-gradient(180deg, #0A0F1E 0%, #0d1428 50%, #0A0F1E 100%)",
       }}
     >
-      {/* Background gold glow */}
+      {/* Background glow */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-[#D4A017]/5 blur-3xl" />
       </div>
@@ -78,15 +79,15 @@ export function LeadCaptureSection() {
               Free Download
             </span>
             <h2 className="font-serif text-4xl md:text-5xl font-bold text-white mb-4 leading-tight">
-              {site.leadMagnet.formHeadline}
+              {leadMagnet.formHeadline}
             </h2>
             <p className="text-white/55 text-base leading-relaxed mb-8">
-              {site.leadMagnet.description}
+              {leadMagnet.description}
             </p>
 
             {/* Bullets */}
             <ul className="space-y-4">
-              {site.leadMagnet.bullets.map((bullet, i) => (
+              {leadMagnet.bullets.map((bullet, i) => (
                 <motion.li
                   key={i}
                   initial={{ opacity: 0, x: -16 }}
@@ -119,23 +120,23 @@ export function LeadCaptureSection() {
             >
               <div className="mb-6">
                 <h3 className="font-serif text-2xl font-bold text-white mb-1">
-                  Get the Playbook — Free
+                  {leadMagnet.formCardTitle}
                 </h3>
-                <p className="text-white/45 text-sm">{site.leadMagnet.formSubheadline}</p>
+                <p className="text-white/45 text-sm">{leadMagnet.formSubheadline}</p>
               </div>
 
               <form onSubmit={handleSubmit} noValidate>
                 <div className="space-y-4 mb-6">
                   <div>
                     <label htmlFor="firstName" className="block text-xs font-medium text-white/60 mb-1.5 uppercase tracking-wide">
-                      First Name
+                      {leadMagnet.firstNameLabel}
                     </label>
                     <input
                       id="firstName"
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="Your first name"
+                      placeholder={leadMagnet.firstNamePlaceholder}
                       className="input-dark w-full px-4 py-3 rounded-lg text-sm"
                       disabled={loading}
                       data-testid="input-first-name"
@@ -144,14 +145,14 @@ export function LeadCaptureSection() {
 
                   <div>
                     <label htmlFor="email" className="block text-xs font-medium text-white/60 mb-1.5 uppercase tracking-wide">
-                      Email Address <span className="text-[#D4A017]">*</span>
+                      {leadMagnet.emailLabel} <span className="text-[#D4A017]">*</span>
                     </label>
                     <input
                       id="email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="you@example.com"
+                      placeholder={leadMagnet.emailPlaceholder}
                       required
                       className="input-dark w-full px-4 py-3 rounded-lg text-sm"
                       disabled={loading}
@@ -175,16 +176,16 @@ export function LeadCaptureSection() {
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      Sending…
+                      {leadMagnet.submittingLabel}
                     </>
                   ) : (
-                    "Send Me the Playbook →"
+                    leadMagnet.submitLabel
                   )}
                 </button>
 
                 <div className="flex items-center gap-2 justify-center mt-4 text-white/30 text-xs">
                   <Shield className="w-3 h-3" />
-                  {site.leadMagnet.privacyNote}
+                  {leadMagnet.privacyNote}
                 </div>
               </form>
             </div>

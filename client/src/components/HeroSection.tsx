@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ArrowDown, Youtube, Linkedin } from "lucide-react";
+import { ArrowDown, Youtube } from "lucide-react";
 import { site } from "@/config/site";
 
 const fadeUp = {
@@ -26,7 +26,7 @@ export function HeroSection() {
       }}
       aria-label="Hero"
     >
-      {/* Geometric accent lines */}
+      {/* Geometric accent */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div
           className="absolute top-0 right-0 w-1/2 h-full opacity-5"
@@ -56,7 +56,7 @@ export function HeroSection() {
               </span>
             </motion.div>
 
-            {/* Headline */}
+            {/* Headline — driven entirely by site.ts */}
             <motion.h1
               initial="hidden"
               animate="visible"
@@ -65,9 +65,9 @@ export function HeroSection() {
               className="font-serif text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-[1.1] mb-6"
               data-testid="text-hero-headline"
             >
-              I Help Sales Reps{" "}
-              <span className="text-[#D4A017] italic">Become</span>{" "}
-              Sales Leaders
+              {site.hero.headlinePrefix}{" "}
+              <span className="text-[#D4A017] italic">{site.hero.headlineHighlight}</span>{" "}
+              {site.hero.headlineSuffix}
             </motion.h1>
 
             {/* Subheadline */}
@@ -128,7 +128,9 @@ export function HeroSection() {
                   </div>
                 ))}
               </div>
-              <span>Join <strong className="text-white/70">5,000+</strong> sales leaders already subscribed</span>
+              <span dangerouslySetInnerHTML={{
+                __html: site.hero.socialProof.replace(/(\d[\d,+]+)/, '<strong class="text-white/70">$1</strong>')
+              }} />
             </motion.div>
           </div>
 
@@ -140,30 +142,25 @@ export function HeroSection() {
             className="relative flex justify-center lg:justify-end"
           >
             <div className="relative">
-              {/* Outer glow ring */}
               <div className="absolute inset-0 rounded-full bg-[#D4A017]/20 blur-2xl scale-110" />
 
-              {/* Gold border ring */}
               <div className="relative w-72 h-72 sm:w-80 sm:h-80 lg:w-96 lg:h-96 rounded-full border-2 border-[#D4A017]/40 flex items-center justify-center">
-                {/* Inner photo area */}
                 <div className="w-[92%] h-[92%] rounded-full bg-gradient-to-br from-[#1a2340] to-[#0d1428] border border-white/10 flex flex-col items-center justify-center">
                   <div className="font-serif text-7xl font-bold text-[#D4A017] mb-2">NA</div>
                   <div className="text-white/40 text-xs font-medium tracking-widest uppercase">Photo Coming</div>
                 </div>
-
-                {/* Rotating dot */}
                 <div className="absolute top-4 right-4 w-3 h-3 rounded-full bg-[#D4A017]" />
               </div>
 
-              {/* Floating credential badges */}
+              {/* Floating badges */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.6, duration: 0.5 }}
                 className="absolute -left-4 top-1/3 card-surface rounded-xl px-4 py-3 shadow-xl"
               >
-                <div className="text-[#D4A017] font-bold text-lg leading-none">10+</div>
-                <div className="text-white/60 text-xs mt-0.5">Years Leading</div>
+                <div className="text-[#D4A017] font-bold text-lg leading-none">{site.stats[0].value}</div>
+                <div className="text-white/60 text-xs mt-0.5">{site.stats[0].label}</div>
               </motion.div>
 
               <motion.div
@@ -172,8 +169,8 @@ export function HeroSection() {
                 transition={{ delay: 0.75, duration: 0.5 }}
                 className="absolute -right-4 bottom-1/3 card-surface rounded-xl px-4 py-3 shadow-xl"
               >
-                <div className="text-[#D4A017] font-bold text-lg leading-none">500+</div>
-                <div className="text-white/60 text-xs mt-0.5">Managers Coached</div>
+                <div className="text-[#D4A017] font-bold text-lg leading-none">{site.stats[1].value}</div>
+                <div className="text-white/60 text-xs mt-0.5">{site.stats[1].label}</div>
               </motion.div>
             </div>
           </motion.div>
