@@ -33,6 +33,8 @@ export const subscribers = pgTable("subscribers", {
   email: text("email").notNull(),
   firstName: text("first_name"),
   tag: text("tag").notNull().default("newsletter"),
+  unsubscribed: boolean("unsubscribed").notNull().default(false),
+  unsubscribedAt: timestamp("unsubscribed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -69,6 +71,8 @@ export const insertLeadSchema = createInsertSchema(leads).omit({
 
 export const insertSubscriberSchema = createInsertSchema(subscribers).omit({
   id: true,
+  unsubscribed: true,
+  unsubscribedAt: true,
   createdAt: true,
 }).extend({
   email: z.string().email("Please enter a valid email address"),

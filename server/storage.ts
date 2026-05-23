@@ -30,6 +30,7 @@ export interface IStorage {
   getAnalytics(): Promise<AnalyticsStat[]>;
   createSubscriber(data: InsertSubscriber): Promise<Subscriber>;
   getSubscriberByEmail(email: string): Promise<Subscriber | undefined>;
+  markSubscriberUnsubscribed(email: string): Promise<void>;
 }
 
 export class DbStorage implements IStorage {
@@ -91,7 +92,17 @@ export class DbStorage implements IStorage {
   }
 
   async markUnsubscribed(email: string): Promise<void> {
-    await db.update(leads).set({ unsubscribed: true, unsubscribedAt: new Date() }).where(eq(leads.email, email.toLowerCase()));
+    const emailLower = email.toLowerCase();
+    // Update both tables so any historical lead records and new subscriber records
+    // are both marked unsubscribed in the same operation.
+    await Promise.all([
+      db.update(leads)
+        .set({ unsubscribed: true, unsubscribedAt: new Date() })
+        .where(eq(leads.email, emailLower)),
+      db.update(subscribers)
+        .set({ unsubscribed: true, unsubscribedAt: new Date() })
+        .where(eq(subscribers.email, emailLower)),
+    ]);
   }
 
   async getAnalytics(): Promise<AnalyticsStat[]> {
@@ -117,6 +128,12 @@ export class DbStorage implements IStorage {
   async getSubscriberByEmail(email: string): Promise<Subscriber | undefined> {
     const [row] = await db.select().from(subscribers).where(eq(subscribers.email, email.toLowerCase()));
     return row;
+  }
+
+  async markSubscriberUnsubscribed(email: string): Promise<void> {
+    await db.update(subscribers)
+      .set({ unsubscribed: true, unsubscribedAt: new Date() })
+      .where(eq(subscribers.email, email.toLowerCase()));
   }
 }
 

@@ -20,16 +20,21 @@ export async function registerRoutes(
 
       const { email, firstName, tag } = result.data;
 
-      // Idempotent: don't create duplicate subscriber records
+      // Suppression check: if this email has previously unsubscribed, do not send
       const existing = await storage.getSubscriberByEmail(email);
+      if (existing?.unsubscribed) {
+        // Return success-looking response (don't expose suppression status to caller)
+        return res.json({ success: true });
+      }
+
+      // Idempotent: don't create duplicate subscriber records
       if (!existing) {
         await storage.createSubscriber({ email, firstName, tag });
       }
 
-      // ConvertKit — awaited so we can surface errors when configured
+      // ConvertKit — awaited; logs errors but does not block email delivery
       const ckResult = await subscribeToConvertKit(email, firstName || "", tag);
       if (!ckResult.success && !ckResult.skipped) {
-        // CK was configured but failed — log and continue (don't block email delivery)
         console.error("[Subscribe] ConvertKit error:", ckResult.error);
       }
 
@@ -38,7 +43,7 @@ export async function registerRoutes(
       const host = req.headers["x-forwarded-host"] || req.headers.host;
       const baseUrl = `${protocol}://${host}`;
 
-      const isLeadMagnet = tag === "lead-magnet-playbook" || tag === "lead-magnet";
+      const isLeadMagnet = tag === "lead-magnet" || tag === "lead-magnet-playbook";
       const emailResult = isLeadMagnet
         ? await sendLeadMagnetEmail(email, firstName || "", "/lead-magnet.pdf", baseUrl)
         : await sendNewsletterConfirmationEmail(email, firstName || "");
@@ -63,6 +68,8 @@ export async function registerRoutes(
       const token = req.query.token as string;
       if (!email || !token) return res.status(400).json({ message: "Invalid unsubscribe link." });
       if (!validateUnsubscribeToken(email, token)) return res.status(400).json({ message: "Invalid token." });
+
+      // Mark unsubscribed in both leads and subscribers tables
       await storage.markUnsubscribed(email);
       return res.json({ success: true, message: "You have been unsubscribed." });
     } catch {
@@ -70,7 +77,7 @@ export async function registerRoutes(
     }
   });
 
-  // ── Legacy endpoints (kept for backward compatibility) ───────────────────────
+  // ── Legacy endpoints (backward compatibility) ────────────────────────────────
   app.get("/api/lead-magnets", async (_req, res) => {
     try {
       const magnets = await storage.listLeadMagnets(true);
