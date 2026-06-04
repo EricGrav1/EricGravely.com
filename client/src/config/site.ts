@@ -36,13 +36,13 @@ export const site = {
         description: "Jumped into sales and never looked back. Learned the fundamentals, hit my numbers, and started figuring out what separates the top performers from everyone else.",
       },
       {
-        year: "2016",
+        year: "2019",
         title: "Sales Trainer",
         company: "Developing Others",
         description: "Moved into a training role and discovered a passion for developing other reps. Learned how to break down what makes great salespeople great and actually teach it.",
       },
       {
-        year: "2018",
+        year: "2020",
         title: "Sales Manager",
         company: "Leading Teams",
         description: "Stepped into management and started building. Developed top-performing teams, earned Presidents Club recognition, and refined the coaching frameworks I use today.",
