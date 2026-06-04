@@ -48,19 +48,13 @@ export const site = {
         description: "Stepped into management and started building. Developed top-performing teams, earned Presidents Club recognition, and refined the coaching frameworks I use today.",
       },
       {
-        year: "2020",
+        year: "2022-2024",
         title: "3x Presidents Club",
         company: "Award Winner",
         description: "Consecutive Presidents Club wins are the result of systems, coaching, and culture — not luck. Built teams that hit their numbers consistently, year after year.",
       },
       {
-        year: "2022",
-        title: "Content Creator",
-        company: "@EricGravely on YouTube",
-        description: "Started sharing real sales coaching, leadership insights, and development content on YouTube. No fluff — just the stuff that actually moves the needle for reps and leaders.",
-      },
-      {
-        year: "2024",
+        year: "2025",
         title: "Entrepreneur",
         company: "SalesCoachAI",
         description: "Built SalesCoachAI to give every sales rep access to on-demand coaching. Combining years of field experience with AI to scale sales development like never before.",
