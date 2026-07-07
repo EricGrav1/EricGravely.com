@@ -9,7 +9,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 
 export default function Home() {
   return (
-    <div style={{ backgroundColor: "#0A0F1E", minHeight: "100vh" }}>
+    <div style={{ backgroundColor: "var(--c-bg)", minHeight: "100vh" }}>
       <SiteNav />
       <HeroSection />
       <StatsBar />

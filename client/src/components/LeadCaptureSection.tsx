@@ -58,14 +58,6 @@ export function LeadCaptureSection() {
       className="py-24 md:py-32 relative overflow-hidden"
       style={{ background: "var(--c-bg2)" }}
     >
-      {/* Subtle red glow */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full blur-3xl"
-          style={{ background: "rgba(200,16,46,0.05)" }}
-        />
-      </div>
-
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
 
@@ -76,10 +68,10 @@ export function LeadCaptureSection() {
             viewport={{ once: true, margin: "-80px" }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
-            <span className="text-xs font-semibold tracking-widest uppercase block mb-4" style={{ color: "#C8102E" }}>
+            <span className="label-track block mb-5" style={{ color: "var(--c-accent)" }}>
               Free Download
             </span>
-            <h2 className="font-serif text-4xl md:text-5xl font-bold mb-4 leading-tight" style={{ color: "var(--c-fg)" }}>
+            <h2 className="font-display text-4xl md:text-5xl font-bold mb-4 leading-tight" style={{ color: "var(--c-fg)" }}>
               {leadMagnet.formHeadline}
             </h2>
             <p className="text-base leading-relaxed mb-8" style={{ color: "var(--c-fg-55)" }}>
@@ -97,7 +89,7 @@ export function LeadCaptureSection() {
                   transition={{ delay: i * 0.1 + 0.2, duration: 0.4 }}
                   className="flex items-start gap-3"
                 >
-                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#C8102E" }} />
+                  <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "var(--c-accent)" }} />
                   <span className="text-sm leading-relaxed" style={{ color: "var(--c-fg-70)" }}>{bullet}</span>
                 </motion.li>
               ))}
@@ -115,12 +107,11 @@ export function LeadCaptureSection() {
               className="rounded-2xl p-8"
               style={{
                 background: "var(--c-card)",
-                border: "1px solid rgba(200,16,46,0.20)",
-                boxShadow: "0 0 60px rgba(200,16,46,0.05)",
+                border: "1px solid var(--c-card-border)",
               }}
             >
               <div className="mb-6">
-                <h3 className="font-serif text-2xl font-bold mb-1" style={{ color: "var(--c-fg)" }}>
+                <h3 className="font-display text-2xl font-bold mb-1" style={{ color: "var(--c-fg)" }}>
                   {leadMagnet.formCardTitle}
                 </h3>
                 <p className="text-sm" style={{ color: "var(--c-fg-45)" }}>{leadMagnet.formSubheadline}</p>
@@ -155,7 +146,7 @@ export function LeadCaptureSection() {
                       style={{ color: "var(--c-fg-55)" }}
                     >
                       {leadMagnet.emailLabel}{" "}
-                      <span style={{ color: "#C8102E" }}>*</span>
+                      <span style={{ color: "var(--c-fg-30)" }}>*</span>
                     </label>
                     <input
                       id="email"
@@ -175,9 +166,9 @@ export function LeadCaptureSection() {
                   <div
                     className="mb-4 px-4 py-3 rounded-lg text-sm"
                     style={{
-                      background: "rgba(200,16,46,0.12)",
-                      border: "1px solid rgba(200,16,46,0.30)",
-                      color: "#C8102E",
+                      background: "rgba(0,0,0,0.04)",
+                      border: "1px solid var(--c-border)",
+                      color: "var(--c-fg-70)",
                     }}
                     data-testid="text-form-error"
                   >

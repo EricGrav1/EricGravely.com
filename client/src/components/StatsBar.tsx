@@ -29,7 +29,7 @@ export function StatsBar() {
                 hidden: { opacity: 0, y: 20 },
                 visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
               }}
-              className={`flex flex-col items-center text-center px-6 py-8`}
+              className="flex flex-col items-center text-center px-6 py-8"
               style={{
                 borderRight: i < site.stats.length - 1 ? "1px solid var(--c-border)" : "none",
                 borderTop: i >= 2 ? "1px solid var(--c-border)" : "none",
@@ -37,12 +37,12 @@ export function StatsBar() {
               data-testid={`stat-${i}`}
             >
               <div
-                className="font-serif text-4xl lg:text-5xl font-bold mb-2"
-                style={{ color: "#C8102E" }}
+                className="font-display text-4xl lg:text-5xl font-bold mb-2"
+                style={{ color: "var(--c-accent)" }}
               >
                 {stat.value}
               </div>
-              <div className="text-sm font-medium leading-snug max-w-[120px]" style={{ color: "var(--c-fg-55)" }}>
+              <div className="label-track mt-1 max-w-[120px] leading-snug" style={{ letterSpacing: "0.08em" }}>
                 {stat.label}
               </div>
             </motion.div>

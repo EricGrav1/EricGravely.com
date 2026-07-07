@@ -18,26 +18,22 @@ export default function ThankYou() {
           className="py-20 md:py-28 relative overflow-hidden"
           style={{ background: "var(--c-bg)" }}
         >
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(200,16,46,0.08) 0%, transparent 60%)" }}
-          />
           <div className="relative max-w-3xl mx-auto px-4 sm:px-6 text-center">
-            {/* Red checkmark */}
+            {/* Gold checkmark circle */}
             <motion.div
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
               className="w-20 h-20 rounded-full mx-auto mb-8 flex items-center justify-center"
               style={{
-                background: "rgba(200,16,46,0.12)",
-                border: "2px solid rgba(200,16,46,0.35)",
+                background: "var(--c-accent-10)",
+                border: "1px solid var(--c-accent-15)",
               }}
             >
               <svg className="w-9 h-9" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M5 13L9 17L19 7"
-                  stroke="#C8102E"
+                  stroke="var(--c-accent)"
                   strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -50,11 +46,11 @@ export default function ThankYou() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
             >
-              <span className="text-xs font-semibold tracking-widest uppercase block mb-4" style={{ color: "#C8102E" }}>
+              <span className="label-track block mb-5" style={{ color: "var(--c-accent)" }}>
                 You're all set
               </span>
               <h1
-                className="font-serif text-4xl md:text-5xl font-bold mb-4"
+                className="font-display text-4xl md:text-5xl font-bold mb-4"
                 style={{ color: "var(--c-fg)" }}
                 data-testid="text-success-headline"
               >
@@ -94,7 +90,7 @@ export default function ThankYou() {
               transition={{ duration: 0.6 }}
               className="text-center mb-12"
             >
-              <h2 className="font-serif text-3xl md:text-4xl font-bold mb-3" style={{ color: "var(--c-fg)" }}>
+              <h2 className="font-display text-3xl md:text-4xl font-bold mb-3" style={{ color: "var(--c-fg)" }}>
                 {thankYou.nextStepsTitle}
               </h2>
               <p style={{ color: "var(--c-fg-45)" }}>
@@ -113,14 +109,14 @@ export default function ThankYou() {
                   className="rounded-xl p-6 relative"
                   style={{
                     background: "var(--c-card)",
-                    border: "1px solid rgba(200,16,46,0.12)",
+                    border: "1px solid var(--c-card-border)",
                   }}
                   data-testid={`section-next-step-${i}`}
                 >
-                  <div className="font-serif font-bold text-4xl mb-4" style={{ color: "rgba(200,16,46,0.35)" }}>
+                  <div className="font-display font-bold text-4xl mb-4" style={{ color: "var(--c-accent-15)" }}>
                     {step.step}
                   </div>
-                  <h3 className="font-semibold text-lg mb-2" style={{ color: "var(--c-fg)" }}>{step.title}</h3>
+                  <h3 className="font-display font-semibold text-lg mb-2" style={{ color: "var(--c-fg)" }}>{step.title}</h3>
                   <p className="text-sm leading-relaxed" style={{ color: "var(--c-fg-45)" }}>{step.description}</p>
                 </motion.div>
               ))}
@@ -157,14 +153,14 @@ export default function ThankYou() {
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{
-                    background: "rgba(200,16,46,0.12)",
-                    border: "1px solid rgba(200,16,46,0.25)",
+                    background: "var(--c-accent-10)",
+                    border: "1px solid var(--c-accent-15)",
                   }}
                 >
-                  <Youtube className="w-5 h-5" style={{ color: "#C8102E" }} />
+                  <Youtube className="w-5 h-5" style={{ color: "var(--c-accent)" }} />
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold mb-1 transition-colors" style={{ color: "var(--c-fg)" }}>
+                  <div className="font-display font-semibold mb-1 transition-colors" style={{ color: "var(--c-fg)" }}>
                     {thankYou.youtubeCta}
                   </div>
                   <div className="text-sm" style={{ color: "var(--c-fg-45)" }}>{thankYou.youtubeDesc}</div>
@@ -183,22 +179,22 @@ export default function ThankYou() {
                 transition={{ delay: 0.1, duration: 0.5 }}
                 className="group rounded-xl p-6 flex items-center gap-5 transition-all duration-200"
                 style={{
-                  background: "rgba(200,16,46,0.05)",
-                  border: "1px solid rgba(200,16,46,0.18)",
+                  background: "var(--c-accent-06)",
+                  border: "1px solid var(--c-accent-15)",
                 }}
                 data-testid="link-app-cta"
               >
                 <div
                   className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
                   style={{
-                    background: "rgba(200,16,46,0.12)",
-                    border: "1px solid rgba(200,16,46,0.25)",
+                    background: "var(--c-accent-10)",
+                    border: "1px solid var(--c-accent-15)",
                   }}
                 >
-                  <Smartphone className="w-5 h-5" style={{ color: "#C8102E" }} />
+                  <Smartphone className="w-5 h-5" style={{ color: "var(--c-accent)" }} />
                 </div>
                 <div className="flex-1">
-                  <div className="font-semibold mb-1" style={{ color: "var(--c-fg)" }}>
+                  <div className="font-display font-semibold mb-1" style={{ color: "var(--c-fg)" }}>
                     {thankYou.appCta}
                   </div>
                   <div className="text-sm" style={{ color: "var(--c-fg-45)" }}>{thankYou.appDesc}</div>

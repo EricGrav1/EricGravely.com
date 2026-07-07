@@ -51,19 +51,19 @@ function VideoCard({ video, index }: { video: typeof site.youtube.videos[0]; ind
             {/* Dark overlay */}
             <div
               className="absolute inset-0 transition-opacity duration-300"
-              style={{ background: isPlaceholder ? "var(--c-bg3)" : "rgba(0,0,0,0.25)" }}
+              style={{ background: isPlaceholder ? "var(--c-bg3)" : "rgba(0,0,0,0.28)" }}
             />
 
-            {/* Play button */}
+            {/* Play button — gold circle, black triangle */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div
                 className="w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-transform duration-200 group-hover:scale-110"
                 style={{
-                  background: isPlaceholder ? "var(--c-border)" : "#C8102E",
+                  background: isPlaceholder ? "var(--c-border)" : "var(--c-accent)",
                   opacity: isPlaceholder ? 0.4 : 1,
                 }}
               >
-                <Play className="w-6 h-6 fill-current ml-0.5" style={{ color: "#FAF7F2" }} />
+                <Play className="w-5 h-5 fill-current ml-0.5" style={{ color: "#0D0D0D" }} />
               </div>
             </div>
           </button>
@@ -73,7 +73,7 @@ function VideoCard({ video, index }: { video: typeof site.youtube.videos[0]; ind
       {/* Info */}
       <div className="p-5 flex-1 flex flex-col" style={{ background: "var(--c-card)" }}>
         <h3
-          className="font-semibold text-base leading-snug mb-2 transition-colors"
+          className="font-display font-semibold text-base leading-snug mb-2"
           style={{ color: "var(--c-fg)" }}
         >
           {isPlaceholder ? "Coming Soon" : video.title}
@@ -103,10 +103,10 @@ export function YouTubeSection() {
           className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12"
         >
           <div>
-            <span className="text-xs font-semibold tracking-widest uppercase block mb-4" style={{ color: "#C8102E" }}>
+            <span className="label-track block mb-5">
               Content
             </span>
-            <h2 className="font-serif text-4xl md:text-5xl font-bold mb-3" style={{ color: "var(--c-fg)" }}>
+            <h2 className="font-display text-4xl md:text-5xl font-bold mb-3" style={{ color: "var(--c-fg)" }}>
               {site.youtube.sectionTitle}
             </h2>
             <p className="text-base max-w-lg" style={{ color: "var(--c-fg-55)" }}>

@@ -1,0 +1,1 @@
+- [Gold rebrand tokens](gold-rebrand.md) — site uses gold #C9A227 (light) / #D4AF37 (dark) as --c-accent; all red (#C8102E) has been removed

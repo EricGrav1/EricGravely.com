@@ -40,7 +40,7 @@ export function SiteNav() {
   };
 
   const navBg = scrolled || mobileOpen
-    ? "dark:bg-[#0D0D0D]/95 bg-[#FAF7F2]/95 backdrop-blur-md border-b dark:border-white/5 border-black/8 shadow-sm"
+    ? "dark:bg-[#0F0F0E]/95 bg-[#FAF7F2]/95 backdrop-blur-md border-b dark:border-white/5 border-black/[0.06] shadow-sm"
     : "bg-transparent";
 
   return (
@@ -51,15 +51,12 @@ export function SiteNav() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-3 group">
-              <div
-                className="w-9 h-9 rounded-lg flex items-center justify-center font-serif font-bold text-sm flex-shrink-0 transition-colors"
-                style={{ backgroundColor: "#C8102E", color: "#FAF7F2" }}
+            {/* Wordmark — no badge, just Syne text */}
+            <Link href="/" className="flex items-center gap-0 group" data-testid="link-logo">
+              <span
+                className="font-display font-bold text-lg tracking-tight"
+                style={{ color: "var(--c-fg)" }}
               >
-                EG
-              </div>
-              <span className="font-serif font-semibold text-[color:var(--c-fg)] text-base hidden sm:block">
                 {site.name}
               </span>
             </Link>
@@ -71,7 +68,7 @@ export function SiteNav() {
                   key={link.href}
                   href={link.href}
                   onClick={(e) => handleSmoothScroll(e, link.href)}
-                  className="text-sm font-medium text-fg-55 hover:text-fg transition-colors duration-200"
+                  className="text-sm font-medium transition-colors duration-200"
                   style={{ color: "var(--c-fg-55)" }}
                   onMouseEnter={e => (e.currentTarget.style.color = "var(--c-fg)")}
                   onMouseLeave={e => (e.currentTarget.style.color = "var(--c-fg-55)")}
@@ -83,7 +80,6 @@ export function SiteNav() {
 
             {/* Desktop right side */}
             <div className="hidden md:flex items-center gap-3">
-              {/* Theme toggle */}
               <button
                 onClick={toggle}
                 className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"

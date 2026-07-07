@@ -1,28 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=Syne:wght@600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /* ── Color tokens ─────────────────────────────────────────────────────────── */
 :root {
-  /* Light mode: ivory background, black text */
+  /* Light mode: ivory background, near-black text, gold accent */
   --c-bg:           #FAF7F2;
-  --c-bg2:          #F0EDE5;
-  --c-bg3:          #E6E3DB;
+  --c-bg2:          #F2EEE6;
+  --c-bg3:          #EAE5DB;
   --c-fg:           #0D0D0D;
   --c-fg-70:        rgba(13, 13, 13, 0.70);
   --c-fg-55:        rgba(13, 13, 13, 0.55);
   --c-fg-45:        rgba(13, 13, 13, 0.45);
   --c-fg-30:        rgba(13, 13, 13, 0.30);
   --c-fg-20:        rgba(13, 13, 13, 0.20);
-  --c-accent:       #C8102E;
-  --c-accent-h:     #A80D25;
-  --c-accent-15:    rgba(200, 16, 46, 0.15);
-  --c-accent-10:    rgba(200, 16, 46, 0.10);
-  --c-accent-06:    rgba(200, 16, 46, 0.06);
-  --c-border:       rgba(0, 0, 0, 0.10);
-  --c-border-2:     rgba(0, 0, 0, 0.06);
-  --c-card:         rgba(0, 0, 0, 0.04);
-  --c-card-border:  rgba(0, 0, 0, 0.08);
+  --c-accent:       #C9A227;
+  --c-accent-h:     #B08D1E;
+  --c-accent-15:    rgba(201, 162, 39, 0.15);
+  --c-accent-10:    rgba(201, 162, 39, 0.10);
+  --c-accent-06:    rgba(201, 162, 39, 0.06);
+  --c-border:       rgba(0, 0, 0, 0.08);
+  --c-border-2:     rgba(0, 0, 0, 0.05);
+  --c-card:         rgba(0, 0, 0, 0.03);
+  --c-card-border:  rgba(0, 0, 0, 0.07);
 
   /* shadcn tokens — light */
   --background:     46 50% 95%;
@@ -31,61 +33,61 @@
   --input:          30 10% 88%;
   --card:           40 40% 97%;
   --card-foreground: 0 0% 5%;
-  --primary:        350 88% 42%;
-  --primary-foreground: 0 0% 98%;
+  --primary:        43 68% 47%;
+  --primary-foreground: 0 0% 5%;
   --secondary:      30 10% 88%;
   --secondary-foreground: 0 0% 10%;
   --muted:          30 10% 90%;
   --muted-foreground: 0 0% 45%;
-  --accent:         350 88% 42%;
-  --accent-foreground: 0 0% 98%;
+  --accent:         43 68% 47%;
+  --accent-foreground: 0 0% 5%;
   --destructive:    0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --ring:           350 88% 42%;
+  --ring:           43 68% 47%;
   --radius:         0.5rem;
   --font-sans:      'DM Sans', sans-serif;
-  --font-serif:     'Playfair Display', Georgia, serif;
+  --font-display:   'Syne', sans-serif;
 }
 
 .dark {
-  /* Dark mode: near-black background, ivory text */
-  --c-bg:           #0D0D0D;
-  --c-bg2:          #141414;
-  --c-bg3:          #1C1C1C;
+  /* Dark mode: warm near-black (not blue), ivory text, slightly brighter gold */
+  --c-bg:           #0F0F0E;
+  --c-bg2:          #161614;
+  --c-bg3:          #1E1D1A;
   --c-fg:           #FAF7F2;
   --c-fg-70:        rgba(250, 247, 242, 0.70);
   --c-fg-55:        rgba(250, 247, 242, 0.55);
   --c-fg-45:        rgba(250, 247, 242, 0.45);
   --c-fg-30:        rgba(250, 247, 242, 0.30);
   --c-fg-20:        rgba(250, 247, 242, 0.20);
-  --c-accent:       #C8102E;
-  --c-accent-h:     #E01235;
-  --c-accent-15:    rgba(200, 16, 46, 0.15);
-  --c-accent-10:    rgba(200, 16, 46, 0.10);
-  --c-accent-06:    rgba(200, 16, 46, 0.06);
+  --c-accent:       #D4AF37;
+  --c-accent-h:     #E6C458;
+  --c-accent-15:    rgba(212, 175, 55, 0.15);
+  --c-accent-10:    rgba(212, 175, 55, 0.10);
+  --c-accent-06:    rgba(212, 175, 55, 0.06);
   --c-border:       rgba(255, 255, 255, 0.08);
   --c-border-2:     rgba(255, 255, 255, 0.05);
   --c-card:         rgba(255, 255, 255, 0.03);
   --c-card-border:  rgba(255, 255, 255, 0.07);
 
   /* shadcn tokens — dark */
-  --background:     0 0% 5%;
+  --background:     0 0% 6%;
   --foreground:     40 40% 96%;
-  --border:         0 0% 15%;
-  --input:          0 0% 13%;
+  --border:         0 0% 14%;
+  --input:          0 0% 12%;
   --card:           0 0% 9%;
   --card-foreground: 40 40% 95%;
-  --primary:        350 88% 42%;
-  --primary-foreground: 40 40% 96%;
+  --primary:        43 60% 53%;
+  --primary-foreground: 0 0% 5%;
   --secondary:      0 0% 15%;
   --secondary-foreground: 40 40% 90%;
   --muted:          0 0% 13%;
   --muted-foreground: 0 0% 55%;
-  --accent:         350 60% 18%;
-  --accent-foreground: 350 88% 70%;
+  --accent:         43 40% 22%;
+  --accent-foreground: 43 60% 70%;
   --destructive:    0 72% 51%;
   --destructive-foreground: 0 0% 100%;
-  --ring:           350 88% 42%;
+  --ring:           43 60% 53%;
 }
 
 @layer base {
@@ -105,82 +107,123 @@
   }
 
   ::selection {
-    background-color: rgba(200, 16, 46, 0.25);
+    background-color: rgba(201, 162, 39, 0.22);
     color: var(--c-fg);
+  }
+
+  /* Keyboard focus ring — gold outline */
+  :focus-visible {
+    outline: 2px solid var(--c-accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer utilities {
-  .font-serif {
-    font-family: 'Playfair Display', Georgia, serif;
+  /* ── Typography ── */
+  .font-display {
+    font-family: 'Syne', sans-serif;
   }
 
+  .font-serif {
+    font-family: 'Syne', sans-serif;
+  }
+
+  /* Tracked label — echoes logo tagline style */
+  .label-track {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--c-fg-45);
+  }
+
+  /* Gold underline signature element */
+  .gold-underline {
+    position: relative;
+    display: inline-block;
+  }
+  .gold-underline::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -4px;
+    height: 2px;
+    background-color: var(--c-accent);
+    border-radius: 1px;
+  }
+
+  /* ── Color helpers ── */
   .text-accent {
     color: var(--c-accent);
   }
 
-  .text-fg {
-    color: var(--c-fg);
-  }
-
+  .text-fg    { color: var(--c-fg); }
   .text-fg-70 { color: var(--c-fg-70); }
   .text-fg-55 { color: var(--c-fg-55); }
   .text-fg-45 { color: var(--c-fg-45); }
   .text-fg-30 { color: var(--c-fg-30); }
 
-  .bg-site {
-    background-color: var(--c-bg);
-  }
-
-  .bg-site-2 {
-    background-color: var(--c-bg2);
-  }
-
-  .bg-site-3 {
-    background-color: var(--c-bg3);
-  }
+  .bg-site   { background-color: var(--c-bg); }
+  .bg-site-2 { background-color: var(--c-bg2); }
+  .bg-site-3 { background-color: var(--c-bg3); }
 
   .card-surface {
     background-color: var(--c-card);
     border: 1px solid var(--c-card-border);
   }
 
+  /* ── Buttons ── */
   .btn-accent {
     background-color: var(--c-accent);
-    color: #FAF7F2;
+    color: #0D0D0D;
     font-weight: 700;
-    transition: all 0.2s;
+    transition: background-color 0.2s, transform 0.2s, box-shadow 0.2s;
     cursor: pointer;
   }
 
   .btn-accent:hover {
     background-color: var(--c-accent-h);
     transform: translateY(-1px);
-    box-shadow: 0 8px 24px rgba(200, 16, 46, 0.35);
+    box-shadow: 0 6px 20px rgba(201, 162, 39, 0.28);
   }
 
   .btn-accent:active {
     transform: translateY(0);
+    box-shadow: none;
   }
 
   .btn-outline-accent {
-    border: 1.5px solid var(--c-accent);
-    color: var(--c-accent);
+    border: 1.5px solid var(--c-border);
+    color: var(--c-fg-55);
     background: transparent;
     font-weight: 600;
-    transition: all 0.2s;
+    transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
     cursor: pointer;
   }
 
   .btn-outline-accent:hover {
-    background-color: var(--c-accent-10);
-    box-shadow: 0 4px 16px rgba(200, 16, 46, 0.2);
+    border-color: var(--c-accent);
+    color: var(--c-accent);
+    box-shadow: 0 4px 14px rgba(201, 162, 39, 0.14);
   }
 
-  /* Keep legacy names as aliases so existing classes don't break */
-  .btn-gold { @apply btn-accent; }
+  /* Legacy aliases */
+  .btn-gold         { @apply btn-accent; }
   .btn-outline-gold { @apply btn-outline-accent; }
 
+  /* ── Inputs ── */
   .input-dark {
     background-color: var(--c-card);
     border: 1px solid var(--c-border);
@@ -198,22 +241,27 @@
     background-color: var(--c-card);
   }
 
+  /* ── Section-specific ── */
   .timeline-line {
-    background: linear-gradient(180deg, transparent, var(--c-accent) 20%, var(--c-accent) 80%, transparent);
+    background: linear-gradient(180deg, transparent, var(--c-border) 20%, var(--c-border) 80%, transparent);
   }
 
   .stat-border {
-    border: 1px solid var(--c-accent-15);
-    background: var(--c-accent-06);
+    border: 1px solid var(--c-border);
+    background: var(--c-card);
   }
 
   .video-overlay {
     background: linear-gradient(0deg, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.25) 50%, transparent 100%);
   }
 
-  .accent-underline {
-    text-decoration: underline;
-    text-decoration-color: var(--c-accent);
-    text-underline-offset: 4px;
+  /* ── Logo blend modes ── */
+  .logo-img-light {
+    mix-blend-mode: multiply;
+  }
+
+  .logo-img-dark {
+    filter: invert(0.95) brightness(0.92);
+    mix-blend-mode: screen;
   }
 }

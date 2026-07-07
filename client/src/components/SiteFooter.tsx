@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Youtube, Linkedin, Twitter, Loader2 } from "lucide-react";
 import { Link } from "wouter";
 import { site } from "@/config/site";
+import { useTheme } from "@/lib/theme";
 
 export function SiteFooter() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const { footer, social } = site;
+  const { theme } = useTheme();
 
   const handleNewsletter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,24 +54,30 @@ export function SiteFooter() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid md:grid-cols-3 gap-12 mb-12">
+
           {/* Brand */}
           <div>
-            <Link href="/" className="flex items-center gap-3 mb-4 group">
-              <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center font-serif font-bold text-sm"
-                style={{ background: "#C8102E", color: "#FAF7F2" }}
+            <Link href="/" className="inline-block mb-5 group" data-testid="link-footer-logo">
+              <img
+                src="/brand-logo.png"
+                alt="Eric Gravely"
+                className={`h-12 w-auto object-contain ${theme === "dark" ? "logo-img-dark" : "logo-img-light"}`}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                  const sibling = (e.currentTarget as HTMLImageElement).nextElementSibling as HTMLElement | null;
+                  if (sibling) sibling.style.display = "block";
+                }}
+              />
+              <span
+                className="font-display font-bold text-xl hidden"
+                style={{ color: "var(--c-fg)" }}
               >
-                NA
-              </div>
-              <div>
-                <div className="font-serif font-bold text-base" style={{ color: "var(--c-fg)" }}>{site.name}</div>
-                <div className="text-xs font-medium" style={{ color: "#C8102E" }}>{site.title}</div>
-              </div>
+                {site.name}
+              </span>
             </Link>
             <p className="text-sm leading-relaxed mb-6 max-w-xs" style={{ color: "var(--c-fg-45)" }}>
               {footer.tagline}
             </p>
-            {/* Social links */}
             <div className="flex gap-3">
               {[
                 { href: social.youtube, Icon: Youtube, label: "YouTube" },
@@ -83,11 +90,8 @@ export function SiteFooter() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
-                  style={{
-                    border: "1px solid var(--c-border)",
-                    color: "var(--c-fg-45)",
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "#C8102E")}
+                  style={{ border: "1px solid var(--c-border)", color: "var(--c-fg-45)" }}
+                  onMouseEnter={e => (e.currentTarget.style.color = "var(--c-accent)")}
                   onMouseLeave={e => (e.currentTarget.style.color = "var(--c-fg-45)")}
                   aria-label={label}
                 >
@@ -99,9 +103,7 @@ export function SiteFooter() {
 
           {/* Nav links */}
           <div>
-            <div className="text-xs font-semibold tracking-widest uppercase mb-5" style={{ color: "#C8102E" }}>
-              Navigate
-            </div>
+            <div className="label-track mb-5">Navigate</div>
             <nav className="space-y-3">
               {footer.links.map((link) => (
                 <div key={link.href}>
@@ -144,9 +146,7 @@ export function SiteFooter() {
 
           {/* Newsletter */}
           <div>
-            <div className="text-xs font-semibold tracking-widest uppercase mb-5" style={{ color: "#C8102E" }}>
-              {footer.newsletterTitle}
-            </div>
+            <div className="label-track mb-5">{footer.newsletterTitle}</div>
             <p className="text-sm mb-4 leading-relaxed" style={{ color: "var(--c-fg-45)" }}>
               {footer.newsletterDesc}
             </p>
@@ -155,9 +155,9 @@ export function SiteFooter() {
               <div
                 className="px-4 py-3 rounded-lg text-sm font-medium"
                 style={{
-                  background: "rgba(200,16,46,0.10)",
-                  border: "1px solid rgba(200,16,46,0.30)",
-                  color: "#C8102E",
+                  background: "var(--c-accent-10)",
+                  border: "1px solid var(--c-accent-15)",
+                  color: "var(--c-accent)",
                 }}
               >
                 {footer.newsletterSuccess}
@@ -174,7 +174,7 @@ export function SiteFooter() {
                   data-testid="input-footer-email"
                 />
                 {status === "error" && (
-                  <p className="text-xs" style={{ color: "#C8102E" }}>{errorMsg}</p>
+                  <p className="text-xs" style={{ color: "var(--c-fg-55)" }}>{errorMsg}</p>
                 )}
                 <button
                   type="submit"
@@ -203,7 +203,7 @@ export function SiteFooter() {
             rel="noopener noreferrer"
             className="text-xs transition-colors"
             style={{ color: "var(--c-fg-30)" }}
-            onMouseEnter={e => (e.currentTarget.style.color = "#C8102E")}
+            onMouseEnter={e => (e.currentTarget.style.color = "var(--c-accent)")}
             onMouseLeave={e => (e.currentTarget.style.color = "var(--c-fg-30)")}
           >
             {footer.appCta}

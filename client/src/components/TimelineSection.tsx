@@ -23,12 +23,12 @@ export function TimelineSection() {
           transition={{ duration: 0.6, ease: "easeOut" }}
           className="text-center mb-16"
         >
-          <span className="text-xs font-semibold tracking-widest uppercase block mb-4" style={{ color: "#C8102E" }}>
+          <span className="label-track block mb-5">
             {timeline.sectionLabel}
           </span>
-          <h2 className="font-serif text-4xl md:text-5xl font-bold mb-4" style={{ color: "var(--c-fg)" }}>
+          <h2 className="font-display text-4xl md:text-5xl font-bold mb-4" style={{ color: "var(--c-fg)" }}>
             {timeline.sectionTitlePrefix}{" "}
-            <span className="italic" style={{ color: "#C8102E" }}>{timeline.sectionTitleHighlight}</span>
+            <span className="gold-underline">{timeline.sectionTitleHighlight}</span>
           </h2>
           <p className="text-lg max-w-xl mx-auto" style={{ color: "var(--c-fg-55)" }}>
             {timeline.sectionDescription}
@@ -40,12 +40,12 @@ export function TimelineSection() {
           {/* Center line — desktop */}
           <div
             className="absolute left-1/2 top-0 bottom-0 w-px hidden lg:block"
-            style={{ background: "linear-gradient(180deg, transparent, #C8102E 10%, #C8102E 90%, transparent)" }}
+            style={{ background: "linear-gradient(180deg, transparent, var(--c-border) 10%, var(--c-border) 90%, transparent)" }}
           />
           {/* Left line — mobile */}
           <div
             className="absolute left-6 top-0 bottom-0 w-px lg:hidden"
-            style={{ background: "linear-gradient(180deg, transparent, #C8102E 10%, #C8102E 90%, transparent)" }}
+            style={{ background: "linear-gradient(180deg, transparent, var(--c-border) 10%, var(--c-border) 90%, transparent)" }}
           />
 
           <div className="space-y-0">
@@ -63,23 +63,22 @@ export function TimelineSection() {
                   {/* Mobile layout */}
                   <div className="lg:hidden flex items-start gap-6 w-full pl-12">
                     <div
-                      className="absolute left-[18px] top-1 w-4 h-4 rounded-full border-2 flex-shrink-0"
+                      className="absolute left-[19px] top-1.5 w-3 h-3 rounded-full flex-shrink-0"
                       style={{
-                        borderColor: "#C8102E",
-                        backgroundColor: "var(--c-bg)",
-                        boxShadow: "0 0 12px rgba(200,16,46,0.4)",
+                        backgroundColor: "var(--c-accent)",
+                        boxShadow: "0 0 0 3px var(--c-bg), 0 0 0 4px var(--c-border)",
                       }}
                     />
                     <div
                       className="rounded-xl p-5 flex-1"
                       style={{
                         background: "var(--c-card)",
-                        border: "1px solid rgba(200,16,46,0.14)",
+                        border: "1px solid var(--c-card-border)",
                       }}
                     >
-                      <div className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: "#C8102E" }}>{item.year}</div>
-                      <div className="font-semibold text-lg mb-1" style={{ color: "var(--c-fg)" }}>{item.title}</div>
-                      <div className="text-xs font-medium mb-2" style={{ color: "rgba(200,16,46,0.7)" }}>{item.company}</div>
+                      <div className="label-track mb-2" style={{ color: "var(--c-accent)" }}>{item.year}</div>
+                      <div className="font-display font-semibold text-lg mb-1" style={{ color: "var(--c-fg)" }}>{item.title}</div>
+                      <div className="text-xs font-medium mb-2" style={{ color: "var(--c-fg-45)" }}>{item.company}</div>
                       <p className="text-sm leading-relaxed" style={{ color: "var(--c-fg-55)" }}>{item.description}</p>
                     </div>
                   </div>
@@ -90,27 +89,24 @@ export function TimelineSection() {
                       className="rounded-xl p-6 max-w-sm w-full"
                       style={{
                         background: "var(--c-card)",
-                        border: "1px solid rgba(200,16,46,0.14)",
+                        border: "1px solid var(--c-card-border)",
                       }}
                     >
-                      <div className="text-xs font-bold tracking-widest uppercase mb-2" style={{ color: "#C8102E" }}>{item.year}</div>
-                      <div className="font-semibold text-xl mb-1" style={{ color: "var(--c-fg)" }}>{item.title}</div>
-                      <div className="text-sm font-medium mb-3" style={{ color: "rgba(200,16,46,0.7)" }}>{item.company}</div>
+                      <div className="label-track mb-2" style={{ color: "var(--c-accent)" }}>{item.year}</div>
+                      <div className="font-display font-semibold text-xl mb-1" style={{ color: "var(--c-fg)" }}>{item.title}</div>
+                      <div className="text-sm font-medium mb-3" style={{ color: "var(--c-fg-45)" }}>{item.company}</div>
                       <p className="text-sm leading-relaxed" style={{ color: "var(--c-fg-55)" }}>{item.description}</p>
                     </div>
                   </div>
 
                   {/* Center dot — desktop */}
                   <div
-                    className="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-5 h-5 rounded-full border-2 items-center justify-center flex-shrink-0 z-10"
+                    className="hidden lg:block absolute left-1/2 -translate-x-1/2 w-3 h-3 rounded-full flex-shrink-0 z-10"
                     style={{
-                      borderColor: "#C8102E",
-                      backgroundColor: "var(--c-bg)",
-                      boxShadow: "0 0 16px rgba(200,16,46,0.5)",
+                      backgroundColor: "var(--c-accent)",
+                      boxShadow: "0 0 0 3px var(--c-bg), 0 0 0 4px var(--c-border)",
                     }}
-                  >
-                    <div className="w-2 h-2 rounded-full" style={{ background: "#C8102E" }} />
-                  </div>
+                  />
 
                   <div className="hidden lg:block w-1/2" />
                 </motion.div>
