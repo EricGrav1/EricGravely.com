@@ -178,7 +178,7 @@ function DownloadProductCard({ product, index }: { product: LeadMagnet; index: n
               className="btn-accent w-full py-3.5 rounded-lg font-bold text-base flex items-center justify-center gap-2"
               data-testid={`button-get-${product.id}`}
             >
-              Get it free
+              {product.buttonLabel ?? "Get it free"}
               <ChevronDown className="w-4 h-4" />
             </motion.button>
 
@@ -311,11 +311,11 @@ export default function Products() {
                 className="font-display text-4xl md:text-5xl font-bold mb-5 leading-tight"
                 style={{ color: "var(--c-fg)" }}
               >
-                Everything you need to{" "}
-                <span className="gold-underline">sell better</span>
+                Built from real sales floors.{" "}
+                <span className="gold-underline">Not theory.</span>
               </h1>
               <p className="text-lg leading-relaxed" style={{ color: "var(--c-fg-55)" }}>
-                A mobile app for daily practice, plus free playbooks and tools built from 10+ years in the field.
+                Free frameworks and tools I use with the reps and managers I coach. Take them, use them, run better calls this week.
               </p>
             </motion.div>
           </div>

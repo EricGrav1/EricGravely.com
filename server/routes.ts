@@ -12,7 +12,7 @@ import { getSiteBaseUrl, PRODUCT_CK_TAGS } from "./config";
 const LEAD_MAGNET_TAG_MAP: Record<string, { name: string; downloadUrl: string }> = {
   "lead-magnet-ask-close":     { name: "The Ask & Close Playbook",     downloadUrl: "/downloads/ask-close-playbook.pdf" },
   "ask-close-playbook":        { name: "The Ask & Close Playbook",     downloadUrl: "/downloads/ask-close-playbook.pdf" },
-  "coaching-matrix":           { name: "Sales Rep Self-Coaching Matrix", downloadUrl: "/downloads/salesrep-coaching-tool.xlsx" },
+  "coaching-matrix":           { name: "Sales Rep Self-Coaching Tool", downloadUrl: "/downloads/salesrep-coaching-tool.xlsx" },
   "lead-magnet":               { name: "The Ask & Close Playbook",     downloadUrl: "/downloads/ask-close-playbook.pdf" },
   "lead-magnet-playbook":      { name: "The Ask & Close Playbook",     downloadUrl: "/downloads/ask-close-playbook.pdf" },
 };
