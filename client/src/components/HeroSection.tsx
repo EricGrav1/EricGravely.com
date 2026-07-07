@@ -24,19 +24,42 @@ export function HeroSection() {
       style={{ background: "var(--c-bg)" }}
       aria-label="Hero"
     >
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
+
+        {/* Mobile-only photo — centered, above headline */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.1 }}
+          className="lg:hidden flex justify-center mb-10"
+        >
+          <div
+            className="w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden"
+            style={{
+              border: "1px solid var(--c-border)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.10)",
+            }}
+          >
+            <img
+              src="/nicholas.jpg"
+              alt="Eric Gravely — Sales Leadership Coach"
+              className="w-full h-full object-cover"
+              style={{ objectPosition: "center 12%" }}
+            />
+          </div>
+        </motion.div>
+
+        {/* Desktop layout: content left, photo+badges right (top-aligned) */}
+        <div className="grid lg:grid-cols-[1fr_auto] gap-10 lg:gap-20 items-start">
 
           {/* Left — Content */}
-          <div>
-            {/* Tracked eyebrow label */}
+          <div className="max-w-2xl">
             <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp}>
               <span className="label-track block mb-8" data-testid="text-hero-eyebrow">
                 Sales Leadership Coaching
               </span>
             </motion.div>
 
-            {/* Headline */}
             <motion.h1
               initial="hidden"
               animate="visible"
@@ -51,7 +74,6 @@ export function HeroSection() {
               {site.hero.headlineSuffix}
             </motion.h1>
 
-            {/* Subheadline */}
             <motion.p
               initial="hidden"
               animate="visible"
@@ -64,7 +86,6 @@ export function HeroSection() {
               {site.hero.subheadline}
             </motion.p>
 
-            {/* CTA Buttons */}
             <motion.div
               initial="hidden"
               animate="visible"
@@ -93,36 +114,37 @@ export function HeroSection() {
             </motion.div>
           </div>
 
-          {/* Right — Real Photo */}
+          {/* Right — Photo + badges (desktop only) */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-            className="relative flex justify-center lg:justify-end"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+            className="hidden lg:flex flex-col items-center gap-5 pt-2"
           >
-            <div className="relative">
-              {/* Photo circle */}
-              <div
-                className="relative w-72 h-72 sm:w-80 sm:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden"
-                style={{
-                  border: "1px solid var(--c-border)",
-                  boxShadow: "0 8px 48px rgba(0,0,0,0.10)",
-                }}
-              >
-                <img
-                  src="/nicholas.jpg"
-                  alt="Eric Gravely — Sales Leadership Coach"
-                  className="w-full h-full object-cover"
-                  style={{ objectPosition: "center 12%" }}
-                />
-              </div>
+            {/* Photo — smaller, fully visible */}
+            <div
+              className="w-52 h-52 rounded-full overflow-hidden flex-shrink-0"
+              style={{
+                border: "1px solid var(--c-border)",
+                boxShadow: "0 6px 32px rgba(0,0,0,0.10)",
+              }}
+            >
+              <img
+                src="/nicholas.jpg"
+                alt="Eric Gravely — Sales Leadership Coach"
+                className="w-full h-full object-cover"
+                style={{ objectPosition: "center 12%" }}
+              />
+            </div>
 
-              {/* Floating stat badge — left */}
+            {/* Stat badges — below photo, never overlapping */}
+            <div className="flex gap-3">
               <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6, duration: 0.5 }}
-                className="absolute -left-4 top-1/3 card-surface rounded-xl px-4 py-3 shadow-xl"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5, duration: 0.4 }}
+                className="card-surface rounded-xl px-4 py-3 text-center"
+                data-testid="stat-badge-0"
               >
                 <div
                   className="font-display font-bold text-lg leading-none"
@@ -130,26 +152,26 @@ export function HeroSection() {
                 >
                   {site.stats[0].value}
                 </div>
-                <div className="text-xs mt-0.5" style={{ color: "var(--c-fg-55)" }}>
+                <div className="text-xs mt-0.5 whitespace-nowrap" style={{ color: "var(--c-fg-55)" }}>
                   {site.stats[0].label}
                 </div>
               </motion.div>
 
-              {/* Floating stat badge — right */}
               <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.75, duration: 0.5 }}
-                className="absolute -right-4 bottom-1/3 card-surface rounded-xl px-4 py-3 shadow-xl"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.65, duration: 0.4 }}
+                className="card-surface rounded-xl px-4 py-3 text-center"
+                data-testid="stat-badge-1"
               >
                 <div
                   className="font-display font-bold text-lg leading-none"
                   style={{ color: "var(--c-accent)" }}
                 >
-                  {site.stats[1].value}
+                  {site.stats[2].value}
                 </div>
-                <div className="text-xs mt-0.5" style={{ color: "var(--c-fg-55)" }}>
-                  {site.stats[1].label}
+                <div className="text-xs mt-0.5 whitespace-nowrap" style={{ color: "var(--c-fg-55)" }}>
+                  {site.stats[2].label}
                 </div>
               </motion.div>
             </div>

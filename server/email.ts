@@ -50,55 +50,57 @@ function leadMagnetEmailHtml(
   firstName: string,
   downloadUrl: string,
   baseUrl: string,
+  productName: string,
 ): string {
   const unsubToken = generateUnsubscribeToken(email);
   const unsubLink = `${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}&token=${unsubToken}`;
+  const fullDownloadUrl = downloadUrl.startsWith('http') ? downloadUrl : `${baseUrl}${downloadUrl}`;
+  const greeting = firstName ? `, ${firstName}` : "";
 
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0A0F1E;margin:0;padding:0;">
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAF7F2;margin:0;padding:0;">
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-    <div style="background:#111827;border:1px solid rgba(212,160,23,0.2);border-radius:12px;padding:48px 40px;">
+    <div style="background:#ffffff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:48px 40px;">
+
       <div style="text-align:center;margin-bottom:32px;">
-        <div style="display:inline-block;background:rgba(212,160,23,0.15);border:1px solid rgba(212,160,23,0.3);border-radius:6px;padding:6px 16px;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#D4A017;margin-bottom:24px;">
-          The Sales Commandments
+        <div style="display:inline-block;background:rgba(201,162,39,0.10);border:1px solid rgba(201,162,39,0.25);border-radius:4px;padding:5px 14px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#B08D1E;margin-bottom:24px;">
+          Eric Gravely
         </div>
-        <h1 style="font-size:28px;font-weight:700;color:#ffffff;margin:0 0 12px;line-height:1.3;">
-          Your Playbook Is Ready${firstName ? `, ${firstName}` : ""}
+        <h1 style="font-size:26px;font-weight:700;color:#0D0D0D;margin:0 0 12px;line-height:1.3;">
+          Here's your copy of ${productName}${greeting}
         </h1>
-        <p style="font-size:16px;color:#9CA3AF;margin:0;">
-          The New Sales Manager Playbook — downloaded and ready to go.
+        <p style="font-size:15px;color:#555550;margin:0;line-height:1.6;">
+          Click below to download — it's ready for you now.
         </p>
       </div>
 
       <div style="text-align:center;margin-bottom:36px;">
-        <a href="${downloadUrl}" style="display:inline-block;background:#D4A017;color:#0A0F1E;text-decoration:none;padding:16px 36px;border-radius:8px;font-weight:700;font-size:16px;">
-          Download Your Playbook →
+        <a href="${fullDownloadUrl}" style="display:inline-block;background:#C9A227;color:#0D0D0D;text-decoration:none;padding:16px 36px;border-radius:8px;font-weight:700;font-size:16px;">
+          Download ${productName} →
         </a>
       </div>
 
-      <div style="border-top:1px solid rgba(255,255,255,0.07);padding-top:28px;margin-bottom:28px;">
-        <p style="color:#9CA3AF;font-size:15px;line-height:1.7;margin:0 0 16px;">
-          Inside you'll find the exact frameworks I've used to help hundreds of new sales managers stop winging it and start leading with confidence:
+      <div style="border-top:1px solid rgba(0,0,0,0.07);padding-top:28px;margin-bottom:28px;">
+        <p style="color:#555550;font-size:14px;line-height:1.7;margin:0 0 16px;">
+          This comes from 10+ years in the field — coaching hundreds of sales reps, leading teams to Presidents Club, and figuring out what actually separates top performers from everyone else.
         </p>
-        <ul style="padding-left:20px;margin:0;">
-          <li style="margin-bottom:8px;color:#9CA3AF;">The 5 mistakes every new manager makes (and how to avoid them)</li>
-          <li style="margin-bottom:8px;color:#9CA3AF;">A plug-and-play 1:1 framework your reps will actually respect</li>
-          <li style="margin-bottom:8px;color:#9CA3AF;">Your 90-day blueprint for building a team that hits quota</li>
-        </ul>
+        <p style="color:#555550;font-size:14px;line-height:1.7;margin:0;">
+          If you have questions or want to go deeper, reply to this email. I read every one.
+        </p>
       </div>
 
-      <div style="background:rgba(212,160,23,0.08);border:1px solid rgba(212,160,23,0.15);border-radius:8px;padding:24px;text-align:center;margin-bottom:28px;">
-        <p style="color:#ffffff;font-size:15px;margin:0 0 16px;font-weight:600;">Want coaching on demand, anywhere?</p>
-        <a href="${APP_STORE_URL}" style="display:inline-block;background:#1a2340;color:#D4A017;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:14px;border:1px solid rgba(212,160,23,0.3);">
+      <div style="background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:8px;padding:24px;text-align:center;margin-bottom:28px;">
+        <p style="color:#0D0D0D;font-size:14px;margin:0 0 14px;font-weight:600;">Want on-demand coaching wherever you are?</p>
+        <a href="${APP_STORE_URL}" style="display:inline-block;background:#0D0D0D;color:#FAF7F2;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:14px;">
           Download SalesCoachAI →
         </a>
       </div>
 
-      <p style="color:#6B7280;font-size:13px;text-align:center;margin:0;">
-        You're receiving this because you signed up at nicholasandrews.com.<br>
-        <a href="${unsubLink}" style="color:#6B7280;">Unsubscribe</a>
+      <p style="color:#999994;font-size:12px;text-align:center;margin:0;line-height:1.6;">
+        You requested this from EricGravely.com.<br>
+        <a href="${unsubLink}" style="color:#999994;">Unsubscribe</a>
       </p>
     </div>
   </div>
@@ -107,22 +109,23 @@ function leadMagnetEmailHtml(
 }
 
 function newsletterEmailHtml(firstName: string): string {
+  const greeting = firstName ? `, ${firstName}` : "";
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0A0F1E;margin:0;padding:0;">
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAF7F2;margin:0;padding:0;">
   <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
-    <div style="background:#111827;border:1px solid rgba(212,160,23,0.2);border-radius:12px;padding:48px 40px;text-align:center;">
-      <div style="display:inline-block;background:rgba(212,160,23,0.15);border:1px solid rgba(212,160,23,0.3);border-radius:6px;padding:6px 16px;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:#D4A017;margin-bottom:24px;">
-        The Sales Commandments
+    <div style="background:#ffffff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:48px 40px;text-align:center;">
+      <div style="display:inline-block;background:rgba(201,162,39,0.10);border:1px solid rgba(201,162,39,0.25);border-radius:4px;padding:5px 14px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#B08D1E;margin-bottom:24px;">
+        Eric Gravely
       </div>
-      <h1 style="font-size:26px;font-weight:700;color:#ffffff;margin:0 0 12px;">
-        You're In${firstName ? `, ${firstName}` : ""} 👊
+      <h1 style="font-size:24px;font-weight:700;color:#0D0D0D;margin:0 0 12px;">
+        You're in${greeting}
       </h1>
-      <p style="font-size:16px;color:#9CA3AF;margin:0 0 32px;line-height:1.6;">
-        Welcome to The Sales Commandments community. Expect real talk, proven frameworks, and zero fluff delivered straight to your inbox.
+      <p style="font-size:15px;color:#555550;margin:0 0 32px;line-height:1.6;">
+        Sales coaching, rep development, and leadership insights — straight to your inbox. No recycled advice, no fluff.
       </p>
-      <a href="${APP_STORE_URL}" style="display:inline-block;background:#D4A017;color:#0A0F1E;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">
+      <a href="${APP_STORE_URL}" style="display:inline-block;background:#C9A227;color:#0D0D0D;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">
         Download SalesCoachAI
       </a>
     </div>
@@ -136,6 +139,7 @@ export async function sendLeadMagnetEmail(
   firstName: string,
   downloadUrl: string,
   baseUrl: string,
+  productName: string = "The Ask & Close Playbook",
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const { client, fromEmail } = await getUncachableResendClient();
@@ -144,8 +148,8 @@ export async function sendLeadMagnetEmail(
     await client.emails.send({
       from: fromEmail,
       to: email,
-      subject: `Your Sales Manager Playbook is inside 📋`,
-      html: leadMagnetEmailHtml(email, firstName, downloadUrl, baseUrl),
+      subject: `Your copy of ${productName} is ready`,
+      html: leadMagnetEmailHtml(email, firstName, downloadUrl, baseUrl, productName),
     });
     return { success: true };
   } catch (err: unknown) {
@@ -166,7 +170,7 @@ export async function sendNewsletterConfirmationEmail(
     await client.emails.send({
       from: fromEmail,
       to: email,
-      subject: `Welcome to The Sales Commandments`,
+      subject: `You're in — Eric Gravely`,
       html: newsletterEmailHtml(firstName),
     });
     return { success: true };

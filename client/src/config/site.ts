@@ -13,7 +13,6 @@ export const site = {
     ctaTarget: "#get-the-playbook",
     secondaryCta: "Watch on YouTube",
     secondaryCtaUrl: "https://www.youtube.com/@EricGravely",
-    socialProof: "Join hundreds of sales pros already following along",
   },
 
   stats: [
@@ -22,6 +21,19 @@ export const site = {
     { value: "3x", label: "Presidents Club Winner" },
     { value: "3", label: "Top-Performing Teams Built" },
   ],
+
+  about: {
+    eyebrow: "About Eric",
+    headline: "From Rep to",
+    headlineHighlight: "Leader",
+    bio: [
+      "I started in sales in 2014 with zero shortcuts — just a commitment to figuring out what actually works. Over the next decade I went from rep to trainer to manager, built three top-performing teams, and earned Presidents Club three consecutive times.",
+      "Along the way I coached hundreds of reps — and realized the biggest gap isn't talent or scripts. It's the fundamentals: asking the right questions, building real conviction, and developing the habits that make high performance repeatable.",
+      "That's what I coach. That's what this site is built around.",
+    ],
+    timelineLabel: "The Journey",
+    timelineDescription: "Started as a rep in 2014, earned my way to trainer, then manager. Here's how it happened.",
+  },
 
   timeline: {
     sectionLabel: "The Journey",
@@ -48,7 +60,7 @@ export const site = {
         description: "Stepped into management and started building. Developed top-performing teams, earned Presidents Club recognition, and refined the coaching frameworks I use today.",
       },
       {
-        year: "2022-2024",
+        year: "2022–2024",
         title: "3x Presidents Club",
         company: "Award Winner",
         description: "Consecutive Presidents Club wins are the result of systems, coaching, and culture — not luck. Built teams that hit their numbers consistently, year after year.",
@@ -61,6 +73,37 @@ export const site = {
       },
     ],
   },
+
+  products: [
+    {
+      title: "The Ask & Close Playbook",
+      eyebrow: "Free Playbook",
+      description: "A question-based selling system built from 10+ years coaching hundreds of sales reps. Learn the right mix of open-ended and closed questions at every stage of the sale, and how to guide any conversation naturally toward the close.",
+      bullets: [
+        "Sell by asking instead of pitching — the shift that changes everything",
+        "Open-ended vs. closed questions: when to use each and why",
+        "How to guide a conversation naturally toward the close",
+        "Built from coaching hundreds of reps across multiple industries",
+      ],
+      tag: "lead-magnet-ask-close",
+      downloadUrl: "/lead-magnet.pdf",
+      formCardTitle: "Get the Playbook — Free",
+    },
+    {
+      title: "The Self Coaching Tool",
+      eyebrow: "Free Tool",
+      description: "A self-evaluation and call-scoring tool for sales reps who want to improve between manager touchpoints. Score your own calls, identify patterns in your performance, and build the habit of honest self-assessment.",
+      bullets: [
+        "Score your own calls with a structured evaluation framework",
+        "Identify patterns in your performance over time",
+        "Build the self-awareness that separates coachable reps from the rest",
+        "Use it independently between 1:1s with your manager",
+      ],
+      tag: "lead-magnet-self-coaching",
+      downloadUrl: "/self-coaching-tool.pdf",
+      formCardTitle: "Get the Tool — Free",
+    },
+  ],
 
   youtube: {
     sectionTitle: "Eric Gravely on YouTube",
@@ -92,17 +135,17 @@ export const site = {
   },
 
   leadMagnet: {
-    formHeadline: "Free Download: The Sales Rep Playbook",
-    formSubheadline: "Join hundreds of sales pros who use this playbook to sharpen their skills and hit their numbers.",
-    description: "The exact frameworks I've used to coach hundreds of reps, build top-performing teams, and win Presidents Club 3 times. No theory — just what actually works.",
+    formHeadline: "The Ask & Close Playbook",
+    formSubheadline: "Built from 10+ years coaching hundreds of sales reps. No theory — just what actually works in the field.",
+    description: "A question-based selling system for reps who are tired of pitching and getting objected. Learn to sell by asking — the right questions, at the right stages, in the right order.",
     bullets: [
-      "The habits that separate top performers from the rest of the team",
-      "A plug-and-play framework for consistent, coachable sales activity",
-      "How to handle objections without losing your confidence",
-      "A 90-day plan to fast-track your growth as a sales professional",
+      "Sell by asking instead of pitching — the shift that changes everything",
+      "The right mix of open-ended and closed questions at each stage of the sale",
+      "How to guide a conversation naturally toward the close",
+      "Built from coaching hundreds of reps across real sales floors",
     ],
     downloadUrl: "/lead-magnet.pdf",
-    convertKitTag: "lead-magnet",
+    convertKitTag: "lead-magnet-ask-close",
     formCardTitle: "Get the Playbook — Free",
     firstNameLabel: "First Name",
     firstNamePlaceholder: "Your first name",
@@ -205,23 +248,23 @@ export const site = {
   },
 
   thankYou: {
-    headline: "Your Playbook Is on Its Way",
-    subheadline: "Check your inbox — we just sent The Sales Rep Playbook to your email address.",
-    downloadLabel: "Download the Playbook",
+    headline: "Check Your Inbox",
+    subheadline: "We just sent your resource to your email address. It should arrive within 2 minutes.",
+    downloadLabel: "Download Now",
     downloadUrl: "/lead-magnet.pdf",
-    inboxNote: "(Also delivered to your inbox within 2 minutes)",
+    inboxNote: "(Check spam if you don't see it within 2 minutes)",
     nextStepsTitle: "What Happens Next",
-    nextStepsDescription: "Here's exactly what to expect over the next few days.",
+    nextStepsDescription: "Here's exactly what to expect.",
     nextSteps: [
       {
         step: "01",
         title: "Check Your Email",
-        description: "We sent the playbook directly to your inbox. Check spam if you don't see it within 2 minutes.",
+        description: "Your resource is on its way. Check spam if you don't see it within 2 minutes.",
       },
       {
         step: "02",
-        title: "Block 30 Minutes",
-        description: "Don't skim it. Read it with your current goals in mind. The frameworks hit differently when you apply them to real situations.",
+        title: "Put It to Work",
+        description: "Don't skim it. Read it with your current situation in mind — that's when the frameworks actually click.",
       },
       {
         step: "03",
@@ -258,14 +301,15 @@ export const site = {
     newsletterPlaceholder: "your@email.com",
     newsletterCta: "Subscribe →",
     newsletterSuccess: "✓ You're in! Check your inbox.",
-    copyright: "Built by Eric Gravely.",
+    copyright: "All rights reserved.",
     appCta: "Download SalesCoachAI →",
     links: [
       { label: "Home", href: "/" },
-      { label: "About", href: "/#about" },
+      { label: "About", href: "/about" },
+      { label: "Products", href: "/products" },
+      { label: "Coaching", href: "/coaching" },
       { label: "YouTube", href: "https://www.youtube.com/@EricGravely", external: true },
       { label: "SalesCoachAI", href: "https://apps.apple.com/us/app/sales-coach-ai/id6748286535", external: true },
-      { label: "Coaching", href: "/coaching" },
     ],
   },
 };

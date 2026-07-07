@@ -5,8 +5,8 @@ import { site } from "@/config/site";
 import { useTheme } from "@/lib/theme";
 
 const navLinks = [
-  { label: "About", href: "/#about" },
-  { label: "Videos", href: "/#videos" },
+  { label: "About", href: "/about" },
+  { label: "Products", href: "/products" },
   { label: "Coaching", href: "/coaching" },
 ];
 
@@ -26,19 +26,6 @@ export function SiteNav() {
     setMobileOpen(false);
   }, [location]);
 
-  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (href.startsWith("/#")) {
-      e.preventDefault();
-      const id = href.replace("/#", "");
-      const el = document.getElementById(id);
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "start" });
-      } else if (location !== "/") {
-        window.location.href = href;
-      }
-    }
-  };
-
   const navBg = scrolled || mobileOpen
     ? "dark:bg-[#0F0F0E]/95 bg-[#FAF7F2]/95 backdrop-blur-md border-b dark:border-white/5 border-black/[0.06] shadow-sm"
     : "bg-transparent";
@@ -51,8 +38,8 @@ export function SiteNav() {
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
-            {/* Wordmark — no badge, just Syne text */}
-            <Link href="/" className="flex items-center gap-0 group" data-testid="link-logo">
+            {/* Wordmark */}
+            <Link href="/" className="flex items-center group" data-testid="link-logo">
               <span
                 className="font-display font-bold text-lg tracking-tight"
                 style={{ color: "var(--c-fg)" }}
@@ -64,21 +51,18 @@ export function SiteNav() {
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-8">
               {navLinks.map((link) => (
-                <a
+                <Link
                   key={link.href}
                   href={link.href}
-                  onClick={(e) => handleSmoothScroll(e, link.href)}
                   className="text-sm font-medium transition-colors duration-200"
-                  style={{ color: "var(--c-fg-55)" }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "var(--c-fg)")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "var(--c-fg-55)")}
+                  style={{ color: location === link.href ? "var(--c-fg)" : "var(--c-fg-55)" }}
                 >
                   {link.label}
-                </a>
+                </Link>
               ))}
             </div>
 
-            {/* Desktop right side */}
+            {/* Desktop right */}
             <div className="hidden md:flex items-center gap-3">
               <button
                 onClick={toggle}
@@ -89,18 +73,16 @@ export function SiteNav() {
               >
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
-
-              <a
-                href="/#get-the-playbook"
-                onClick={(e) => handleSmoothScroll(e, "/#get-the-playbook")}
+              <Link
+                href="/products"
                 className="btn-accent px-4 py-2 rounded-lg text-sm font-semibold"
                 data-testid="button-nav-cta"
               >
-                Download Playbook
-              </a>
+                Free Resources
+              </Link>
             </div>
 
-            {/* Mobile right side */}
+            {/* Mobile right */}
             <div className="md:hidden flex items-center gap-2">
               <button
                 onClick={toggle}
@@ -126,36 +108,27 @@ export function SiteNav() {
         {/* Mobile Menu */}
         {mobileOpen && (
           <div
-            className="md:hidden px-4 py-6 space-y-4"
-            style={{
-              borderTop: "1px solid var(--c-border)",
-              backgroundColor: "var(--c-bg)",
-            }}
+            className="md:hidden px-4 py-6 space-y-1"
+            style={{ borderTop: "1px solid var(--c-border)", backgroundColor: "var(--c-bg)" }}
           >
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.href}
                 href={link.href}
-                onClick={(e) => {
-                  handleSmoothScroll(e, link.href);
-                  setMobileOpen(false);
-                }}
-                className="block text-base font-medium py-2 transition-colors"
+                className="block text-base font-medium py-2.5 transition-colors"
                 style={{ color: "var(--c-fg-70)" }}
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
-            <a
-              href="/#get-the-playbook"
-              onClick={(e) => {
-                handleSmoothScroll(e, "/#get-the-playbook");
-                setMobileOpen(false);
-              }}
-              className="block btn-accent px-4 py-3 rounded-lg text-sm font-semibold text-center mt-4"
-            >
-              Download Free Playbook
-            </a>
+            <div className="pt-3">
+              <Link
+                href="/products"
+                className="block btn-accent px-4 py-3 rounded-lg text-sm font-semibold text-center"
+              >
+                Free Resources
+              </Link>
+            </div>
           </div>
         )}
       </nav>
