@@ -6,8 +6,14 @@ export const leadMagnets = pgTable("lead_magnets", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  // "download" = email-gated free resource | "external" = direct link (no email capture)
+  productType: text("product_type").notNull().default("download"),
   resourceUrl: text("resource_url"),
   deliveryMethod: text("delivery_method").notNull().default("email"),
+  // External product fields
+  externalUrl: text("external_url"),
+  buttonLabel: text("button_label"),
+  iconPath: text("icon_path"),
   active: boolean("active").notNull().default(true),
   viewCount: integer("view_count").notNull().default(0),
   submissionCount: integer("submission_count").notNull().default(0),
@@ -54,6 +60,9 @@ export const insertLeadMagnetSchema = createInsertSchema(leadMagnets).omit({
 }).extend({
   questionnaireFields: z.array(questionnaireFieldSchema).optional(),
   nextSteps: z.string().optional(),
+  externalUrl: z.string().url().optional().nullable(),
+  buttonLabel: z.string().optional().nullable(),
+  iconPath: z.string().optional().nullable(),
 });
 
 export const insertLeadSchema = createInsertSchema(leads).omit({
