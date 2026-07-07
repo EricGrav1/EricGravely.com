@@ -289,8 +289,9 @@ export const site = {
 
   social: {
     youtube: "https://www.youtube.com/@EricGravely",
-    linkedin: "https://www.linkedin.com/in/ericgravely",
-    twitter: "https://twitter.com/ericgravely",
+    linkedin: "https://www.linkedin.com/in/ericgravely/",
+    twitter: "https://x.com/EricGrvly_",
+    instagram: "https://www.instagram.com/ericgravely_/",
     app: "https://apps.apple.com/us/app/sales-coach-ai/id6748286535",
   },
 

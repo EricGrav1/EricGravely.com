@@ -1,22 +1,27 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { existsSync } from "fs";
+import { join } from "path";
 import { storage } from "./storage";
 import { insertSubscriberSchema, insertLeadSchema } from "@shared/schema";
 import { sendLeadMagnetEmail, sendNewsletterConfirmationEmail, validateUnsubscribeToken } from "./email";
 import { subscribeToConvertKit } from "./convertkit";
+import { getSiteBaseUrl, PRODUCT_CK_TAGS } from "./config";
 
-interface ProductInfo {
-  name: string;
-  downloadUrl: string;
-}
-
-// Tag-based fallback map (for homepage lead capture using convertKitTag)
-const LEAD_MAGNET_TAG_MAP: Record<string, ProductInfo> = {
-  "lead-magnet-ask-close":    { name: "The Ask & Close Playbook",  downloadUrl: "/lead-magnet.pdf" },
-  "lead-magnet-self-coaching":{ name: "The Self Coaching Matrix",  downloadUrl: "/self-coaching-matrix.pdf" },
-  "lead-magnet":              { name: "The Ask & Close Playbook",  downloadUrl: "/lead-magnet.pdf" },
-  "lead-magnet-playbook":     { name: "The Ask & Close Playbook",  downloadUrl: "/lead-magnet.pdf" },
+// Tag-based fallback map for homepage lead capture (convertKitTag in site.ts)
+const LEAD_MAGNET_TAG_MAP: Record<string, { name: string; downloadUrl: string }> = {
+  "lead-magnet-ask-close":     { name: "The Ask & Close Playbook",     downloadUrl: "/downloads/ask-close-playbook.pdf" },
+  "ask-close-playbook":        { name: "The Ask & Close Playbook",     downloadUrl: "/downloads/ask-close-playbook.pdf" },
+  "coaching-matrix":           { name: "Sales Rep Self-Coaching Matrix", downloadUrl: "/downloads/salesrep-coaching-tool.xlsx" },
+  "lead-magnet":               { name: "The Ask & Close Playbook",     downloadUrl: "/downloads/ask-close-playbook.pdf" },
+  "lead-magnet-playbook":      { name: "The Ask & Close Playbook",     downloadUrl: "/downloads/ask-close-playbook.pdf" },
 };
+
+// Resolve the filesystem path for a public download URL
+function publicFilePath(downloadUrl: string): string {
+  const relative = downloadUrl.startsWith("/") ? downloadUrl.slice(1) : downloadUrl;
+  return join(process.cwd(), "client", "public", relative);
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -36,20 +41,46 @@ export async function registerRoutes(
 
       const { email, firstName } = result.data;
       const leadMagnetId = req.body.leadMagnetId ? Number(req.body.leadMagnetId) : undefined;
+      const siteBaseUrl = getSiteBaseUrl(req as any);
 
-      // Resolve product info — DB lookup takes priority over tag map
-      let product: ProductInfo | undefined;
+      // Resolve product — DB lookup takes priority over tag map
+      let product: { name: string; downloadUrl: string } | undefined;
       let resolvedTag = result.data.tag || "newsletter";
 
       if (leadMagnetId && !isNaN(leadMagnetId)) {
         const lm = await storage.getLeadMagnet(leadMagnetId);
         if (!lm) return res.status(404).json({ message: "Product not found." });
-        product = { name: lm.title, downloadUrl: lm.resourceUrl || "/lead-magnet.pdf" };
-        resolvedTag = `lead-magnet-product-${leadMagnetId}`;
+
+        const downloadUrl = lm.resourceUrl || "/downloads/ask-close-playbook.pdf";
+        const filePath = publicFilePath(downloadUrl);
+        const fileExists = existsSync(filePath);
+
+        if (!fileExists) {
+          console.warn(`[subscribe] File missing for "${lm.title}": ${filePath} — email not sent`);
+          return res.status(503).json({
+            message: "This resource isn't available for download yet. Check back soon.",
+          });
+        }
+
+        product = { name: lm.title, downloadUrl };
+        resolvedTag = PRODUCT_CK_TAGS[leadMagnetId] ?? `lead-magnet-product-${leadMagnetId}`;
+
         // Increment submission count
         await storage.incrementSubmissions(leadMagnetId);
+
       } else if (resolvedTag && LEAD_MAGNET_TAG_MAP[resolvedTag]) {
-        product = LEAD_MAGNET_TAG_MAP[resolvedTag];
+        const tagProduct = LEAD_MAGNET_TAG_MAP[resolvedTag];
+        const filePath = publicFilePath(tagProduct.downloadUrl);
+        const fileExists = existsSync(filePath);
+
+        if (!fileExists) {
+          console.warn(`[subscribe] File missing for tag "${resolvedTag}": ${filePath} — email not sent`);
+          return res.status(503).json({
+            message: "This resource isn't available for download yet. Check back soon.",
+          });
+        }
+
+        product = tagProduct;
       }
 
       // Suppression check
@@ -69,13 +100,9 @@ export async function registerRoutes(
         console.error("[Subscribe] ConvertKit error:", ckResult.error);
       }
 
-      const protocol = req.headers["x-forwarded-proto"] || "https";
-      const host = req.headers["x-forwarded-host"] || req.headers.host;
-      const baseUrl = `${protocol}://${host}`;
-
       const emailResult = product
-        ? await sendLeadMagnetEmail(email, firstName || "", product.downloadUrl, baseUrl, product.name)
-        : await sendNewsletterConfirmationEmail(email, firstName || "");
+        ? await sendLeadMagnetEmail(email, firstName || "", product.downloadUrl, siteBaseUrl, product.name)
+        : await sendNewsletterConfirmationEmail(email, firstName || "", siteBaseUrl);
 
       if (!emailResult.success) {
         console.error("Email failed:", emailResult.error);

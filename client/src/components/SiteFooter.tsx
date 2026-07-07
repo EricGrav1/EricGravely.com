@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Youtube, Linkedin, Twitter, Loader2 } from "lucide-react";
+import { Youtube, Linkedin, Loader2 } from "lucide-react";
+import { SiX, SiInstagram } from "react-icons/si";
 import { Link } from "wouter";
 import { site } from "@/config/site";
 import { useTheme } from "@/lib/theme";
@@ -36,14 +37,12 @@ export function SiteFooter() {
     }
   };
 
-  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    if (href.startsWith("/#")) {
-      e.preventDefault();
-      const id = href.replace("/#", "");
-      const el = document.getElementById(id);
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
+  const SOCIAL_ICONS = [
+    { href: social.youtube,   Icon: Youtube,      label: "YouTube"    },
+    { href: social.instagram, Icon: SiInstagram,  label: "Instagram"  },
+    { href: social.linkedin,  Icon: Linkedin,     label: "LinkedIn"   },
+    { href: social.twitter,   Icon: SiX,          label: "X (Twitter)" },
+  ];
 
   return (
     <footer
@@ -79,11 +78,7 @@ export function SiteFooter() {
               {footer.tagline}
             </p>
             <div className="flex gap-3">
-              {[
-                { href: social.youtube, Icon: Youtube, label: "YouTube" },
-                { href: social.linkedin, Icon: Linkedin, label: "LinkedIn" },
-                { href: social.twitter, Icon: Twitter, label: "Twitter / X" },
-              ].map(({ href, Icon, label }) => (
+              {SOCIAL_ICONS.map(({ href, Icon, label }) => (
                 <a
                   key={label}
                   href={href}
@@ -94,6 +89,7 @@ export function SiteFooter() {
                   onMouseEnter={e => (e.currentTarget.style.color = "var(--c-accent)")}
                   onMouseLeave={e => (e.currentTarget.style.color = "var(--c-fg-45)")}
                   aria-label={label}
+                  data-testid={`link-social-${label.toLowerCase().replace(/[^a-z]/g, "")}`}
                 >
                   <Icon className="w-4 h-4" />
                 </a>
@@ -113,17 +109,6 @@ export function SiteFooter() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm transition-colors"
-                      style={{ color: "var(--c-fg-55)" }}
-                      onMouseEnter={e => (e.currentTarget.style.color = "var(--c-fg)")}
-                      onMouseLeave={e => (e.currentTarget.style.color = "var(--c-fg-55)")}
-                    >
-                      {link.label}
-                    </a>
-                  ) : link.href.startsWith("/#") ? (
-                    <a
-                      href={link.href}
-                      onClick={(e) => handleSmoothScroll(e, link.href)}
-                      className="text-sm transition-colors cursor-pointer"
                       style={{ color: "var(--c-fg-55)" }}
                       onMouseEnter={e => (e.currentTarget.style.color = "var(--c-fg)")}
                       onMouseLeave={e => (e.currentTarget.style.color = "var(--c-fg-55)")}

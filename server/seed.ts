@@ -2,20 +2,18 @@ import { db } from "./db";
 import { leadMagnets } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
-const MATRIX_URL = process.env.MATRIX_URL || "/self-coaching-matrix.pdf";
-
 const PRODUCTS = [
   {
     title: "The Ask & Close Playbook",
-    description: "A question-based selling system built from 10+ years coaching hundreds of sales reps. Learn to sell by asking instead of pitching — the right mix of open-ended and closed questions at every stage of the sale.",
-    resourceUrl: "/lead-magnet.pdf",
+    description: "A question-based selling framework mapping the exact open and closed questions that move a deal through five stages, with target open-to-closed question ratios for each stage from rapport to close.",
+    resourceUrl: "/downloads/ask-close-playbook.pdf",
     deliveryMethod: "email",
     active: true,
   },
   {
-    title: "The Self Coaching Matrix",
-    description: "A self-evaluation and call-scoring tool that lets sales reps score their own calls and coach themselves between manager touchpoints. Built for reps who want to improve without waiting for their next 1:1.",
-    resourceUrl: MATRIX_URL,
+    title: "Sales Rep Self-Coaching Matrix",
+    description: "An Excel call-scoring tool that grades your sales calls across Introduction, Call Control, and Presentation/Close, with an automatic dashboard that shows exactly where your calls are strong and where they leak.",
+    resourceUrl: "/downloads/salesrep-coaching-tool.xlsx",
     deliveryMethod: "email",
     active: true,
   },
