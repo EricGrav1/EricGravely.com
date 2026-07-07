@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircle2, Loader2, Shield, ChevronDown, X } from "lucide-react";
+import { CheckCircle2, Loader2, Shield, ChevronDown, X, PackageOpen } from "lucide-react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
-import { site } from "@/config/site";
+import type { LeadMagnet } from "@shared/schema";
 
-type Product = typeof site.products[0];
 type FormState = "idle" | "open" | "loading" | "success" | "error";
 
-function ProductCard({ product, index }: { product: Product; index: number }) {
+function ProductCard({ product, index }: { product: LeadMagnet; index: number }) {
   const [formState, setFormState] = useState<FormState>("idle");
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
@@ -32,10 +32,10 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
     setErrorMsg("");
 
     if (!email.trim()) {
-      setErrorMsg("Please enter your email address.");
+      setErrorMsg("Email address is required.");
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
       setErrorMsg("Please enter a valid email address.");
       return;
     }
@@ -49,7 +49,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
         body: JSON.stringify({
           email: email.trim(),
           firstName: firstName.trim() || undefined,
-          tag: product.tag,
+          leadMagnetId: product.id,
         }),
       });
 
@@ -63,7 +63,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
 
       setFormState("success");
     } catch {
-      setErrorMsg("Network error. Please check your connection and try again.");
+      setErrorMsg("Network error — please check your connection and try again.");
       setFormState("open");
     }
   };
@@ -79,38 +79,27 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
         background: "var(--c-card)",
         border: "1px solid var(--c-card-border)",
       }}
-      data-testid={`card-product-${index}`}
+      data-testid={`card-product-${product.id}`}
     >
-      {/* Card body */}
       <div className="p-7 flex-1 flex flex-col">
-        <span className="label-track block mb-4" style={{ color: "var(--c-accent)" }}>
-          {product.eyebrow}
+        <span className="label-track block mb-4">
+          Free Resource
         </span>
 
         <h2
           className="font-display text-2xl font-bold mb-3 leading-snug"
           style={{ color: "var(--c-fg)" }}
+          data-testid={`text-product-title-${product.id}`}
         >
           {product.title}
         </h2>
 
-        <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--c-fg-55)" }}>
+        <p
+          className="text-sm leading-relaxed mb-8 flex-1"
+          style={{ color: "var(--c-fg-55)" }}
+        >
           {product.description}
         </p>
-
-        <ul className="space-y-2.5 mb-8 flex-1">
-          {product.bullets.map((bullet, i) => (
-            <li key={i} className="flex items-start gap-2.5">
-              <CheckCircle2
-                className="w-4 h-4 flex-shrink-0 mt-0.5"
-                style={{ color: "var(--c-accent)" }}
-              />
-              <span className="text-sm leading-snug" style={{ color: "var(--c-fg-70)" }}>
-                {bullet}
-              </span>
-            </li>
-          ))}
-        </ul>
 
         {/* CTA / inline form */}
         <AnimatePresence mode="wait">
@@ -119,48 +108,57 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
               key="success"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="rounded-xl px-5 py-4 text-center"
+              exit={{ opacity: 0 }}
+              className="rounded-xl px-5 py-5 text-center"
               style={{
                 background: "var(--c-accent-10)",
                 border: "1px solid var(--c-accent-15)",
               }}
+              data-testid={`text-success-${product.id}`}
             >
-              <div className="font-display font-semibold mb-1" style={{ color: "var(--c-accent)" }}>
+              <CheckCircle2
+                className="w-6 h-6 mx-auto mb-2"
+                style={{ color: "var(--c-accent)" }}
+              />
+              <div className="font-display font-semibold mb-1" style={{ color: "var(--c-fg)" }}>
                 On its way!
               </div>
-              <p className="text-xs" style={{ color: "var(--c-fg-55)" }}>
-                Check your inbox — it'll arrive within 2 minutes.
+              <p className="text-xs leading-relaxed" style={{ color: "var(--c-fg-55)" }}>
+                Check your inbox — arrives within 2 minutes. Check spam if you don't see it.
               </p>
             </motion.div>
+
           ) : formState === "idle" ? (
             <motion.button
               key="cta"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               onClick={handleOpen}
               className="btn-accent w-full py-3.5 rounded-lg font-bold text-base flex items-center justify-center gap-2"
-              data-testid={`button-get-${index}`}
+              data-testid={`button-get-${product.id}`}
             >
               Get it free
               <ChevronDown className="w-4 h-4" />
             </motion.button>
+
           ) : (
             <motion.div
               key="form"
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.25 }}
+              transition={{ duration: 0.2 }}
             >
               <div className="flex items-center justify-between mb-4">
                 <span className="text-sm font-display font-semibold" style={{ color: "var(--c-fg)" }}>
-                  {product.formCardTitle}
+                  Get {product.title}
                 </span>
                 <button
                   onClick={handleClose}
-                  className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors"
+                  className="w-7 h-7 rounded-lg flex items-center justify-center"
                   style={{ color: "var(--c-fg-45)", border: "1px solid var(--c-border)" }}
-                  aria-label="Close"
+                  aria-label="Close form"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -174,7 +172,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
                   placeholder="First name (optional)"
                   className="input-dark w-full px-3.5 py-2.5 rounded-lg text-sm"
                   disabled={formState === "loading"}
-                  data-testid={`input-firstname-${index}`}
+                  data-testid={`input-firstname-${product.id}`}
                 />
                 <input
                   type="email"
@@ -184,15 +182,11 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
                   required
                   className="input-dark w-full px-3.5 py-2.5 rounded-lg text-sm"
                   disabled={formState === "loading"}
-                  data-testid={`input-email-${index}`}
+                  data-testid={`input-email-${product.id}`}
                 />
 
                 {errorMsg && (
-                  <p
-                    className="text-xs px-1"
-                    style={{ color: "var(--c-fg-55)" }}
-                    data-testid={`text-error-${index}`}
-                  >
+                  <p className="text-xs px-1" style={{ color: "var(--c-fg-55)" }}>
                     {errorMsg}
                   </p>
                 )}
@@ -201,7 +195,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
                   type="submit"
                   disabled={formState === "loading"}
                   className="btn-accent w-full py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:transform-none"
-                  data-testid={`button-submit-${index}`}
+                  data-testid={`button-submit-${product.id}`}
                 >
                   {formState === "loading" ? (
                     <>
@@ -209,7 +203,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
                       Sending…
                     </>
                   ) : (
-                    `Send me ${product.title} →`
+                    "Send it to my inbox →"
                   )}
                 </button>
 
@@ -229,7 +223,34 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
   );
 }
 
+function EmptyState() {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="col-span-full flex flex-col items-center py-24 text-center"
+    >
+      <div
+        className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"
+        style={{ background: "var(--c-accent-10)", border: "1px solid var(--c-accent-15)" }}
+      >
+        <PackageOpen className="w-6 h-6" style={{ color: "var(--c-accent)" }} />
+      </div>
+      <h3 className="font-display text-xl font-bold mb-2" style={{ color: "var(--c-fg)" }}>
+        More resources coming soon
+      </h3>
+      <p className="text-sm max-w-xs" style={{ color: "var(--c-fg-45)" }}>
+        New tools and playbooks are in the works. Check back soon or scroll down for coaching.
+      </p>
+    </motion.div>
+  );
+}
+
 export default function Products() {
+  const { data: products, isLoading, isError } = useQuery<LeadMagnet[]>({
+    queryKey: ["/api/lead-magnets"],
+  });
+
   return (
     <div style={{ backgroundColor: "var(--c-bg)", minHeight: "100vh" }}>
       <SiteNav />
@@ -249,18 +270,41 @@ export default function Products() {
                 className="font-display text-4xl md:text-5xl font-bold mb-5 leading-tight"
                 style={{ color: "var(--c-fg)" }}
               >
-                Tools &{" "}
+                Tools &amp;{" "}
                 <span className="gold-underline">Playbooks</span>
               </h1>
               <p className="text-lg leading-relaxed" style={{ color: "var(--c-fg-55)" }}>
-                Practical resources built from 10+ years coaching sales reps and leading teams. Each one is free — gated only by your email so I can send it directly to your inbox.
+                Practical resources built from 10+ years coaching sales reps and leading teams.
+                Each one is free — just enter your email and it lands in your inbox.
               </p>
             </motion.div>
 
-            {/* Product grid — 1 / 2 / 3 column responsive */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {site.products.map((product, i) => (
-                <ProductCard key={product.tag} product={product} index={i} />
+            {/* Product grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="grid-products">
+              {isLoading && (
+                <>
+                  {[0, 1].map((i) => (
+                    <div
+                      key={i}
+                      className="rounded-2xl h-64 animate-pulse"
+                      style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}
+                    />
+                  ))}
+                </>
+              )}
+
+              {isError && (
+                <div className="col-span-full py-16 text-center" style={{ color: "var(--c-fg-45)" }}>
+                  <p className="text-sm">Couldn't load products right now. Please refresh the page.</p>
+                </div>
+              )}
+
+              {!isLoading && !isError && products && products.length === 0 && (
+                <EmptyState />
+              )}
+
+              {!isLoading && !isError && products && products.map((product, i) => (
+                <ProductCard key={product.id} product={product} index={i} />
               ))}
             </div>
           </div>

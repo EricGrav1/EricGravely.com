@@ -10,9 +10,10 @@ interface ProductInfo {
   downloadUrl: string;
 }
 
-const LEAD_MAGNET_PRODUCTS: Record<string, ProductInfo> = {
+// Tag-based fallback map (for homepage lead capture using convertKitTag)
+const LEAD_MAGNET_TAG_MAP: Record<string, ProductInfo> = {
   "lead-magnet-ask-close":    { name: "The Ask & Close Playbook",  downloadUrl: "/lead-magnet.pdf" },
-  "lead-magnet-self-coaching":{ name: "The Self Coaching Tool",    downloadUrl: "/self-coaching-tool.pdf" },
+  "lead-magnet-self-coaching":{ name: "The Self Coaching Matrix",  downloadUrl: "/self-coaching-matrix.pdf" },
   "lead-magnet":              { name: "The Ask & Close Playbook",  downloadUrl: "/lead-magnet.pdf" },
   "lead-magnet-playbook":     { name: "The Ask & Close Playbook",  downloadUrl: "/lead-magnet.pdf" },
 };
@@ -23,6 +24,9 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   // ── Main subscribe endpoint ──────────────────────────────────────────────────
+  // Accepts either:
+  //   { email, firstName, tag }           — tag-based (homepage lead capture)
+  //   { email, firstName, leadMagnetId }  — DB-driven (products page)
   app.post("/api/subscribe", async (req, res) => {
     try {
       const result = insertSubscriberSchema.safeParse(req.body);
@@ -30,7 +34,23 @@ export async function registerRoutes(
         return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid submission" });
       }
 
-      const { email, firstName, tag } = result.data;
+      const { email, firstName } = result.data;
+      const leadMagnetId = req.body.leadMagnetId ? Number(req.body.leadMagnetId) : undefined;
+
+      // Resolve product info — DB lookup takes priority over tag map
+      let product: ProductInfo | undefined;
+      let resolvedTag = result.data.tag || "newsletter";
+
+      if (leadMagnetId && !isNaN(leadMagnetId)) {
+        const lm = await storage.getLeadMagnet(leadMagnetId);
+        if (!lm) return res.status(404).json({ message: "Product not found." });
+        product = { name: lm.title, downloadUrl: lm.resourceUrl || "/lead-magnet.pdf" };
+        resolvedTag = `lead-magnet-product-${leadMagnetId}`;
+        // Increment submission count
+        await storage.incrementSubmissions(leadMagnetId);
+      } else if (resolvedTag && LEAD_MAGNET_TAG_MAP[resolvedTag]) {
+        product = LEAD_MAGNET_TAG_MAP[resolvedTag];
+      }
 
       // Suppression check
       const existing = await storage.getSubscriberByEmail(email);
@@ -38,13 +58,13 @@ export async function registerRoutes(
         return res.json({ success: true });
       }
 
-      // Idempotent: don't duplicate subscriber records
+      // Idempotent subscriber creation
       if (!existing) {
-        await storage.createSubscriber({ email, firstName, tag });
+        await storage.createSubscriber({ email, firstName, tag: resolvedTag });
       }
 
       // ConvertKit sync
-      const ckResult = await subscribeToConvertKit(email, firstName || "", tag);
+      const ckResult = await subscribeToConvertKit(email, firstName || "", resolvedTag);
       if (!ckResult.success && !ckResult.skipped) {
         console.error("[Subscribe] ConvertKit error:", ckResult.error);
       }
@@ -52,8 +72,6 @@ export async function registerRoutes(
       const protocol = req.headers["x-forwarded-proto"] || "https";
       const host = req.headers["x-forwarded-host"] || req.headers.host;
       const baseUrl = `${protocol}://${host}`;
-
-      const product = tag ? LEAD_MAGNET_PRODUCTS[tag] : undefined;
 
       const emailResult = product
         ? await sendLeadMagnetEmail(email, firstName || "", product.downloadUrl, baseUrl, product.name)
