@@ -3,14 +3,13 @@ import { Youtube, Linkedin, Loader2 } from "lucide-react";
 import { SiX, SiInstagram } from "react-icons/si";
 import { Link } from "wouter";
 import { site } from "@/config/site";
-import { useTheme } from "@/lib/theme";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export function SiteFooter() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const { footer, social } = site;
-  const { theme } = useTheme();
 
   const handleNewsletter = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,23 +55,8 @@ export function SiteFooter() {
 
           {/* Brand */}
           <div>
-            <Link href="/" className="inline-block mb-5 group" data-testid="link-footer-logo">
-              <img
-                src="/brand-logo.png"
-                alt="Eric Gravely"
-                className={`h-12 w-auto object-contain ${theme === "dark" ? "logo-img-dark" : "logo-img-light"}`}
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                  const sibling = (e.currentTarget as HTMLImageElement).nextElementSibling as HTMLElement | null;
-                  if (sibling) sibling.style.display = "block";
-                }}
-              />
-              <span
-                className="font-display font-bold text-xl hidden"
-                style={{ color: "var(--c-fg)" }}
-              >
-                {site.name}
-              </span>
+            <Link href="/" className="inline-block mb-5" data-testid="link-footer-logo">
+              <BrandLogo widthClass="w-44 sm:w-52" />
             </Link>
             <p className="text-sm leading-relaxed mb-6 max-w-xs" style={{ color: "var(--c-fg-45)" }}>
               {footer.tagline}

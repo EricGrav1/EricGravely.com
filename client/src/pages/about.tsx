@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -281,6 +282,16 @@ export default function About() {
                 </motion.div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* ── Brand moment ─────────────────────────────────────────────────── */}
+        <section
+          className="py-16"
+          style={{ background: "var(--c-bg)", borderTop: "1px solid var(--c-border)" }}
+        >
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-center">
+            <BrandLogo widthClass="w-48 sm:w-56 md:w-64" />
           </div>
         </section>
 
