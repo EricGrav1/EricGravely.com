@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   Users, Mail, ListChecks, ChevronDown, ChevronUp,
-  Plus, Trash2, Loader2, Save, X, Pencil,
+  Plus, Trash2, Loader2, Save, X, Pencil, Lock, LogOut,
 } from "lucide-react";
 import { Link } from "wouter";
 import type { LeadMagnet, SequenceEmail, QuestionnaireField } from "@shared/schema";
@@ -485,6 +485,91 @@ function QuestionsTab() {
   );
 }
 
+// ── Login gate ────────────────────────────────────────────────────────────────
+function AdminLogin() {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const loginMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/admin/login", { password });
+    },
+    onSuccess: () => {
+      setError(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/session"] });
+    },
+    onError: (err: Error) => {
+      const msg = err.message.replace(/^\d+:\s*/, "");
+      try {
+        setError(JSON.parse(msg).message ?? "Login failed.");
+      } catch {
+        setError(msg || "Login failed.");
+      }
+    },
+  });
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "var(--c-bg)" }}>
+      <div
+        className="w-full max-w-sm rounded-2xl p-8"
+        style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}
+      >
+        <div
+          className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
+          style={{ background: "var(--c-accent-10)", border: "1px solid var(--c-accent)" }}
+        >
+          <Lock className="w-5 h-5" style={{ color: "var(--c-accent)" }} />
+        </div>
+        <h1 className="font-display text-xl font-bold mb-1" style={{ color: "var(--c-fg)" }} data-testid="text-login-title">
+          Admin access
+        </h1>
+        <p className="text-xs mb-6" style={{ color: "var(--c-fg-45)" }}>
+          Enter the admin password to manage signups and emails.
+        </p>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (password) loginMutation.mutate();
+          }}
+        >
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            autoFocus
+            className="w-full rounded-lg px-3.5 py-2.5 text-sm mb-3 outline-none"
+            style={{ background: "var(--c-bg2)", border: "1px solid var(--c-border)", color: "var(--c-fg)" }}
+            data-testid="input-admin-password"
+          />
+          {error && (
+            <p className="text-xs mb-3" style={{ color: "#c0392b" }} data-testid="text-login-error">
+              {error}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={loginMutation.isPending || !password}
+            className="w-full rounded-lg py-2.5 text-sm font-semibold disabled:opacity-50"
+            style={{ background: "var(--c-accent)", color: "#141311" }}
+            data-testid="button-admin-login"
+          >
+            {loginMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Log in"}
+          </button>
+        </form>
+        <Link
+          href="/"
+          className="block text-center text-xs font-semibold mt-5"
+          style={{ color: "var(--c-fg-45)" }}
+          data-testid="link-login-back-home"
+        >
+          ← Back to site
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 type Tab = "signups" | "sequence" | "questions";
 
@@ -496,6 +581,32 @@ const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
 
 export default function Admin() {
   const [tab, setTab] = useState<Tab>("signups");
+
+  const { data: sessionData, isLoading: sessionLoading } = useQuery<{ authenticated: boolean }>({
+    queryKey: ["/api/admin/session"],
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/admin/logout");
+    },
+    onSuccess: () => {
+      queryClient.removeQueries({ predicate: (q) => String(q.queryKey[0]).startsWith("/api/admin") });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/session"] });
+    },
+  });
+
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--c-bg)" }}>
+        <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--c-accent)" }} />
+      </div>
+    );
+  }
+
+  if (!sessionData?.authenticated) {
+    return <AdminLogin />;
+  }
 
   return (
     <div style={{ backgroundColor: "var(--c-bg)", minHeight: "100vh" }}>
@@ -509,14 +620,26 @@ export default function Admin() {
               Signups, nurture sequence, and questionnaire management
             </p>
           </div>
-          <Link
-            href="/"
-            className="text-sm font-semibold"
-            style={{ color: "var(--c-accent)" }}
-            data-testid="link-back-home"
-          >
-            ← Back to site
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/"
+              className="text-sm font-semibold"
+              style={{ color: "var(--c-accent)" }}
+              data-testid="link-back-home"
+            >
+              ← Back to site
+            </Link>
+            <button
+              onClick={() => logoutMutation.mutate()}
+              disabled={logoutMutation.isPending}
+              className="flex items-center gap-1.5 text-sm font-semibold"
+              style={{ color: "var(--c-fg-45)" }}
+              data-testid="button-admin-logout"
+            >
+              <LogOut className="w-4 h-4" />
+              Log out
+            </button>
+          </div>
         </div>
 
         <div className="flex gap-1.5 mb-6 rounded-xl p-1" style={{ background: "var(--c-bg2)", border: "1px solid var(--c-border)" }}>

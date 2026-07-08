@@ -19,6 +19,7 @@ import {
 } from "./email";
 import { subscribeToConvertKit } from "./convertkit";
 import { getSiteBaseUrl, PRODUCT_CK_TAGS } from "./config";
+import { setupAdminAuth, requireAdmin } from "./adminAuth";
 
 // Legacy tag → resource title map (homepage lead capture used tags historically).
 // Resolved against the DB so delivery always goes through the tokenized flow.
@@ -45,6 +46,8 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  setupAdminAuth(app);
 
   // ── Main subscribe endpoint ──────────────────────────────────────────────────
   // Accepts:
@@ -233,7 +236,7 @@ export async function registerRoutes(
   });
 
   // ── Admin: signups + questionnaire answers ──────────────────────────────────
-  app.get("/api/admin/leads", async (_req, res) => {
+  app.get("/api/admin/leads", requireAdmin, async (_req, res) => {
     try {
       const [allLeads, allSubscribers, magnets] = await Promise.all([
         storage.listLeads(),
@@ -261,7 +264,7 @@ export async function registerRoutes(
   });
 
   // ── Admin: lead magnets (incl. inactive) + question editor ──────────────────
-  app.get("/api/admin/lead-magnets", async (_req, res) => {
+  app.get("/api/admin/lead-magnets", requireAdmin, async (_req, res) => {
     try {
       return res.json(await storage.listLeadMagnets());
     } catch {
@@ -269,7 +272,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/admin/lead-magnets/:id", async (req, res) => {
+  app.patch("/api/admin/lead-magnets/:id", requireAdmin, async (req, res) => {
     try {
       const id = Number(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid id." });
@@ -286,7 +289,7 @@ export async function registerRoutes(
   });
 
   // ── Admin: sequence email CRUD ──────────────────────────────────────────────
-  app.get("/api/admin/sequence-emails", async (_req, res) => {
+  app.get("/api/admin/sequence-emails", requireAdmin, async (_req, res) => {
     try {
       return res.json(await storage.listSequenceEmails());
     } catch {
@@ -294,7 +297,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/admin/sequence-emails", async (req, res) => {
+  app.post("/api/admin/sequence-emails", requireAdmin, async (req, res) => {
     try {
       const result = insertSequenceEmailSchema.safeParse(req.body);
       if (!result.success) {
@@ -306,7 +309,7 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/admin/sequence-emails/:id", async (req, res) => {
+  app.patch("/api/admin/sequence-emails/:id", requireAdmin, async (req, res) => {
     try {
       const id = Number(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid id." });
@@ -322,7 +325,7 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/admin/sequence-emails/:id", async (req, res) => {
+  app.delete("/api/admin/sequence-emails/:id", requireAdmin, async (req, res) => {
     try {
       const id = Number(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid id." });
