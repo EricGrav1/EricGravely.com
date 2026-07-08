@@ -48,7 +48,36 @@ export function generateUnsubscribeToken(email: string): string {
 }
 
 export function validateUnsubscribeToken(email: string, token: string): boolean {
-  return token === generateUnsubscribeToken(email);
+  const expected = generateUnsubscribeToken(email);
+  try {
+    return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+  } catch {
+    return false;
+  }
+}
+
+// ── Download tokens ───────────────────────────────────────────────────────────
+// Resources are delivered ONLY via email. The email contains a tokenized link
+// to /api/download which validates this HMAC before streaming the file.
+export function generateDownloadToken(email: string, leadMagnetId: number): string {
+  return crypto
+    .createHmac('sha256', UNSUBSCRIBE_SECRET)
+    .update(`download:${email.toLowerCase()}:${leadMagnetId}`)
+    .digest('hex');
+}
+
+export function validateDownloadToken(email: string, leadMagnetId: number, token: string): boolean {
+  const expected = generateDownloadToken(email, leadMagnetId);
+  try {
+    return crypto.timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+  } catch {
+    return false;
+  }
+}
+
+export function buildDownloadUrl(siteBaseUrl: string, email: string, leadMagnetId: number): string {
+  const token = generateDownloadToken(email, leadMagnetId);
+  return `${siteBaseUrl}/api/download?lm=${leadMagnetId}&email=${encodeURIComponent(email.toLowerCase())}&token=${token}`;
 }
 
 function brandBadge(): string {
@@ -154,7 +183,7 @@ function newsletterEmailHtml(firstName: string, siteBaseUrl: string): string {
       </a>
 
       <div style="margin-top:32px;">
-        ${emailFooter("", siteBaseUrl).replace(/unsubscribe.*<\/p>/s, "")}
+        ${emailFooter("", siteBaseUrl).replace(/unsubscribe[\s\S]*<\/p>/, "")}
       </div>
     </div>
   </div>
@@ -173,16 +202,76 @@ export async function sendLeadMagnetEmail(
     const { client, fromEmail } = await getUncachableResendClient();
     if (!fromEmail) return { success: false, error: "From email not configured" };
 
-    await client.emails.send({
+    const { error } = await client.emails.send({
       from: fromEmail,
       to: email,
       subject: `Your copy of ${productName} is inside`,
       html: leadMagnetEmailHtml(email, firstName, downloadUrl, siteBaseUrl, productName),
     });
+    if (error) return { success: false, error: error.message };
     return { success: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error("Email send failed:", msg);
+    return { success: false, error: msg };
+  }
+}
+
+// ── Sequence (nurture) emails ─────────────────────────────────────────────────
+// Body is stored as plain text in the DB (editable in the admin panel).
+// {{first_name}} is replaced, blank lines become paragraphs.
+function sequenceEmailHtml(email: string, bodyText: string, siteBaseUrl: string): string {
+  const paragraphs = bodyText
+    .split(/\n\s*\n/)
+    .map(p => p.trim())
+    .filter(Boolean)
+    .map(p => `<p style="color:#3A3A36;font-size:15px;line-height:1.75;margin:0 0 18px;">${p.replace(/\n/g, "<br>")}</p>`)
+    .join("\n");
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAF7F2;margin:0;padding:0;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="background:#ffffff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:48px 40px;">
+      ${brandBadge()}
+      ${paragraphs}
+      <div style="margin-top:8px;margin-bottom:32px;">
+        <p style="color:#3A3A36;font-size:15px;line-height:1.75;margin:0;">— Eric</p>
+      </div>
+      ${emailFooter(email, siteBaseUrl)}
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+export function personalize(text: string, firstName: string): string {
+  return text.replace(/\{\{\s*first_name\s*\}\}/gi, firstName || "there");
+}
+
+export async function sendSequenceEmail(
+  email: string,
+  firstName: string,
+  subject: string,
+  body: string,
+  siteBaseUrl: string = BRAND_URL,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { client, fromEmail } = await getUncachableResendClient();
+    if (!fromEmail) return { success: false, error: "From email not configured" };
+
+    const { error } = await client.emails.send({
+      from: fromEmail,
+      to: email,
+      subject: personalize(subject, firstName),
+      html: sequenceEmailHtml(email, personalize(body, firstName), siteBaseUrl),
+    });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error("Sequence email failed:", msg);
     return { success: false, error: msg };
   }
 }
@@ -196,12 +285,13 @@ export async function sendNewsletterConfirmationEmail(
     const { client, fromEmail } = await getUncachableResendClient();
     if (!fromEmail) return { success: false, error: "From email not configured" };
 
-    await client.emails.send({
+    const { error } = await client.emails.send({
       from: fromEmail,
       to: email,
       subject: `You're in — ${BRAND_NAME}`,
       html: newsletterEmailHtml(firstName, siteBaseUrl),
     });
+    if (error) return { success: false, error: error.message };
     return { success: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";

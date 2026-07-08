@@ -1,10 +1,11 @@
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, asc, desc } from "drizzle-orm";
 import { db } from "./db";
 import {
-  leadMagnets, leads, subscribers,
+  leadMagnets, leads, subscribers, sequenceEmails,
   type LeadMagnet, type InsertLeadMagnet,
   type Lead, type InsertLead,
   type Subscriber, type InsertSubscriber,
+  type SequenceEmail, type InsertSequenceEmail,
 } from "@shared/schema";
 
 export interface AnalyticsStat {
@@ -31,6 +32,19 @@ export interface IStorage {
   createSubscriber(data: InsertSubscriber): Promise<Subscriber>;
   getSubscriberByEmail(email: string): Promise<Subscriber | undefined>;
   markSubscriberUnsubscribed(email: string): Promise<void>;
+  // Sequence opt-in + scheduler
+  setSequenceOptIn(email: string): Promise<void>;
+  listSequenceSubscribers(): Promise<Subscriber[]>;
+  updateSubscriberSequenceState(id: number, step: number): Promise<void>;
+  // Sequence email CRUD
+  listSequenceEmails(activeOnly?: boolean): Promise<SequenceEmail[]>;
+  createSequenceEmail(data: InsertSequenceEmail): Promise<SequenceEmail>;
+  updateSequenceEmail(id: number, updates: Partial<InsertSequenceEmail>): Promise<SequenceEmail | undefined>;
+  deleteSequenceEmail(id: number): Promise<void>;
+  countSequenceEmails(): Promise<number>;
+  // Admin views
+  listLeads(): Promise<Lead[]>;
+  listSubscribers(): Promise<Subscriber[]>;
 }
 
 export class DbStorage implements IStorage {
@@ -134,6 +148,62 @@ export class DbStorage implements IStorage {
     await db.update(subscribers)
       .set({ unsubscribed: true, unsubscribedAt: new Date() })
       .where(eq(subscribers.email, email.toLowerCase()));
+  }
+
+  async setSequenceOptIn(email: string): Promise<void> {
+    // Only set the opt-in timestamp the first time — re-submitting must not
+    // reset a subscriber's position in the sequence.
+    await db.update(subscribers)
+      .set({ sequenceOptIn: true, sequenceOptInAt: sql`COALESCE(${subscribers.sequenceOptInAt}, now())` })
+      .where(eq(subscribers.email, email.toLowerCase()));
+  }
+
+  async listSequenceSubscribers(): Promise<Subscriber[]> {
+    return db.select().from(subscribers)
+      .where(and(eq(subscribers.sequenceOptIn, true), eq(subscribers.unsubscribed, false)));
+  }
+
+  async updateSubscriberSequenceState(id: number, step: number): Promise<void> {
+    await db.update(subscribers)
+      .set({ sequenceStep: step, lastSequenceSentAt: new Date() })
+      .where(eq(subscribers.id, id));
+  }
+
+  async listSequenceEmails(activeOnly = false): Promise<SequenceEmail[]> {
+    if (activeOnly) {
+      return db.select().from(sequenceEmails)
+        .where(eq(sequenceEmails.active, true))
+        .orderBy(asc(sequenceEmails.dayOffset), asc(sequenceEmails.id));
+    }
+    return db.select().from(sequenceEmails)
+      .orderBy(asc(sequenceEmails.dayOffset), asc(sequenceEmails.id));
+  }
+
+  async createSequenceEmail(data: InsertSequenceEmail): Promise<SequenceEmail> {
+    const [row] = await db.insert(sequenceEmails).values(data).returning();
+    return row;
+  }
+
+  async updateSequenceEmail(id: number, updates: Partial<InsertSequenceEmail>): Promise<SequenceEmail | undefined> {
+    const [row] = await db.update(sequenceEmails).set(updates).where(eq(sequenceEmails.id, id)).returning();
+    return row;
+  }
+
+  async deleteSequenceEmail(id: number): Promise<void> {
+    await db.delete(sequenceEmails).where(eq(sequenceEmails.id, id));
+  }
+
+  async countSequenceEmails(): Promise<number> {
+    const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(sequenceEmails);
+    return row?.count ?? 0;
+  }
+
+  async listLeads(): Promise<Lead[]> {
+    return db.select().from(leads).orderBy(desc(leads.createdAt));
+  }
+
+  async listSubscribers(): Promise<Subscriber[]> {
+    return db.select().from(subscribers).orderBy(desc(subscribers.createdAt));
   }
 }
 

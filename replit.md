@@ -1,8 +1,8 @@
-# Free Resources Lead Magnet Funnel
+# Eric Gravely — Personal Brand Site & Lead Funnel
 
 ## Overview
 
-A multi-resource lead magnet funnel for sales professionals. Visitors browse a gallery of free resources, pick one, provide their email (and optional phone), then receive it via email. Admins manage the resource catalog and track conversion analytics per resource. The app is built around the Sales Coach AI mobile app and delivers resources like the Self Coaching Matrix PDF.
+Personal brand website for Eric Gravely (Sales Manager/Coach) with a lead-magnet funnel. Visitors browse free resources on /products, answer a 5-question opt-in questionnaire, provide their contact info, and receive the resource by email only (tokenized download links — no public downloads). An optional checkbox opts them into an automated nurture email sequence. Brand: ivory/near-black/gold (#C9A227); no fabricated social proof.
 
 ## User Preferences
 
@@ -12,82 +12,66 @@ Preferred communication style: Simple, everyday language.
 
 ### Frontend Architecture
 - **Framework**: React 18 with TypeScript
-- **Routing**: Wouter (lightweight React router)
-- **State Management**: TanStack React Query for server state
-- **Forms**: React Hook Form with Zod validation
-- **Styling**: Tailwind CSS with shadcn/ui component library (New York style)
-- **Build Tool**: Vite with custom plugins for Replit integration
+- **Routing**: Wouter
+- **State Management**: TanStack React Query
+- **Styling**: Tailwind CSS + custom CSS variables (--c-bg, --c-fg, --c-accent, etc.) with light/dark themes; shadcn/ui available
+- **Build Tool**: Vite
 
 Pages under `client/src/pages/`:
-- Landing page (`/`) — Two-step: resource card gallery → contact form (email + optional phone)
-- Thank you page (`/thanks?resource=<name>`) — Post-submission confirmation, shows resource name
-- Unsubscribe page (`/unsubscribe`) — Token-validated email preference management
-- Admin panel (`/admin`) — Resource CRUD + per-resource analytics dashboard
+- Home (`/`), About (`/about`), Coaching (`/coaching`) — brand/marketing pages
+- Products (`/products`) — resource cards with multi-step questionnaire (auto-advance selects, progress bar), contact step with nurture-sequence opt-in checkbox (unchecked by default), and view-only preview lightbox (renders `previewImages` when present)
+- Thank you (`/thank-you`), Unsubscribe (`/unsubscribe`)
+- Admin (`/admin`) — three tabs: Signups (expandable questionnaire answers), Email Sequence (CRUD editor), Questions (per-resource questionnaire editor)
 
 ### Backend Architecture
-- **Runtime**: Node.js with Express
-- **Language**: TypeScript (ESM modules)
-- **API Pattern**: RESTful JSON API under `/api/` prefix
-- **Build**: esbuild for production bundling
+- **Runtime**: Node.js with Express, TypeScript ESM
+- **API Pattern**: RESTful JSON API under `/api/`
 
 Key API endpoints:
-- `GET /api/lead-magnets` — List active lead magnets (for visitors)
-- `POST /api/lead-magnets/:id/view` — Increment view count (fired when card renders)
-- `POST /api/lead` — Submit lead (email + optional phone + leadMagnetId + optional questionnaire)
+- `POST /api/subscribe` — Main funnel endpoint: accepts email, firstName, leadMagnetId, questionnaireAnswers, sequenceOptIn. Creates subscriber + lead, sends delivery email with tokenized download link.
+- `GET /api/download?lm=&email=&token=` — HMAC-validated download; refuses unsubscribed users, missing files, bad tokens. Files live in `server/private/downloads/` (outside web root).
 - `GET /api/unsubscribe` — Token-validated unsubscribe
-- `GET /api/analytics` — Per-resource stats (views, submissions, conversion rate)
-- `GET /api/admin/lead-magnets` — All lead magnets including inactive (admin)
-- `POST /api/admin/lead-magnets` — Create new resource
-- `PATCH /api/admin/lead-magnets/:id` — Update/toggle resource
+- `GET /api/lead-magnets` — Active resources (public)
+- `GET /api/admin/leads` — Signups joined with subscriber state + resource title
+- `GET/PATCH /api/admin/lead-magnets` — Resource management incl. questionnaireFields editing
+- `GET/POST/PATCH/DELETE /api/admin/sequence-emails` — Nurture sequence CRUD
+
+### Nurture Sequence
+- `server/sequence.ts` — scheduler started from `server/index.ts`; ticks every 10 min (first pass 15s after boot), max 25 sends/run, 1 email per subscriber per tick.
+- Anchor: `subscribers.sequenceOptInAt`; `sequenceStep` = index into active sequence emails ordered by dayOffset asc, id asc. Failed sends do NOT advance the step (retried next tick).
+- Seeded with 4 default emails (day 1/3/5/7) only when the table is empty; fully editable in /admin.
 
 ### Data Layer
-- **ORM**: Drizzle ORM with Zod schema integration
-- **Database**: PostgreSQL (configured via DATABASE_URL)
-- **Schema Location**: `shared/schema.ts` — Shared between frontend and backend
-- **Storage**: `DbStorage` class in `server/storage.ts` (PostgreSQL-backed)
-- **Seed**: `server/seed.ts` runs on startup to ensure Self Coaching Matrix exists
+- **ORM**: Drizzle ORM + drizzle-zod; schema in `shared/schema.ts`; `DbStorage` in `server/storage.ts`
+- **Seed**: `server/seed.ts` runs on startup (products, default 5-question questionnaire backfill, sequence emails)
 
 Data models:
-- `lead_magnets`: id, title, description, resourceUrl, deliveryMethod, active, viewCount, submissionCount, createdAt
-- `leads`: id, email, phone, leadMagnetId (FK), questionnaireAnswers (jsonb), unsubscribed, unsubscribedAt, lastSentAt, createdAt
+- `lead_magnets`: id, title, description, productType (download|external), resourceUrl, externalUrl, buttonLabel, iconPath, deliveryMethod, active, viewCount, submissionCount, questionnaireFields (jsonb: id/label/required/type("text"|"select")/options), previewImages (jsonb string[]), nextSteps, createdAt
+- `subscribers`: id, email, firstName, tag, unsubscribed, sequenceOptIn, sequenceOptInAt, sequenceStep, lastSequenceSentAt, createdAt
+- `leads`: id, email, leadMagnetId (FK), questionnaireAnswers (jsonb), unsubscribed, createdAt
+- `sequence_emails`: id, dayOffset, subject, body (plain text, {{first_name}} personalization), active, createdAt
 
 ### Email Delivery
-- **Service**: Resend (via Replit Connectors integration)
-- **Authentication**: Dynamic credential fetching from Replit Connectors API (never cached)
-- **Templates**: Dynamic per lead magnet (subject, body, resource link from DB record)
-- **Features**: Unsubscribe link generation using SHA256 token validation
+- **Service**: Resend via Replit Connectors (dynamic credential fetch, never cached) in `server/email.ts`
+- **Delivery is email-only**: download links are HMAC tokens (`generateDownloadToken`, keyed by UNSUBSCRIBE_SECRET) pointing at /api/download
+- All senders check Resend's `{error}` response — failures surface to the caller instead of silently claiming success
 
 ### Security Considerations
-- Unsubscribe tokens generated via SHA256 hash of email + UNSUBSCRIBE_SECRET
-- Email validation using Zod schemas
-- Admin endpoints unauthenticated (by design, no auth in scope)
-- Graceful error handling to prevent server crashes
+- Unsubscribe: SHA256(email + UNSUBSCRIBE_SECRET); downloads: HMAC-SHA256; both compared with timingSafeEqual
+- Resource files in `server/private/downloads/` — not web-accessible
+- Admin endpoints and /admin page are UNAUTHENTICATED (original design; auth proposed as follow-up)
+
+## Known Setup Gaps (require user action)
+- **Resend connection broken**: the connector reports healthy but Resend rejects the API key (401 "API key is invalid"). Also `from_email` is a yahoo.com address, which Resend cannot send from without a verified domain. User must reconnect Resend with a valid key + verified sender.
+- **Resource files missing**: `server/private/downloads/` contains no files. The funnel returns 503 "not available yet" until the user uploads `ask-close-playbook.pdf` and `salesrep-coaching-tool.xlsx`.
+- **Preview images**: `previewImages` is null for all products (can be generated once files are uploaded); preview UI hides gracefully.
 
 ## External Dependencies
-
-### Third-Party Services
-- **Resend**: Transactional email delivery (connected via Replit Connectors)
-- **PostgreSQL**: Primary database (provisioned via Replit)
+- **Resend**: Transactional email (Replit Connectors)
+- **PostgreSQL**: Primary database (Replit-provisioned)
+- **ConvertKit** (optional): tag sync in `server/convertkit.ts`, skipped when not configured
 
 ### Required Environment Variables
-- `DATABASE_URL` — PostgreSQL connection string
-- `RESEND_API_KEY` — Email service API key (via Replit Connectors)
-- `FROM_EMAIL` — Sender email address (via Replit Connectors)
-- `APP_STORE_URL` — iOS app download link
-- `MATRIX_URL` — Self Coaching Matrix resource URL (used in seed)
-- `UNSUBSCRIBE_SECRET` — Secret for generating unsubscribe tokens
-
-### Optional Environment Variables
-- `PRO_PRICE` — Pro subscription price (default: 4.99)
-- `FUTURE_PRICE` — Future price for scarcity messaging (default: 14.99)
-- `PRICE_INCREASE_DATE` — Date for price increase (YYYY-MM-DD format)
-- `SUPPORT_EMAIL` — Customer support email
-
-### Key NPM Dependencies
-- Express for HTTP server
-- Drizzle ORM + drizzle-zod for database operations
-- Resend for email delivery
-- React + Vite for frontend
-- shadcn/ui + Radix UI for component library
-- TanStack React Query for data fetching
-- Zod for schema validation
+- `DATABASE_URL`, `SESSION_SECRET`, `UNSUBSCRIBE_SECRET` (falls back to a default — should be set in production)
+- `MATRIX_URL` — legacy resource URL
+- Resend credentials come from the Replit Connector, not env vars

@@ -18,6 +18,8 @@ export const leadMagnets = pgTable("lead_magnets", {
   viewCount: integer("view_count").notNull().default(0),
   submissionCount: integer("submission_count").notNull().default(0),
   questionnaireFields: jsonb("questionnaire_fields"),
+  // View-only preview images shown on the site (array of public image paths)
+  previewImages: jsonb("preview_images"),
   nextSteps: text("next_steps"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -41,6 +43,20 @@ export const subscribers = pgTable("subscribers", {
   tag: text("tag").notNull().default("newsletter"),
   unsubscribed: boolean("unsubscribed").notNull().default(false),
   unsubscribedAt: timestamp("unsubscribed_at"),
+  // Email sequence state
+  sequenceOptIn: boolean("sequence_opt_in").notNull().default(false),
+  sequenceOptInAt: timestamp("sequence_opt_in_at"),
+  sequenceStep: integer("sequence_step").notNull().default(0),
+  lastSequenceSentAt: timestamp("last_sequence_sent_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const sequenceEmails = pgTable("sequence_emails", {
+  id: serial("id").primaryKey(),
+  dayOffset: integer("day_offset").notNull(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  active: boolean("active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -48,6 +64,8 @@ export const questionnaireFieldSchema = z.object({
   id: z.string(),
   label: z.string(),
   required: z.boolean().default(false),
+  type: z.enum(["text", "select"]).default("text"),
+  options: z.array(z.string()).optional(),
 });
 
 export type QuestionnaireField = z.infer<typeof questionnaireFieldSchema>;
@@ -59,6 +77,7 @@ export const insertLeadMagnetSchema = createInsertSchema(leadMagnets).omit({
   createdAt: true,
 }).extend({
   questionnaireFields: z.array(questionnaireFieldSchema).optional(),
+  previewImages: z.array(z.string()).optional().nullable(),
   nextSteps: z.string().optional(),
   externalUrl: z.string().url().optional().nullable(),
   buttonLabel: z.string().optional().nullable(),
@@ -82,11 +101,25 @@ export const insertSubscriberSchema = createInsertSchema(subscribers).omit({
   id: true,
   unsubscribed: true,
   unsubscribedAt: true,
+  sequenceOptIn: true,
+  sequenceOptInAt: true,
+  sequenceStep: true,
+  lastSequenceSentAt: true,
   createdAt: true,
 }).extend({
   email: z.string().email("Please enter a valid email address"),
   firstName: z.string().min(1, "First name is required").optional(),
   tag: z.string().default("newsletter"),
+});
+
+export const insertSequenceEmailSchema = createInsertSchema(sequenceEmails).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  dayOffset: z.number().int().min(0, "Day must be 0 or later"),
+  subject: z.string().min(1, "Subject is required"),
+  body: z.string().min(1, "Body is required"),
+  active: z.boolean().default(true),
 });
 
 export type LeadMagnet = typeof leadMagnets.$inferSelect;
@@ -95,3 +128,5 @@ export type Lead = typeof leads.$inferSelect;
 export type InsertLead = z.infer<typeof insertLeadSchema>;
 export type Subscriber = typeof subscribers.$inferSelect;
 export type InsertSubscriber = z.infer<typeof insertSubscriberSchema>;
+export type SequenceEmail = typeof sequenceEmails.$inferSelect;
+export type InsertSequenceEmail = z.infer<typeof insertSequenceEmailSchema>;
