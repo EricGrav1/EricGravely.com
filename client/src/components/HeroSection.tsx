@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { ArrowDown } from "lucide-react";
 import { site } from "@/config/site";
+import { SocialIcons } from "@/components/SocialIcons";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -26,7 +27,7 @@ export function HeroSection() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.1 }}
-          className="lg:hidden flex justify-center mb-10"
+          className="lg:hidden flex flex-col items-center mb-10"
         >
           <div
             className="w-32 h-32 sm:w-40 sm:h-40 rounded-full overflow-hidden"
@@ -42,6 +43,7 @@ export function HeroSection() {
               style={{ objectPosition: "center 12%" }}
             />
           </div>
+          <SocialIcons className="justify-center mt-4" />
         </motion.div>
 
         {/* Desktop layout: content left, photo+badges right (top-aligned) */}
@@ -129,6 +131,8 @@ export function HeroSection() {
                 style={{ objectPosition: "center 12%" }}
               />
             </div>
+
+            <SocialIcons />
 
             {/* Stat badges — below photo, never overlapping */}
             <div className="flex gap-3">

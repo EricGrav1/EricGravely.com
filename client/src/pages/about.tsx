@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BrandLogo } from "@/components/BrandLogo";
+import { SocialIcons } from "@/components/SocialIcons";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -87,7 +88,7 @@ export default function About() {
                 initial={{ opacity: 0, scale: 0.97 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                className="flex justify-center lg:justify-end"
+                className="flex flex-col items-center lg:items-end"
               >
                 <div
                   className="w-64 h-64 lg:w-72 lg:h-72 rounded-full overflow-hidden"
@@ -103,6 +104,7 @@ export default function About() {
                     style={{ objectPosition: "center 12%" }}
                   />
                 </div>
+                <SocialIcons className="mt-5" />
               </motion.div>
             </div>
           </div>

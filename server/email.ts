@@ -213,7 +213,7 @@ export async function sendLeadMagnetEmail(
 
     const { error } = await client.emails.send({
       from: fromEmail,
-      reply_to: REPLY_TO,
+      replyTo: REPLY_TO,
       to: email,
       subject: `Your copy of ${productName} is inside`,
       html: leadMagnetEmailHtml(email, firstName, downloadUrl, siteBaseUrl, productName),
@@ -273,7 +273,7 @@ export async function sendSequenceEmail(
 
     const { error } = await client.emails.send({
       from: fromEmail,
-      reply_to: REPLY_TO,
+      replyTo: REPLY_TO,
       to: email,
       subject: personalize(subject, firstName),
       html: sequenceEmailHtml(email, personalize(body, firstName), siteBaseUrl),
@@ -298,7 +298,7 @@ export async function sendNewsletterConfirmationEmail(
 
     const { error } = await client.emails.send({
       from: fromEmail,
-      reply_to: REPLY_TO,
+      replyTo: REPLY_TO,
       to: email,
       subject: `You're in — ${BRAND_NAME}`,
       html: newsletterEmailHtml(firstName, siteBaseUrl),
