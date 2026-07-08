@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "wouter";
-import { ArrowDown, Youtube } from "lucide-react";
+import { ArrowDown } from "lucide-react";
 import { site } from "@/config/site";
 
 const fadeUp = {
@@ -65,7 +65,7 @@ export function HeroSection() {
               data-testid="text-hero-headline"
             >
               {site.hero.headlinePrefix}{" "}
-              <span className="gold-underline">{site.hero.headlineHighlight}</span>{" "}
+              <span className="gold-underline">{site.hero.headlineHighlight}</span>
               {site.hero.headlineSuffix}
             </motion.h1>
 
@@ -88,23 +88,22 @@ export function HeroSection() {
               variants={fadeUp}
               className="flex flex-col sm:flex-row gap-4"
             >
-              <Link
-                href={site.hero.ctaTarget}
+              <a
+                href={site.hero.ctaUrl}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="btn-accent px-6 py-3.5 rounded-lg text-base font-bold text-center"
                 data-testid="button-hero-cta"
               >
                 {site.hero.ctaText} →
-              </Link>
-              <a
-                href={site.hero.secondaryCtaUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-outline-accent px-6 py-3.5 rounded-lg text-base text-center flex items-center justify-center gap-2"
-                data-testid="link-hero-youtube"
-              >
-                <Youtube className="w-4 h-4" />
-                {site.hero.secondaryCta}
               </a>
+              <Link
+                href={site.hero.secondaryCtaTarget}
+                className="btn-outline-accent px-6 py-3.5 rounded-lg text-base text-center flex items-center justify-center gap-2"
+                data-testid="link-hero-secondary"
+              >
+                {site.hero.secondaryCta}
+              </Link>
             </motion.div>
           </div>
 

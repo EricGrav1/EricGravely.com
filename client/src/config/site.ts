@@ -5,14 +5,14 @@ export const site = {
 
   hero: {
     badge: "Sales Manager · Coach · Content Creator",
-    headlinePrefix: "I Help Sales Reps",
-    headlineHighlight: "Become",
-    headlineSuffix: "Top Performers",
-    subheadline: "10+ years in the field. Went from rep to trainer to manager. Now I share everything I've learned to help you build your sales career — and lead teams that actually win.",
-    ctaText: "Free Resources",
-    ctaTarget: "/products",
-    secondaryCta: "Watch on YouTube",
-    secondaryCtaUrl: "https://www.youtube.com/@EricGravely",
+    headlinePrefix: "They promoted you because you could sell. Not because you could",
+    headlineHighlight: "lead",
+    headlineSuffix: ".",
+    subheadline: "I went from rep to trainer to sales manager, and learned it the hard way: closing deals and coaching closers are two different jobs. I help sales leaders master the second one — developing reps, running the number, and building a team that wins without you selling for them.",
+    ctaText: "Book a Discovery Call",
+    ctaUrl: "https://calendly.com/ericgrav1/30min",
+    secondaryCta: "Get the Free Sales Playbook",
+    secondaryCtaTarget: "/products",
   },
 
   stats: [
