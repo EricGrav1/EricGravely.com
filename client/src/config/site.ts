@@ -10,7 +10,7 @@ export const site = {
     headlineSuffix: "Top Performers",
     subheadline: "10+ years in the field. Went from rep to trainer to manager. Now I share everything I've learned to help you build your sales career — and lead teams that actually win.",
     ctaText: "Free Resources",
-    ctaTarget: "#get-the-playbook",
+    ctaTarget: "/products",
     secondaryCta: "Watch on YouTube",
     secondaryCtaUrl: "https://www.youtube.com/@EricGravely",
   },

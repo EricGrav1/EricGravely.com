@@ -2,7 +2,6 @@ import { SiteNav } from "@/components/SiteNav";
 import { HeroSection } from "@/components/HeroSection";
 import { StatsBar } from "@/components/StatsBar";
 import { YouTubeSection } from "@/components/YouTubeSection";
-import { LeadCaptureSection } from "@/components/LeadCaptureSection";
 import { CoachingSection } from "@/components/CoachingSection";
 import { SiteFooter } from "@/components/SiteFooter";
 
@@ -13,7 +12,6 @@ export default function Home() {
       <HeroSection />
       <StatsBar />
       <YouTubeSection />
-      <LeadCaptureSection />
       <CoachingSection />
       <SiteFooter />
     </div>

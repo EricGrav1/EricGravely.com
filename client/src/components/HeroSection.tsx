@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 import { ArrowDown, Youtube } from "lucide-react";
 import { site } from "@/config/site";
 
@@ -12,12 +13,6 @@ const fadeUp = {
 };
 
 export function HeroSection() {
-  const handleScrollToPlaybook = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const el = document.getElementById("get-the-playbook");
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
   return (
     <section
       className="relative min-h-screen flex flex-col justify-center overflow-hidden"
@@ -93,14 +88,13 @@ export function HeroSection() {
               variants={fadeUp}
               className="flex flex-col sm:flex-row gap-4"
             >
-              <a
-                href="#get-the-playbook"
-                onClick={handleScrollToPlaybook}
+              <Link
+                href={site.hero.ctaTarget}
                 className="btn-accent px-6 py-3.5 rounded-lg text-base font-bold text-center"
                 data-testid="button-hero-cta"
               >
                 {site.hero.ctaText} →
-              </a>
+              </Link>
               <a
                 href={site.hero.secondaryCtaUrl}
                 target="_blank"
