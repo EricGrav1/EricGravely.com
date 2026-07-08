@@ -297,7 +297,7 @@ export const site = {
 
   footer: {
     tagline: "Sales. Coaching. Leadership.",
-    newsletterTitle: "Stay in the Loop",
+    newsletterTitle: "Subscribe to the email list!",
     newsletterDesc: "Sales coaching and leadership insights, straight to your inbox. No fluff.",
     newsletterPlaceholder: "your@email.com",
     newsletterCta: "Subscribe →",
