@@ -52,7 +52,7 @@ Data models:
 - `sequence_emails`: id, dayOffset, subject, body (plain text, {{first_name}} personalization), active, createdAt
 
 ### Email Delivery
-- **Service**: Resend via Replit Connectors (dynamic credential fetch, never cached) in `server/email.ts`
+- **Service**: Resend in `server/email.ts`. Credentials: prefers `RESEND_API_KEY` + `RESEND_FROM_EMAIL` secrets/env (current setup — sender "Eric Gravely <eric@ericgravely.com>", domain ericgravely.com verified for sending); falls back to the Resend Replit Connector only when RESEND_API_KEY is unset (the connector still holds a stale invalid key — ignore it)
 - **Delivery is email-only**: download links are HMAC tokens (`generateDownloadToken`, keyed by UNSUBSCRIBE_SECRET) pointing at /api/download
 - All senders check Resend's `{error}` response — failures surface to the caller instead of silently claiming success
 
@@ -62,8 +62,8 @@ Data models:
 - Admin auth (`server/adminAuth.ts`): password login against `ADMIN_PASSWORD` secret (SHA256 + timingSafeEqual), express-session with connect-pg-simple Postgres store ("session" table, auto-created) mounted only on `/api/admin`; session regenerated on login; cookie httpOnly/lax/secure-in-prod; in-memory rate limit 10 attempts/15min/IP; all 7 admin data routes behind `requireAdmin`; login/logout/session endpoints open (session returns only a boolean). Client gate in admin.tsx + global QueryCache handler flips back to login screen if an admin query gets a 401 (expired session).
 
 ## Known Setup Gaps (require user action)
-- **Resend connection broken**: the connector reports healthy but Resend rejects the API key (401 "API key is invalid"). Also `from_email` is a yahoo.com address, which Resend cannot send from without a verified domain. User must reconnect Resend with a valid key + verified sender.
 - **Resource files missing**: `server/private/downloads/` contains no files. The funnel returns 503 "not available yet" until the user uploads `ask-close-playbook.pdf` and `salesrep-coaching-tool.xlsx`.
+- **Resend "Receiving MX" DNS record pending** (non-blocking — sending verified & tested working July 2026). User should also rotate the Resend API key eventually (it was pasted in chat once) and update the RESEND_API_KEY secret.
 - **Preview images**: `previewImages` is null for all products (can be generated once files are uploaded); preview UI hides gracefully.
 
 ## External Dependencies
