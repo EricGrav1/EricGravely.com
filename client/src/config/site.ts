@@ -182,7 +182,7 @@ export const site = {
     pageHeroTitleHighlight: "That Works",
     pageHeroDescription: "Personalized 1-on-1 coaching for sales reps and emerging managers who want to grow fast, hit their numbers, and build a career worth having.",
     pageHeroCta: "Book a Free Discovery Call",
-    calendlyUrl: "https://calendly.com/ericgravely",
+    calendlyUrl: "https://calendly.com/ericgrav1/30min",
 
     curriculumLabel: "What We Cover",
     curriculumTitle: "Built Around Where You Are Right Now",
