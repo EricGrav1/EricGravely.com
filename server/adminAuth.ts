@@ -77,8 +77,13 @@ export function setupAdminAuth(app: Express): void {
     }
 
     attempts.delete(ip);
-    req.session.isAdmin = true;
-    return res.json({ success: true });
+    req.session.regenerate((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Login failed. Try again." });
+      }
+      req.session.isAdmin = true;
+      return res.json({ success: true });
+    });
   });
 
   app.post("/api/admin/logout", (req: Request, res: Response) => {

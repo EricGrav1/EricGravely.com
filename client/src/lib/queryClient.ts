@@ -1,4 +1,4 @@
-import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { QueryClient, QueryFunction, QueryCache } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -42,6 +42,19 @@ export const getQueryFn: <T>(options: {
   };
 
 export const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: (error, query) => {
+      const key = String(query.queryKey[0] ?? "");
+      if (
+        key.startsWith("/api/admin") &&
+        key !== "/api/admin/session" &&
+        error instanceof Error &&
+        error.message.startsWith("401")
+      ) {
+        queryClient.setQueryData(["/api/admin/session"], { authenticated: false });
+      }
+    },
+  }),
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),

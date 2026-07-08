@@ -59,7 +59,7 @@ Data models:
 ### Security Considerations
 - Unsubscribe: SHA256(email + UNSUBSCRIBE_SECRET); downloads: HMAC-SHA256; both compared with timingSafeEqual
 - Resource files in `server/private/downloads/` — not web-accessible
-- Admin endpoints and /admin page are UNAUTHENTICATED (original design; auth proposed as follow-up)
+- Admin auth (`server/adminAuth.ts`): password login against `ADMIN_PASSWORD` secret (SHA256 + timingSafeEqual), express-session with connect-pg-simple Postgres store ("session" table, auto-created) mounted only on `/api/admin`; session regenerated on login; cookie httpOnly/lax/secure-in-prod; in-memory rate limit 10 attempts/15min/IP; all 7 admin data routes behind `requireAdmin`; login/logout/session endpoints open (session returns only a boolean). Client gate in admin.tsx + global QueryCache handler flips back to login screen if an admin query gets a 401 (expired session).
 
 ## Known Setup Gaps (require user action)
 - **Resend connection broken**: the connector reports healthy but Resend rejects the API key (401 "API key is invalid"). Also `from_email` is a yahoo.com address, which Resend cannot send from without a verified domain. User must reconnect Resend with a valid key + verified sender.
@@ -73,5 +73,6 @@ Data models:
 
 ### Required Environment Variables
 - `DATABASE_URL`, `SESSION_SECRET`, `UNSUBSCRIBE_SECRET` (falls back to a default — should be set in production)
+- `ADMIN_PASSWORD` — admin panel login (set as a secret)
 - `MATRIX_URL` — legacy resource URL
 - Resend credentials come from the Replit Connector, not env vars
