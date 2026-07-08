@@ -8,6 +8,7 @@ const UNSUBSCRIBE_SECRET = process.env.UNSUBSCRIBE_SECRET || "default-secret-cha
 // Brand constants — single source of truth for email identity
 const BRAND_NAME = "Eric Gravely";
 const BRAND_TAGLINE = "Coach. Develop. Transform.";
+const REPLY_TO = "eric@ericgravely.com";
 const BRAND_URL = getSiteBaseUrl(); // used only when no request context available
 
 async function getCredentials() {
@@ -212,6 +213,7 @@ export async function sendLeadMagnetEmail(
 
     const { error } = await client.emails.send({
       from: fromEmail,
+      reply_to: REPLY_TO,
       to: email,
       subject: `Your copy of ${productName} is inside`,
       html: leadMagnetEmailHtml(email, firstName, downloadUrl, siteBaseUrl, productName),
@@ -271,6 +273,7 @@ export async function sendSequenceEmail(
 
     const { error } = await client.emails.send({
       from: fromEmail,
+      reply_to: REPLY_TO,
       to: email,
       subject: personalize(subject, firstName),
       html: sequenceEmailHtml(email, personalize(body, firstName), siteBaseUrl),
@@ -295,6 +298,7 @@ export async function sendNewsletterConfirmationEmail(
 
     const { error } = await client.emails.send({
       from: fromEmail,
+      reply_to: REPLY_TO,
       to: email,
       subject: `You're in — ${BRAND_NAME}`,
       html: newsletterEmailHtml(firstName, siteBaseUrl),
