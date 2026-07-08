@@ -1,1 +1,2 @@
 - [Gold rebrand tokens](gold-rebrand.md) — site uses gold #C9A227 (light) / #D4AF37 (dark) as --c-accent; all red (#C8102E) has been removed
+- [Resend connector validation](resend-connector-validation.md) — "healthy" status doesn't mean the API key works; test against api.resend.com/domains after every (re)connect.
