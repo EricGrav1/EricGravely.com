@@ -51,7 +51,7 @@ export function HeroSection() {
           <div className="max-w-2xl">
             <motion.div initial="hidden" animate="visible" custom={0} variants={fadeUp}>
               <span className="label-track block mb-8" data-testid="text-hero-eyebrow">
-                Sales Leadership Coaching
+                Sales. Leadership. Coaching.
               </span>
             </motion.div>
 
