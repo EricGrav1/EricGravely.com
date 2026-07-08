@@ -296,7 +296,7 @@ export const site = {
   },
 
   footer: {
-    tagline: "Helping sales reps grow, perform, and lead.",
+    tagline: "Sales. Coaching. Leadership.",
     newsletterTitle: "Stay in the Loop",
     newsletterDesc: "Sales coaching and leadership insights, straight to your inbox. No fluff.",
     newsletterPlaceholder: "your@email.com",
