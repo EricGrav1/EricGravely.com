@@ -13,6 +13,7 @@ const navLinks = [
 export function SiteNav() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
   const [location] = useLocation();
   const { theme, toggle } = useTheme();
 
@@ -40,12 +41,21 @@ export function SiteNav() {
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Wordmark */}
             <Link href="/" className="flex items-center group" data-testid="link-logo">
-              <span
-                className="font-display font-bold text-lg tracking-tight"
-                style={{ color: "var(--c-fg)" }}
-              >
-                {site.name}
-              </span>
+              {logoFailed ? (
+                <span
+                  className="font-display font-bold text-lg tracking-tight"
+                  style={{ color: "var(--c-fg)" }}
+                >
+                  {site.name}
+                </span>
+              ) : (
+                <img
+                  src="/nav-logo.png"
+                  alt={site.name}
+                  onError={() => setLogoFailed(true)}
+                  className="h-9 md:h-11 w-auto dark:invert"
+                />
+              )}
             </Link>
 
             {/* Desktop Nav */}

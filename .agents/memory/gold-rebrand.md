@@ -14,10 +14,10 @@ description: Color system and font decisions after full visual rebrand from red 
 ## Signature element
 `.gold-underline` — CSS ::after pseudo adds a 2px gold line 4px below baseline. Used on one hero word and section title highlights. NOT italic, NOT gold-colored text.
 
-## Footer logo
-`/brand-logo.png` not yet uploaded. Footer `<img>` has onError fallback to Syne text wordmark. In light mode: mix-blend-mode multiply (ivory bg disappears). In dark mode: invert(0.95) + mix-blend-mode screen.
+## Logo images
+Both brand logos are live: footer/About uses `/brand-logo.png` (black script on ivory, adapted via blend modes: multiply in light, invert+screen in dark); nav uses `/nav-logo.png` (transparent signature, adapted via `dark:invert`). Both `<img>`s have onError fallback to text wordmark.
 
-**Why:** User brand logo is black script on ivory — blend modes let it adapt without needing two separate image files.
+**Why:** User brand logo is single-color script — filters/blend modes let one image file adapt to both themes. Resize uploads to ~2x display size (ImageMagick, keep full alpha — PNG8 palette degrades edges).
 
 ## Dark mode backgrounds
 Warm near-black `#0F0F0E` (not blue-tinted). Old value `#0A0F1E` was removed — was hardcoded in home.tsx and caused dark/light mode inconsistency on hero section.
