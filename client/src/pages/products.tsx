@@ -311,8 +311,8 @@ export default function Products() {
                 className="font-display text-4xl md:text-5xl font-bold mb-5 leading-tight"
                 style={{ color: "var(--c-fg)" }}
               >
-                I know what works because I wasn't always good — I just{" "}
-                <span className="gold-underline">never stopped trying to get better.</span>
+                I wasn't always good — I just never stopped trying to get better.{" "}
+                <span className="gold-underline">That's why I know what works.</span>
               </h1>
               <p className="text-lg leading-relaxed" style={{ color: "var(--c-fg-55)" }}>
                 Free frameworks and tools I use with the reps and managers I coach. Take them, use them, run better calls this week.
