@@ -5,9 +5,9 @@ export const site = {
 
   hero: {
     badge: "Sales Manager · Coach · Content Creator",
-    headlinePrefix: "They promoted you because you could sell. Not because you could",
-    headlineHighlight: "lead",
-    headlineSuffix: ".",
+    headlinePrefix: "Most companies don't invest in training their sales managers. They promote you, hand you a team and a quota, and leave you to",
+    headlineHighlight: "figure it out.",
+    headlineSuffix: "",
     subheadline: "I went from rep to trainer to sales manager, and learned it the hard way: closing deals and coaching closers are two different jobs. I help sales leaders master the second one — developing reps, running the number, and building a team that wins without you selling for them.",
     ctaText: "Book a Discovery Call",
     ctaUrl: "https://calendly.com/ericgrav1/30min",
