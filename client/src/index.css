@@ -264,4 +264,20 @@
     filter: invert(0.95) brightness(0.92);
     mix-blend-mode: screen;
   }
+
+  /* ── Social feed marquee ── */
+  @keyframes social-feed-scroll {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .social-feed-marquee {
+    display: flex;
+    width: max-content;
+    animation: social-feed-scroll 28s linear infinite;
+  }
+
+  .social-feed-marquee:hover {
+    animation-play-state: paused;
+  }
 }

@@ -3,6 +3,7 @@ import { HeroSection } from "@/components/HeroSection";
 import { StatsBar } from "@/components/StatsBar";
 import { YouTubeSection } from "@/components/YouTubeSection";
 import { CoachingSection } from "@/components/CoachingSection";
+import { SocialFeedStrip } from "@/components/SocialFeedStrip";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export default function Home() {
@@ -13,6 +14,7 @@ export default function Home() {
       <StatsBar />
       <YouTubeSection />
       <CoachingSection />
+      <SocialFeedStrip />
       <SiteFooter />
     </div>
   );
