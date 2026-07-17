@@ -11,7 +11,7 @@ export const site = {
     subheadline: "I went from rep to trainer to sales manager, and learned it the hard way: closing deals and coaching closers are two different jobs. I help sales leaders master the second one — developing reps, running the number, and building a team that wins without you selling for them.",
     ctaText: "Book a Discovery Call",
     ctaUrl: "https://calendly.com/ericgrav1/30min",
-    secondaryCta: "Get the Free Sales Playbook",
+    secondaryCta: "Free Resources",
     secondaryCtaTarget: "/products",
   },
 
