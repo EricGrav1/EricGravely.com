@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Youtube, Linkedin, Loader2 } from "lucide-react";
-import { SiX, SiInstagram } from "react-icons/si";
+import { SiX, SiInstagram, SiGithub } from "react-icons/si";
 import { Link } from "wouter";
 import { site } from "@/config/site";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -41,6 +41,7 @@ export function SiteFooter() {
     { href: social.instagram, Icon: SiInstagram,  label: "Instagram"  },
     { href: social.linkedin,  Icon: Linkedin,     label: "LinkedIn"   },
     { href: social.twitter,   Icon: SiX,          label: "X (Twitter)" },
+    { href: "https://github.com/EricGrav1/EricGrav1/blob/main/README.md", Icon: SiGithub, label: "GitHub" },
   ];
 
   return (
