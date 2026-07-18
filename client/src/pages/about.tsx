@@ -91,7 +91,7 @@ export default function About() {
                 className="flex flex-col items-center lg:items-end"
               >
                 <div
-                  className="w-64 h-80 lg:w-72 lg:h-96 rounded-2xl overflow-hidden"
+                  className="w-72 h-80 lg:w-80 lg:h-96 rounded-2xl overflow-hidden"
                   style={{
                     border: "1px solid var(--c-border)",
                     boxShadow: "0 8px 40px rgba(0,0,0,0.10)",

@@ -30,7 +30,7 @@ export function HeroSection() {
           className="lg:hidden flex flex-col items-center mb-10"
         >
           <div
-            className="w-36 h-44 sm:w-44 sm:h-56 rounded-2xl overflow-hidden"
+            className="w-44 h-52 sm:w-52 sm:h-60 rounded-2xl overflow-hidden"
             style={{
               border: "1px solid var(--c-border)",
               boxShadow: "0 4px 20px rgba(0,0,0,0.10)",
@@ -118,7 +118,7 @@ export function HeroSection() {
           >
             {/* Photo — smaller, fully visible */}
             <div
-              className="w-52 h-64 rounded-2xl overflow-hidden flex-shrink-0"
+              className="w-64 h-72 rounded-2xl overflow-hidden flex-shrink-0"
               style={{
                 border: "1px solid var(--c-border)",
                 boxShadow: "0 6px 32px rgba(0,0,0,0.10)",
