@@ -2,6 +2,8 @@ import type { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import { createHash, timingSafeEqual } from "crypto";
+import { sql } from "drizzle-orm";
+import { db } from "./db";
 
 declare module "express-session" {
   interface SessionData {
@@ -30,13 +32,31 @@ function passwordsMatch(supplied: string, expected: string): boolean {
   return timingSafeEqual(a, b);
 }
 
-export function setupAdminAuth(app: Express): void {
+export async function setupAdminAuth(app: Express): Promise<void> {
   const sessionSecret = process.env.SESSION_SECRET;
   if (!sessionSecret) {
     throw new Error("SESSION_SECRET is required for admin authentication");
   }
 
   app.set("trust proxy", 1);
+
+  // Create the session table ourselves. connect-pg-simple's
+  // createTableIfMissing reads table.sql relative to __dirname, which doesn't
+  // exist inside the esbuild bundle — so it silently breaks login on any
+  // fresh database in production.
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS "session" (
+        "sid" varchar NOT NULL COLLATE "default",
+        "sess" json NOT NULL,
+        "expire" timestamp(6) NOT NULL,
+        CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+      )
+    `);
+    await db.execute(sql`CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire")`);
+  } catch (err) {
+    console.error("[adminAuth] Failed to ensure session table:", err instanceof Error ? err.message : err);
+  }
 
   const PgStore = connectPgSimple(session);
   app.use(
@@ -45,7 +65,6 @@ export function setupAdminAuth(app: Express): void {
       store: new PgStore({
         conString: process.env.DATABASE_URL,
         tableName: "session",
-        createTableIfMissing: true,
       }),
       name: "admin.sid",
       secret: sessionSecret,

@@ -1,11 +1,12 @@
 import { eq, and, sql, asc, desc } from "drizzle-orm";
 import { db } from "./db";
 import {
-  leadMagnets, leads, subscribers, sequenceEmails,
+  leadMagnets, leads, subscribers, sequenceEmails, resourceFiles,
   type LeadMagnet, type InsertLeadMagnet,
   type Lead, type InsertLead,
   type Subscriber, type InsertSubscriber,
   type SequenceEmail, type InsertSequenceEmail,
+  type ResourceFile,
 } from "@shared/schema";
 
 export interface AnalyticsStat {
@@ -45,6 +46,10 @@ export interface IStorage {
   // Admin views
   listLeads(): Promise<Lead[]>;
   listSubscribers(): Promise<Subscriber[]>;
+  // Resource files (DB-backed uploads from the admin panel)
+  saveResourceFile(filename: string, mimeType: string, data: Buffer): Promise<void>;
+  getResourceFile(filename: string): Promise<ResourceFile | undefined>;
+  listResourceFilenames(): Promise<string[]>;
 }
 
 export class DbStorage implements IStorage {
@@ -204,6 +209,25 @@ export class DbStorage implements IStorage {
 
   async listSubscribers(): Promise<Subscriber[]> {
     return db.select().from(subscribers).orderBy(desc(subscribers.createdAt));
+  }
+
+  async saveResourceFile(filename: string, mimeType: string, data: Buffer): Promise<void> {
+    await db.insert(resourceFiles)
+      .values({ filename, mimeType, size: data.length, data })
+      .onConflictDoUpdate({
+        target: resourceFiles.filename,
+        set: { mimeType, size: data.length, data, createdAt: new Date() },
+      });
+  }
+
+  async getResourceFile(filename: string): Promise<ResourceFile | undefined> {
+    const [row] = await db.select().from(resourceFiles).where(eq(resourceFiles.filename, filename));
+    return row;
+  }
+
+  async listResourceFilenames(): Promise<string[]> {
+    const rows = await db.select({ filename: resourceFiles.filename }).from(resourceFiles);
+    return rows.map((r) => r.filename);
   }
 }
 

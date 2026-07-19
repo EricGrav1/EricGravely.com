@@ -62,6 +62,12 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  if (process.env.NODE_ENV === "production" && !process.env.UNSUBSCRIBE_SECRET) {
+    console.warn(
+      "[boot] UNSUBSCRIBE_SECRET is not set — download and unsubscribe links are signed with a " +
+      "publicly known default. Set it in Secrets before going live.",
+    );
+  }
   await seedDatabase();
   await registerRoutes(httpServer, app);
   startSequenceScheduler();

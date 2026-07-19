@@ -5,6 +5,8 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SocialIcons } from "@/components/SocialIcons";
+import { usePageMeta } from "@/lib/seo";
+import { site } from "@/config/site";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 28 },
@@ -35,6 +37,7 @@ const PILLARS = [
 ];
 
 export default function About() {
+  usePageMeta("About Eric Gravely — From Rep to Leader", site.description);
   return (
     <div style={{ backgroundColor: "var(--c-bg)", minHeight: "100vh" }}>
       <SiteNav />

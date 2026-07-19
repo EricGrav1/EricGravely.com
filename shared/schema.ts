@@ -1,6 +1,26 @@
-import { pgTable, serial, text, boolean, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, boolean, timestamp, integer, jsonb, customType } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+const bytea = customType<{ data: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
+
+// Resource files uploaded through the admin panel. Stored in Postgres (not on
+// disk) so they survive Replit redeploys; /api/download checks here first and
+// falls back to server/private/downloads/ on disk.
+export const resourceFiles = pgTable("resource_files", {
+  id: serial("id").primaryKey(),
+  filename: text("filename").notNull().unique(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  data: bytea("data").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type ResourceFile = typeof resourceFiles.$inferSelect;
 
 export const leadMagnets = pgTable("lead_magnets", {
   id: serial("id").primaryKey(),

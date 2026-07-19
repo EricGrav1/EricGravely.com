@@ -4,9 +4,11 @@ import { Link } from "wouter";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { site } from "@/config/site";
+import { usePageMeta } from "@/lib/seo";
 
 export default function Coaching() {
   const { coaching } = site;
+  usePageMeta("1-on-1 Sales Coaching — Eric Gravely", coaching.pageHeroDescription);
 
   return (
     <div style={{ backgroundColor: "var(--c-bg)", minHeight: "100vh" }}>

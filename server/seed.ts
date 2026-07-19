@@ -149,22 +149,28 @@ I'm rooting for you either way.`,
 
 export async function seedDatabase() {
   try {
-    for (const product of PRODUCTS) {
-      const existing = await db
-        .select()
-        .from(leadMagnets)
-        .where(eq(leadMagnets.title, product.title));
-
-      if (existing.length === 0) {
+    // Seed default products only when the table is completely empty. Products
+    // are managed in the admin panel — matching by title here would re-create
+    // a product every time it gets renamed.
+    const [{ count: productCount }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(leadMagnets);
+    if (productCount === 0) {
+      for (const product of PRODUCTS) {
         await db.insert(leadMagnets).values(product);
         console.log(`[seed] Created: ${product.title}`);
-      } else if (product.questionnaireFields && !existing[0].questionnaireFields) {
-        // Backfill default questions on existing resources that have none
-        await db
-          .update(leadMagnets)
-          .set({ questionnaireFields: product.questionnaireFields })
-          .where(eq(leadMagnets.id, existing[0].id));
-        console.log(`[seed] Added default questionnaire to: ${product.title}`);
+      }
+    } else {
+      // Backfill default questions on existing download resources that have none
+      const existing = await db.select().from(leadMagnets);
+      for (const row of existing) {
+        if (row.productType !== "external" && !row.questionnaireFields) {
+          await db
+            .update(leadMagnets)
+            .set({ questionnaireFields: DEFAULT_QUESTIONS })
+            .where(eq(leadMagnets.id, row.id));
+          console.log(`[seed] Added default questionnaire to: ${row.title}`);
+        }
       }
     }
 
