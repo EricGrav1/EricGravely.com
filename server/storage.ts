@@ -1,12 +1,12 @@
 import { eq, and, sql, asc, desc } from "drizzle-orm";
 import { db } from "./db";
 import {
-  leadMagnets, leads, subscribers, sequenceEmails, resourceFiles,
+  leadMagnets, leads, subscribers, sequenceEmails, resourceFiles, broadcasts,
   type LeadMagnet, type InsertLeadMagnet,
   type Lead, type InsertLead,
   type Subscriber, type InsertSubscriber,
   type SequenceEmail, type InsertSequenceEmail,
-  type ResourceFile,
+  type ResourceFile, type Broadcast,
 } from "@shared/schema";
 
 export interface AnalyticsStat {
@@ -34,8 +34,9 @@ export interface IStorage {
   getSubscriberByEmail(email: string): Promise<Subscriber | undefined>;
   markSubscriberUnsubscribed(email: string): Promise<void>;
   // Sequence opt-in + scheduler
-  setSequenceOptIn(email: string): Promise<void>;
+  setSequenceOptIn(email: string, audience: string): Promise<void>;
   listSequenceSubscribers(): Promise<Subscriber[]>;
+  listActiveSubscribers(): Promise<Subscriber[]>;
   updateSubscriberSequenceState(id: number, step: number): Promise<void>;
   // Sequence email CRUD
   listSequenceEmails(activeOnly?: boolean): Promise<SequenceEmail[]>;
@@ -50,6 +51,10 @@ export interface IStorage {
   saveResourceFile(filename: string, mimeType: string, data: Buffer, isPublic?: boolean): Promise<void>;
   getResourceFile(filename: string): Promise<ResourceFile | undefined>;
   listResourceFilenames(): Promise<string[]>;
+  // Broadcasts
+  createBroadcast(subject: string, body: string, totalRecipients: number): Promise<Broadcast>;
+  updateBroadcast(id: number, updates: Partial<Broadcast>): Promise<void>;
+  listBroadcasts(): Promise<Broadcast[]>;
 }
 
 export class DbStorage implements IStorage {
@@ -155,17 +160,26 @@ export class DbStorage implements IStorage {
       .where(eq(subscribers.email, email.toLowerCase()));
   }
 
-  async setSequenceOptIn(email: string): Promise<void> {
-    // Only set the opt-in timestamp the first time — re-submitting must not
-    // reset a subscriber's position in the sequence.
+  async setSequenceOptIn(email: string, audience: string): Promise<void> {
+    // First enrollment sticks: the opt-in timestamp and audience are only set
+    // once — re-submitting must not reset a subscriber's sequence position or
+    // move them to a different sequence mid-way.
     await db.update(subscribers)
-      .set({ sequenceOptIn: true, sequenceOptInAt: sql`COALESCE(${subscribers.sequenceOptInAt}, now())` })
+      .set({
+        sequenceOptIn: true,
+        sequenceOptInAt: sql`COALESCE(${subscribers.sequenceOptInAt}, now())`,
+        sequenceAudience: sql`COALESCE(${subscribers.sequenceAudience}, ${audience})`,
+      })
       .where(eq(subscribers.email, email.toLowerCase()));
   }
 
   async listSequenceSubscribers(): Promise<Subscriber[]> {
     return db.select().from(subscribers)
       .where(and(eq(subscribers.sequenceOptIn, true), eq(subscribers.unsubscribed, false)));
+  }
+
+  async listActiveSubscribers(): Promise<Subscriber[]> {
+    return db.select().from(subscribers).where(eq(subscribers.unsubscribed, false));
   }
 
   async updateSubscriberSequenceState(id: number, step: number): Promise<void> {
@@ -228,6 +242,19 @@ export class DbStorage implements IStorage {
   async listResourceFilenames(): Promise<string[]> {
     const rows = await db.select({ filename: resourceFiles.filename }).from(resourceFiles);
     return rows.map((r) => r.filename);
+  }
+
+  async createBroadcast(subject: string, body: string, totalRecipients: number): Promise<Broadcast> {
+    const [row] = await db.insert(broadcasts).values({ subject, body, totalRecipients }).returning();
+    return row;
+  }
+
+  async updateBroadcast(id: number, updates: Partial<Broadcast>): Promise<void> {
+    await db.update(broadcasts).set(updates).where(eq(broadcasts.id, id));
+  }
+
+  async listBroadcasts(): Promise<Broadcast[]> {
+    return db.select().from(broadcasts).orderBy(desc(broadcasts.createdAt));
   }
 }
 

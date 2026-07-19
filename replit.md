@@ -44,10 +44,12 @@ Key API endpoints:
 - The express-session `session` table is declared in `shared/schema.ts` (so `db:push` doesn't offer to drop it) and also created at startup in `adminAuth.ts` (connect-pg-simple's `createTableIfMissing` breaks inside the esbuild bundle).
 - `GET/POST/PATCH/DELETE /api/admin/sequence-emails` — Nurture sequence CRUD
 
-### Nurture Sequence
-- `server/sequence.ts` — scheduler started from `server/index.ts`; ticks every 10 min (first pass 15s after boot), max 25 sends/run, 1 email per subscriber per tick.
-- Anchor: `subscribers.sequenceOptInAt`; `sequenceStep` = index into active sequence emails ordered by dayOffset asc, id asc. Failed sends do NOT advance the step (retried next tick).
-- Seeded with 4 default emails (day 1/3/5/7) only when the table is empty; fully editable in /admin.
+### Nurture Sequences (two audiences) + Broadcasts
+- TWO sequences, split by `sequence_emails.audience`: "resource" (free-resource signups) and "newsletter" (footer signups). Managed as two sections in /admin → Sequence.
+- **Auto-enrollment**: every signup is enrolled in the matching sequence (no opt-in checkbox — forms show a consent disclaimer: "By submitting, you agree to receive emails from Eric Gravely"). `subscribers.sequenceAudience` records which sequence (null = legacy, treated as "resource"); first enrollment sticks — progress never resets and a later signup via the other path doesn't switch sequences.
+- `server/sequence.ts` — scheduler started from `server/index.ts`; ticks every 10 min (first pass 15s after boot), max 25 sends/run, 1 email per subscriber per tick, per-audience email ordering. Failed sends do NOT advance the step (retried next tick).
+- Seeded with 4 default resource emails (day 1/3/5/7) only when the table is empty; the newsletter series starts empty (add via /admin).
+- **Broadcasts** (`server/broadcast.ts`): one-off emails to ALL active subscribers from /admin → Broadcast. Test-send to any address first; sends throttled 600ms apart (Resend rate limit), progress persisted to the `broadcasts` table and polled by the UI; one broadcast at a time (in-memory lock). Unsubscribe footer included automatically.
 
 ### Data Layer
 - **ORM**: Drizzle ORM + drizzle-zod; schema in `shared/schema.ts`; `DbStorage` in `server/storage.ts`

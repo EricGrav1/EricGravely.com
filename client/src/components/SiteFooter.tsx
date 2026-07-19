@@ -154,6 +154,9 @@ export function SiteFooter() {
                 >
                   {status === "loading" ? <Loader2 className="w-4 h-4 animate-spin" /> : footer.newsletterCta}
                 </button>
+                <p className="text-[11px] leading-relaxed" style={{ color: "var(--c-fg-30)" }}>
+                  By subscribing, you agree to receive emails from Eric Gravely. Unsubscribe anytime.
+                </p>
               </form>
             )}
           </div>

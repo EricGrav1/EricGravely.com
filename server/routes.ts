@@ -11,14 +11,17 @@ import {
   insertLeadSchema,
   insertLeadMagnetSchema,
   insertSequenceEmailSchema,
+  insertBroadcastSchema,
 } from "@shared/schema";
 import {
   sendLeadMagnetEmail,
   sendNewsletterConfirmationEmail,
+  sendSequenceEmail,
   validateUnsubscribeToken,
   validateDownloadToken,
   buildDownloadUrl,
 } from "./email";
+import { startBroadcast, isBroadcastSending } from "./broadcast";
 import { subscribeToConvertKit } from "./convertkit";
 import { getSiteBaseUrl, PRODUCT_CK_TAGS } from "./config";
 import { setupAdminAuth, requireAdmin } from "./adminAuth";
@@ -131,10 +134,13 @@ export async function registerRoutes(
         await storage.createSubscriber({ email, firstName, tag: resolvedTag });
       }
 
-      // Nurture sequence opt-in (never resets progress on re-submit)
-      if (sequenceOptIn) {
-        await storage.setSequenceOptIn(email);
-      }
+      // Auto-enroll in the matching nurture sequence — the form shows a
+      // consent disclaimer. First enrollment sticks (progress never resets,
+      // and a later signup through the other path doesn't switch sequences).
+      // The legacy sequenceOptIn field is still accepted but no longer gates
+      // enrollment.
+      void sequenceOptIn;
+      await storage.setSequenceOptIn(email, magnet ? "resource" : "newsletter");
 
       // Store the lead + questionnaire answers per resource
       if (magnet) {
@@ -535,6 +541,51 @@ export async function registerRoutes(
       return res.json({ success: true });
     } catch {
       return res.status(500).json({ message: "Failed to delete email." });
+    }
+  });
+
+  // ── Admin: one-off broadcasts ───────────────────────────────────────────────
+  app.get("/api/admin/broadcasts", requireAdmin, async (_req, res) => {
+    try {
+      const [list, active] = await Promise.all([
+        storage.listBroadcasts(),
+        storage.listActiveSubscribers(),
+      ]);
+      return res.json({ broadcasts: list, isSending: isBroadcastSending(), activeSubscribers: active.length });
+    } catch {
+      return res.status(500).json({ message: "Failed to load broadcasts." });
+    }
+  });
+
+  // Test send — goes only to the given address, nothing is recorded
+  app.post("/api/admin/broadcasts/test", requireAdmin, async (req, res) => {
+    try {
+      const result = insertBroadcastSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid data" });
+      }
+      const to = typeof req.body?.to === "string" && req.body.to.includes("@") ? req.body.to : null;
+      if (!to) return res.status(400).json({ message: "A test email address is required." });
+
+      const sendResult = await sendSequenceEmail(to, "there", result.data.subject, result.data.body, getSiteBaseUrl(req as any));
+      if (!sendResult.success) return res.status(500).json({ message: sendResult.error || "Test send failed." });
+      return res.json({ success: true });
+    } catch {
+      return res.status(500).json({ message: "Test send failed." });
+    }
+  });
+
+  app.post("/api/admin/broadcasts", requireAdmin, async (req, res) => {
+    try {
+      const result = insertBroadcastSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid data" });
+      }
+      const started = await startBroadcast(result.data.subject, result.data.body, getSiteBaseUrl(req as any));
+      if ("error" in started) return res.status(409).json({ message: started.error });
+      return res.json({ success: true, ...started });
+    } catch {
+      return res.status(500).json({ message: "Failed to start broadcast." });
     }
   });
 

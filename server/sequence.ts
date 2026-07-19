@@ -24,8 +24,15 @@ export async function runSequenceTick(): Promise<{ sent: number; failed: number 
   let failed = 0;
 
   try {
-    const emails = await storage.listSequenceEmails(true);
-    if (emails.length === 0) return { sent, failed };
+    const allEmails = await storage.listSequenceEmails(true);
+    if (allEmails.length === 0) return { sent, failed };
+
+    // Each audience ("resource" | "newsletter") has its own ordered series.
+    const byAudience = new Map<string, typeof allEmails>();
+    for (const em of allEmails) {
+      const key = em.audience ?? "resource";
+      byAudience.set(key, [...(byAudience.get(key) ?? []), em]);
+    }
 
     const subs = await storage.listSequenceSubscribers();
     const now = Date.now();
@@ -33,6 +40,8 @@ export async function runSequenceTick(): Promise<{ sent: number; failed: number 
 
     for (const sub of subs) {
       if (sent + failed >= MAX_SENDS_PER_RUN) break;
+      // Legacy subscribers (opted in before audiences existed) are "resource"
+      const emails = byAudience.get(sub.sequenceAudience ?? "resource") ?? [];
       if (sub.sequenceStep >= emails.length) continue;
 
       const next = emails[sub.sequenceStep];

@@ -79,7 +79,6 @@ export function ProductSignupFlow({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
-  const [optIn, setOptIn] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
   const totalSteps = questions.length + 1;
@@ -98,7 +97,6 @@ export function ProductSignupFlow({
     setAnswers({});
     setFirstName("");
     setEmail("");
-    setOptIn(false);
     setErrorMsg("");
   };
 
@@ -141,7 +139,6 @@ export function ProductSignupFlow({
           firstName: firstName.trim() || undefined,
           leadMagnetId: product.id,
           questionnaireAnswers: Object.keys(answers).length > 0 ? answers : undefined,
-          sequenceOptIn: optIn,
         }),
       });
       const data = await res.json() as { success?: boolean; message?: string };
@@ -332,23 +329,6 @@ export function ProductSignupFlow({
                   data-testid={`input-email-${product.id}`}
                 />
 
-                <label
-                  className="flex items-start gap-2.5 text-xs leading-relaxed cursor-pointer px-1"
-                  style={{ color: "var(--c-fg-55)" }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={optIn}
-                    onChange={(e) => setOptIn(e.target.checked)}
-                    className="mt-0.5 accent-[#C9A227]"
-                    disabled={formState === "loading"}
-                    data-testid={`checkbox-optin-${product.id}`}
-                  />
-                  <span>
-                    Also send me Eric's free coaching email series — practical sales tips over the next week. Unsubscribe anytime.
-                  </span>
-                </label>
-
                 {errorMsg && (
                   <p className="text-xs px-1" style={{ color: "var(--c-fg-55)" }}>{errorMsg}</p>
                 )}
@@ -364,10 +344,14 @@ export function ProductSignupFlow({
                     "Send it to my inbox →"
                   )}
                 </button>
-                <div className="flex items-center gap-1.5 justify-center text-xs" style={{ color: "var(--c-fg-30)" }}>
-                  <Shield className="w-3 h-3" />
-                  No spam. Unsubscribe anytime.
-                </div>
+                <p
+                  className="text-[11px] leading-relaxed text-center px-1"
+                  style={{ color: "var(--c-fg-45)" }}
+                  data-testid={`text-consent-${product.id}`}
+                >
+                  <Shield className="w-3 h-3 inline mr-1 align-[-2px]" />
+                  By submitting, you agree to receive emails from Eric Gravely — including a short coaching series. No spam, unsubscribe anytime.
+                </p>
                 {questions.length > 0 && (
                   <button
                     type="button"

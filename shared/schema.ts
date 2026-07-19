@@ -80,8 +80,11 @@ export const subscribers = pgTable("subscribers", {
   tag: text("tag").notNull().default("newsletter"),
   unsubscribed: boolean("unsubscribed").notNull().default(false),
   unsubscribedAt: timestamp("unsubscribed_at"),
-  // Email sequence state
+  // Email sequence state. sequenceAudience records which sequence the
+  // subscriber entered ("resource" | "newsletter"); null = legacy rows,
+  // treated as "resource". First enrollment sticks — progress never resets.
   sequenceOptIn: boolean("sequence_opt_in").notNull().default(false),
+  sequenceAudience: text("sequence_audience"),
   sequenceOptInAt: timestamp("sequence_opt_in_at"),
   sequenceStep: integer("sequence_step").notNull().default(0),
   lastSequenceSentAt: timestamp("last_sequence_sent_at"),
@@ -93,7 +96,22 @@ export const sequenceEmails = pgTable("sequence_emails", {
   dayOffset: integer("day_offset").notNull(),
   subject: text("subject").notNull(),
   body: text("body").notNull(),
+  // Which signup path this email belongs to: "resource" (free resource
+  // downloads) or "newsletter" (footer/newsletter signups)
+  audience: text("audience").notNull().default("resource"),
   active: boolean("active").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// One-off broadcast emails sent to the whole active list from /admin
+export const broadcasts = pgTable("broadcasts", {
+  id: serial("id").primaryKey(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  status: text("status").notNull().default("sending"), // sending | sent | failed
+  totalRecipients: integer("total_recipients").notNull().default(0),
+  sentCount: integer("sent_count").notNull().default(0),
+  failedCount: integer("failed_count").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -157,8 +175,16 @@ export const insertSequenceEmailSchema = createInsertSchema(sequenceEmails).omit
   dayOffset: z.number().int().min(0, "Day must be 0 or later"),
   subject: z.string().min(1, "Subject is required"),
   body: z.string().min(1, "Body is required"),
+  audience: z.enum(["resource", "newsletter"]).default("resource"),
   active: z.boolean().default(true),
 });
+
+export const insertBroadcastSchema = z.object({
+  subject: z.string().min(1, "Subject is required"),
+  body: z.string().min(1, "Body is required"),
+});
+
+export type Broadcast = typeof broadcasts.$inferSelect;
 
 export type LeadMagnet = typeof leadMagnets.$inferSelect;
 export type InsertLeadMagnet = z.infer<typeof insertLeadMagnetSchema>;

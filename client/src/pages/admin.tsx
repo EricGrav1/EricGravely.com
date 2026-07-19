@@ -4,7 +4,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   Users, Mail, ListChecks, ChevronDown, ChevronUp,
   Plus, Trash2, Loader2, Save, X, Pencil, Lock, LogOut,
-  LayoutDashboard, Package, Upload, CheckCircle2, AlertTriangle, ExternalLink,
+  LayoutDashboard, Package, Upload, CheckCircle2, AlertTriangle, ExternalLink, Send,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -13,7 +13,7 @@ import {
 import { useTheme } from "@/lib/theme";
 import { slugify } from "@shared/slug";
 import { youtubeVideoId } from "@shared/video";
-import type { LeadMagnet, SequenceEmail, QuestionnaireField } from "@shared/schema";
+import type { LeadMagnet, SequenceEmail, QuestionnaireField, Broadcast } from "@shared/schema";
 
 // ── Types for the admin leads endpoint ────────────────────────────────────────
 interface AdminLead {
@@ -862,16 +862,30 @@ function SequenceEmailForm({
   );
 }
 
+const AUDIENCES = [
+  {
+    id: "resource",
+    label: "Resource signups",
+    description: "Sent to everyone who grabs a free resource, starting the day after they sign up.",
+  },
+  {
+    id: "newsletter",
+    label: "Newsletter signups",
+    description: "Sent to everyone who subscribes through the newsletter form (footer).",
+  },
+] as const;
+
 function SequenceTab() {
   const { data: emails, isLoading } = useQuery<SequenceEmail[]>({ queryKey: ["/api/admin/sequence-emails"] });
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState<string | null>(null); // audience id or null
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["/api/admin/sequence-emails"] });
 
   const createMutation = useMutation({
-    mutationFn: (data: SequenceFormData) => apiRequest("POST", "/api/admin/sequence-emails", data),
-    onSuccess: () => { invalidate(); setCreating(false); },
+    mutationFn: ({ data, audience }: { data: SequenceFormData; audience: string }) =>
+      apiRequest("POST", "/api/admin/sequence-emails", { ...data, audience }),
+    onSuccess: () => { invalidate(); setCreating(null); },
   });
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: number; data: SequenceFormData }) =>
@@ -888,13 +902,28 @@ function SequenceTab() {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-8">
       <p className="text-xs leading-relaxed" style={{ color: "var(--c-fg-45)" }}>
-        These emails go out automatically to people who check the opt-in box, starting from the day they sign up.
+        Everyone who signs up is automatically enrolled in the matching series (the forms show a consent note).
         Day 1 = one day after signup. Use {"{{first_name}}"} to personalize.
       </p>
 
-      {(emails ?? []).map((em) => (
+      {AUDIENCES.map((aud) => {
+        const audEmails = (emails ?? []).filter((e) => (e.audience ?? "resource") === aud.id);
+        return (
+          <div key={aud.id} className="space-y-3">
+            <div>
+              <div className="text-sm font-display font-bold" style={{ color: "var(--c-fg)" }}>{aud.label}</div>
+              <p className="text-xs mt-0.5" style={{ color: "var(--c-fg-45)" }}>{aud.description}</p>
+            </div>
+
+            {audEmails.length === 0 && creating !== aud.id && (
+              <p className="text-xs py-3 text-center rounded-xl" style={{ color: "var(--c-fg-45)", border: "1px dashed var(--c-border)" }}>
+                No emails in this series yet — subscribers here won't receive follow-ups until you add one.
+              </p>
+            )}
+
+            {audEmails.map((em) => (
         <div
           key={em.id}
           className="rounded-xl px-4 py-3"
@@ -917,7 +946,7 @@ function SequenceTab() {
               )}
             </div>
             <button
-              onClick={() => { setEditingId(editingId === em.id ? null : em.id); setCreating(false); }}
+              onClick={() => { setEditingId(editingId === em.id ? null : em.id); setCreating(null); }}
               className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
               style={{ color: "var(--c-fg-45)", border: "1px solid var(--c-border)" }}
               aria-label="Edit email"
@@ -940,37 +969,205 @@ function SequenceTab() {
             </button>
           </div>
 
-          {editingId === em.id && (
-            <SequenceEmailForm
-              initial={{ dayOffset: em.dayOffset, subject: em.subject, body: em.body, active: em.active }}
-              onSave={(data) => updateMutation.mutate({ id: em.id, data })}
-              onCancel={() => setEditingId(null)}
-              saving={updateMutation.isPending}
-            />
-          )}
-        </div>
-      ))}
+                {editingId === em.id && (
+                  <SequenceEmailForm
+                    initial={{ dayOffset: em.dayOffset, subject: em.subject, body: em.body, active: em.active }}
+                    onSave={(data) => updateMutation.mutate({ id: em.id, data })}
+                    onCancel={() => setEditingId(null)}
+                    saving={updateMutation.isPending}
+                  />
+                )}
+              </div>
+            ))}
 
-      {creating ? (
-        <div className="rounded-xl px-4 py-3" style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}>
-          <div className="text-sm font-semibold" style={{ color: "var(--c-fg)" }}>New sequence email</div>
-          <SequenceEmailForm
-            initial={{ dayOffset: (emails?.length ? Math.max(...emails.map((e) => e.dayOffset)) + 2 : 1), subject: "", body: "", active: true }}
-            onSave={(data) => createMutation.mutate(data)}
-            onCancel={() => setCreating(false)}
-            saving={createMutation.isPending}
-          />
+            {creating === aud.id ? (
+              <div className="rounded-xl px-4 py-3" style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}>
+                <div className="text-sm font-semibold" style={{ color: "var(--c-fg)" }}>New email — {aud.label}</div>
+                <SequenceEmailForm
+                  initial={{ dayOffset: (audEmails.length ? Math.max(...audEmails.map((e) => e.dayOffset)) + 2 : 1), subject: "", body: "", active: true }}
+                  onSave={(data) => createMutation.mutate({ data, audience: aud.id })}
+                  onCancel={() => setCreating(null)}
+                  saving={createMutation.isPending}
+                />
+              </div>
+            ) : (
+              <button
+                onClick={() => { setCreating(aud.id); setEditingId(null); }}
+                className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
+                style={{ color: "var(--c-accent)", border: "1px dashed var(--c-accent-15)", background: "var(--c-accent-10)" }}
+                data-testid={`button-add-sequence-${aud.id}`}
+              >
+                <Plus className="w-4 h-4" /> Add email
+              </button>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Broadcast tab ─────────────────────────────────────────────────────────────
+interface BroadcastData {
+  broadcasts: Broadcast[];
+  isSending: boolean;
+  activeSubscribers: number;
+}
+
+function BroadcastTab() {
+  const { data, isLoading } = useQuery<BroadcastData>({
+    queryKey: ["/api/admin/broadcasts"],
+    refetchInterval: (query) => (query.state.data?.isSending ? 3000 : false),
+  });
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [testTo, setTestTo] = useState("eric@ericgravely.com");
+  const [notice, setNotice] = useState<{ kind: "ok" | "err"; text: string } | null>(null);
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["/api/admin/broadcasts"] });
+
+  const parseErr = (err: Error) => {
+    try { return JSON.parse(err.message.replace(/^\d+:\s*/, "")).message ?? "Something went wrong."; }
+    catch { return "Something went wrong."; }
+  };
+
+  const testMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/admin/broadcasts/test", { subject, body, to: testTo }),
+    onSuccess: () => setNotice({ kind: "ok", text: `Test sent to ${testTo} — check that inbox.` }),
+    onError: (err: Error) => setNotice({ kind: "err", text: parseErr(err) }),
+  });
+
+  const sendMutation = useMutation({
+    mutationFn: () => apiRequest("POST", "/api/admin/broadcasts", { subject, body }),
+    onSuccess: () => {
+      setNotice({ kind: "ok", text: "Broadcast started — progress shows below." });
+      setSubject("");
+      setBody("");
+      invalidate();
+    },
+    onError: (err: Error) => setNotice({ kind: "err", text: parseErr(err) }),
+  });
+
+  const canSubmit = subject.trim().length > 0 && body.trim().length > 0;
+  const recipients = data?.activeSubscribers ?? 0;
+
+  const handleSendAll = () => {
+    if (!canSubmit) { setNotice({ kind: "err", text: "Subject and body are required." }); return; }
+    if (confirm(`Send "${subject.trim()}" to all ${recipients} active subscribers? This can't be undone.`)) {
+      sendMutation.mutate();
+    }
+  };
+
+  if (isLoading) {
+    return <div className="py-16 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto" style={{ color: "var(--c-accent)" }} /></div>;
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Compose */}
+      <div className="rounded-xl px-4 py-4 space-y-3" style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}>
+        <div className="text-sm font-display font-bold" style={{ color: "var(--c-fg)" }}>
+          New broadcast
         </div>
-      ) : (
-        <button
-          onClick={() => { setCreating(true); setEditingId(null); }}
-          className="w-full py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2"
-          style={{ color: "var(--c-accent)", border: "1px dashed var(--c-accent-15)", background: "var(--c-accent-10)" }}
-          data-testid="button-add-sequence"
-        >
-          <Plus className="w-4 h-4" /> Add email
-        </button>
-      )}
+        <p className="text-xs leading-relaxed" style={{ color: "var(--c-fg-45)" }}>
+          A one-off email to all {recipients} active subscribers. Plain text with {"{{first_name}}"} personalization —
+          the unsubscribe link is added automatically. Always send yourself a test first.
+        </p>
+        <input
+          type="text"
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          placeholder="Subject line"
+          className="input-dark w-full px-3.5 py-2.5 rounded-lg text-sm"
+          data-testid="input-broadcast-subject"
+        />
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder={"Email body — plain text. Use {{first_name}} to personalize. Blank lines create paragraphs."}
+          rows={10}
+          className="input-dark w-full px-3.5 py-2.5 rounded-lg text-sm resize-y"
+          data-testid="input-broadcast-body"
+        />
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <input
+            type="email"
+            value={testTo}
+            onChange={(e) => setTestTo(e.target.value)}
+            placeholder="Test email address"
+            className="input-dark px-3 py-2 rounded-lg text-xs w-56"
+            data-testid="input-broadcast-test-to"
+          />
+          <button
+            onClick={() => { setNotice(null); testMutation.mutate(); }}
+            disabled={!canSubmit || testMutation.isPending}
+            className="px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 disabled:opacity-50"
+            style={{ color: "var(--c-accent)", border: "1px solid var(--c-accent-15)" }}
+            data-testid="button-broadcast-test"
+          >
+            {testMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+            Send test
+          </button>
+          <div className="flex-1" />
+          <button
+            onClick={handleSendAll}
+            disabled={!canSubmit || sendMutation.isPending || data?.isSending}
+            className="btn-accent px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-1.5 disabled:opacity-50"
+            data-testid="button-broadcast-send"
+          >
+            {sendMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+            Send to everyone
+          </button>
+        </div>
+
+        {data?.isSending && (
+          <p className="text-xs" style={{ color: "var(--c-fg-45)" }}>
+            A broadcast is currently sending — you can start the next one when it finishes.
+          </p>
+        )}
+        {notice && (
+          <p className="text-xs" style={{ color: notice.kind === "ok" ? "var(--c-accent)" : "#B4552D" }} data-testid="text-broadcast-notice">
+            {notice.text}
+          </p>
+        )}
+      </div>
+
+      {/* History */}
+      <div className="space-y-2">
+        <div className="text-[11px] uppercase tracking-wider" style={{ color: "var(--c-fg-45)" }}>Past broadcasts</div>
+        {(data?.broadcasts ?? []).length === 0 && (
+          <p className="text-xs py-4 text-center rounded-xl" style={{ color: "var(--c-fg-45)", border: "1px dashed var(--c-border)" }}>
+            Nothing sent yet.
+          </p>
+        )}
+        {(data?.broadcasts ?? []).map((b) => (
+          <div
+            key={b.id}
+            className="rounded-xl px-4 py-3 flex items-center gap-3"
+            style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}
+            data-testid={`row-broadcast-${b.id}`}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold truncate" style={{ color: "var(--c-fg)" }}>{b.subject}</div>
+              <div className="text-[11px] mt-0.5" style={{ color: "var(--c-fg-45)" }}>
+                {formatDate(b.createdAt)} · {b.sentCount}/{b.totalRecipients} sent
+                {b.failedCount > 0 && ` · ${b.failedCount} failed`}
+              </div>
+            </div>
+            <span
+              className="text-[10px] uppercase tracking-wider px-2 py-1 rounded flex-shrink-0"
+              style={
+                b.status === "sending"
+                  ? { background: "var(--c-accent-10)", color: "var(--c-accent)", border: "1px solid var(--c-accent-15)" }
+                  : { background: "var(--c-border)", color: "var(--c-fg-45)" }
+              }
+            >
+              {b.status === "sending" ? "Sending…" : b.status}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1242,13 +1439,14 @@ function AdminLogin() {
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
-type Tab = "dashboard" | "signups" | "products" | "sequence" | "questions";
+type Tab = "dashboard" | "signups" | "products" | "sequence" | "broadcast" | "questions";
 
 const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "signups", label: "Signups", icon: Users },
   { id: "products", label: "Products", icon: Package },
   { id: "sequence", label: "Sequence", icon: Mail },
+  { id: "broadcast", label: "Broadcast", icon: Send },
   { id: "questions", label: "Questions", icon: ListChecks },
 ];
 
@@ -1290,7 +1488,7 @@ export default function Admin() {
               Admin
             </h1>
             <p className="text-xs mt-1" style={{ color: "var(--c-fg-45)" }}>
-              Stats, signups, products, nurture sequence, and questionnaires
+              Stats, signups, products, sequences, broadcasts, and questionnaires
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -1338,6 +1536,7 @@ export default function Admin() {
         {tab === "signups" && <SignupsTab />}
         {tab === "products" && <ProductsTab />}
         {tab === "sequence" && <SequenceTab />}
+        {tab === "broadcast" && <BroadcastTab />}
         {tab === "questions" && <QuestionsTab />}
       </div>
     </div>
