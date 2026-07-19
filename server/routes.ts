@@ -1,9 +1,11 @@
 import type { Express } from "express";
 import { type Server } from "http";
 import { existsSync } from "fs";
-import { join, basename } from "path";
+import { join, basename, extname } from "path";
 import { z } from "zod";
+import multer from "multer";
 import { storage } from "./storage";
+import { slugify } from "@shared/slug";
 import {
   insertSubscriberSchema,
   insertLeadSchema,
@@ -37,6 +39,31 @@ export function privateFilePath(resourceUrl: string): string {
   return join(process.cwd(), "server", "private", "downloads", basename(resourceUrl));
 }
 
+// A resource is deliverable if its file is in Postgres (admin upload) or on
+// disk. The DB check is guarded so the app still works before `db:push` has
+// created the resource_files table.
+async function resourceFileAvailable(resourceUrl: string | null): Promise<boolean> {
+  if (!resourceUrl) return false;
+  const filename = basename(resourceUrl);
+  try {
+    if (await storage.getResourceFile(filename)) return true;
+  } catch {
+    // resource_files table missing — fall through to disk
+  }
+  return existsSync(privateFilePath(resourceUrl));
+}
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024 },
+});
+
+const ALLOWED_UPLOAD_EXTENSIONS = new Set([
+  ".pdf", ".xlsx", ".xls", ".csv", ".docx", ".pptx", ".zip", ".png", ".jpg", ".jpeg",
+]);
+
+const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
+
 const subscribeExtrasSchema = z.object({
   questionnaireAnswers: z.record(z.string()).optional(),
   sequenceOptIn: z.boolean().optional(),
@@ -47,7 +74,7 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
 
-  setupAdminAuth(app);
+  await setupAdminAuth(app);
 
   // ── Main subscribe endpoint ──────────────────────────────────────────────────
   // Accepts:
@@ -83,9 +110,8 @@ export async function registerRoutes(
         magnet = await storage.getLeadMagnet(leadMagnetId);
         if (!magnet) return res.status(404).json({ message: "Product not found." });
 
-        const filePath = privateFilePath(magnet.resourceUrl || "");
-        if (!magnet.resourceUrl || !existsSync(filePath)) {
-          console.warn(`[subscribe] File missing for "${magnet.title}": ${filePath} — email not sent`);
+        if (!(await resourceFileAvailable(magnet.resourceUrl))) {
+          console.warn(`[subscribe] File missing for "${magnet.title}" — email not sent`);
           return res.status(503).json({
             message: "This resource isn't available yet. Check back soon.",
           });
@@ -178,13 +204,27 @@ export async function registerRoutes(
         return res.status(404).send("Resource not found.");
       }
 
+      // Prefer the DB copy (uploaded via admin, survives redeploys), then disk.
+      const filename = basename(magnet.resourceUrl);
+      try {
+        const dbFile = await storage.getResourceFile(filename);
+        if (dbFile) {
+          res.setHeader("Content-Type", dbFile.mimeType);
+          res.setHeader("Content-Length", String(dbFile.size));
+          res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+          return res.send(dbFile.data);
+        }
+      } catch {
+        // resource_files table missing — fall through to disk
+      }
+
       const filePath = privateFilePath(magnet.resourceUrl);
       if (!existsSync(filePath)) {
         console.warn(`[download] File missing: ${filePath}`);
         return res.status(404).send("This file isn't available right now.");
       }
 
-      return res.download(filePath, basename(magnet.resourceUrl));
+      return res.download(filePath, filename);
     } catch (err) {
       console.error("Download error:", err instanceof Error ? err.message : err);
       return res.status(500).send("Something went wrong.");
@@ -213,6 +253,44 @@ export async function registerRoutes(
       return res.json(magnets);
     } catch {
       return res.status(500).json({ message: "Failed to load resources." });
+    }
+  });
+
+  // ── View tracking (product detail page opens / signup flow starts) ──────────
+  app.post("/api/lead-magnets/:id/view", async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid id." });
+      await storage.incrementViews(id);
+      return res.json({ success: true });
+    } catch {
+      return res.status(500).json({ message: "Failed to record view." });
+    }
+  });
+
+  // ── SEO: robots.txt + sitemap.xml ───────────────────────────────────────────
+  app.get("/robots.txt", (req, res) => {
+    const base = getSiteBaseUrl(req as any);
+    res.type("text/plain").send(
+      ["User-agent: *", "Allow: /", "Disallow: /admin", "Disallow: /api/", "", `Sitemap: ${base}/sitemap.xml`].join("\n"),
+    );
+  });
+
+  app.get("/sitemap.xml", async (req, res) => {
+    try {
+      const base = getSiteBaseUrl(req as any);
+      const staticPaths = ["/", "/about", "/products", "/coaching"];
+      const magnets = await storage.listLeadMagnets(true);
+      const urls = [
+        ...staticPaths,
+        ...magnets.map((m) => `/products/${slugify(m.title)}`),
+      ];
+      const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
+        .map((u) => `  <url><loc>${base}${u}</loc></url>`)
+        .join("\n")}\n</urlset>`;
+      return res.type("application/xml").send(xml);
+    } catch {
+      return res.status(500).send("");
     }
   });
 
@@ -263,12 +341,136 @@ export async function registerRoutes(
     }
   });
 
+  // ── Admin: dashboard stats ──────────────────────────────────────────────────
+  app.get("/api/admin/stats", requireAdmin, async (_req, res) => {
+    try {
+      const [allLeads, allSubscribers, perProduct] = await Promise.all([
+        storage.listLeads(),
+        storage.listSubscribers(),
+        storage.getAnalytics(),
+      ]);
+
+      const now = Date.now();
+      const DAY = 24 * 60 * 60 * 1000;
+      const since = (days: number) =>
+        allLeads.filter((l) => now - new Date(l.createdAt).getTime() < days * DAY).length;
+
+      // Daily signup counts for the last 30 days (oldest first)
+      const signupsByDay: { date: string; count: number }[] = [];
+      for (let i = 29; i >= 0; i--) {
+        const day = new Date(now - i * DAY);
+        const key = day.toISOString().slice(0, 10);
+        signupsByDay.push({
+          date: key,
+          count: allLeads.filter((l) => new Date(l.createdAt).toISOString().slice(0, 10) === key).length,
+        });
+      }
+
+      const activeSubscribers = allSubscribers.filter((s) => !s.unsubscribed);
+      return res.json({
+        totalLeads: allLeads.length,
+        leadsLast7: since(7),
+        leadsPrev7: since(14) - since(7),
+        totalSubscribers: allSubscribers.length,
+        activeSubscribers: activeSubscribers.length,
+        sequenceOptIns: activeSubscribers.filter((s) => s.sequenceOptIn).length,
+        unsubscribed: allSubscribers.length - activeSubscribers.length,
+        perProduct,
+        signupsByDay,
+      });
+    } catch {
+      return res.status(500).json({ message: "Failed to load stats." });
+    }
+  });
+
   // ── Admin: lead magnets (incl. inactive) + question editor ──────────────────
   app.get("/api/admin/lead-magnets", requireAdmin, async (_req, res) => {
     try {
-      return res.json(await storage.listLeadMagnets());
+      const magnets = await storage.listLeadMagnets();
+      // Tell the admin UI whether each download product's file is actually
+      // deliverable (uploaded to the DB or present on disk).
+      const withFileState = await Promise.all(
+        magnets.map(async (m) => ({
+          ...m,
+          fileUploaded: m.productType === "external" ? null : await resourceFileAvailable(m.resourceUrl),
+        })),
+      );
+      return res.json(withFileState);
     } catch {
       return res.status(500).json({ message: "Failed to load resources." });
+    }
+  });
+
+  app.post("/api/admin/lead-magnets", requireAdmin, async (req, res) => {
+    try {
+      const result = insertLeadMagnetSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid data" });
+      }
+      return res.json(await storage.createLeadMagnet(result.data));
+    } catch {
+      return res.status(500).json({ message: "Failed to create resource." });
+    }
+  });
+
+  // ── Public preview images (uploaded via admin, flagged isPublic) ────────────
+  app.get("/api/files/:filename", async (req, res) => {
+    try {
+      const file = await storage.getResourceFile(basename(req.params.filename));
+      if (!file || !file.isPublic) return res.status(404).send("Not found.");
+      res.setHeader("Content-Type", file.mimeType);
+      res.setHeader("Content-Length", String(file.size));
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      return res.send(file.data);
+    } catch {
+      return res.status(404).send("Not found.");
+    }
+  });
+
+  // ── Admin: file upload (stored in Postgres) ─────────────────────────────────
+  // kind=resource (default): private, delivered only through /api/download.
+  // kind=preview: public image, served from /api/files/ (used for previewImages).
+  app.post("/api/admin/upload", requireAdmin, upload.single("file"), async (req, res) => {
+    try {
+      const file = req.file;
+      if (!file) return res.status(400).json({ message: "No file received." });
+      const isPreview = req.body?.kind === "preview";
+
+      const rawExt = extname(file.originalname);
+      const ext = rawExt.toLowerCase();
+      const allowed = isPreview ? IMAGE_EXTENSIONS : ALLOWED_UPLOAD_EXTENSIONS;
+      if (!allowed.has(ext)) {
+        return res.status(400).json({
+          message: isPreview
+            ? `Previews must be images (${Array.from(IMAGE_EXTENSIONS).join(", ")}).`
+            : `File type ${ext || "(none)"} isn't allowed.`,
+        });
+      }
+
+      // Sanitize to a safe, stable filename. Previews get a prefix so a public
+      // image can never overwrite (and expose) a private gated resource.
+      let filename =
+        basename(file.originalname, rawExt).toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) + ext;
+      if (!filename || filename === ext) {
+        return res.status(400).json({ message: "Invalid filename." });
+      }
+      if (isPreview) filename = `preview-${filename}`;
+
+      await storage.saveResourceFile(filename, file.mimetype || "application/octet-stream", file.buffer, isPreview);
+      return res.json({
+        success: true,
+        filename,
+        resourceUrl: isPreview ? `/api/files/${filename}` : `/downloads/${filename}`,
+        size: file.size,
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Upload failed.";
+      // Most likely cause: resource_files table doesn't exist yet
+      if (/relation .* does not exist/i.test(msg)) {
+        return res.status(500).json({ message: "File storage table missing — run `npm run db:push` once, then retry." });
+      }
+      console.error("Upload error:", msg);
+      return res.status(500).json({ message: "Upload failed." });
     }
   });
 

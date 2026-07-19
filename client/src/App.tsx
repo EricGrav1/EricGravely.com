@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/lib/theme";
 import Home from "@/pages/home";
 import About from "@/pages/about";
 import Products from "@/pages/products";
+import ProductDetail from "@/pages/product-detail";
 import ThankYou from "@/pages/thank-you";
 import Coaching from "@/pages/coaching";
 import Unsubscribe from "@/pages/unsubscribe";
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/about" component={About} />
       <Route path="/products" component={Products} />
+      <Route path="/products/:slug" component={ProductDetail} />
       <Route path="/thank-you" component={ThankYou} />
       <Route path="/coaching" component={Coaching} />
       <Route path="/unsubscribe" component={Unsubscribe} />
