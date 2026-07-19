@@ -38,7 +38,10 @@ Key API endpoints:
 - `GET /api/admin/stats` — Dashboard aggregates (totals, 7-day deltas, 30-day daily signups, per-product conversion)
 - `GET /api/admin/leads` — Signups joined with subscriber state + resource title
 - `GET/POST/PATCH /api/admin/lead-magnets` — Resource management incl. questionnaireFields editing; GET adds `fileUploaded` per product
-- `POST /api/admin/upload` — multipart file upload (multer, 25MB cap, extension allowlist); stores the file in the Postgres `resource_files` table so it survives redeploys. `/api/download` serves the DB copy first and falls back to `server/private/downloads/` on disk.
+- `POST /api/admin/upload` — multipart file upload (multer, 25MB cap, extension allowlist); stores the file in the Postgres `resource_files` table so it survives redeploys. `/api/download` serves the DB copy first and falls back to `server/private/downloads/` on disk. Pass `kind=preview` for public preview images (image extensions only, filename prefixed `preview-`, `is_public=true`).
+- `GET /api/files/:filename` — serves only `is_public` files (preview images); gated resources 404 here.
+- Products also support `videoUrl` (YouTube link, validated + embedded on the product detail page via `shared/video.ts`) and `previewImages` (managed in admin → Products with upload/remove).
+- The express-session `session` table is declared in `shared/schema.ts` (so `db:push` doesn't offer to drop it) and also created at startup in `adminAuth.ts` (connect-pg-simple's `createTableIfMissing` breaks inside the esbuild bundle).
 - `GET/POST/PATCH/DELETE /api/admin/sequence-emails` — Nurture sequence CRUD
 
 ### Nurture Sequence

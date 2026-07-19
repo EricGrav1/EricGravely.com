@@ -47,7 +47,7 @@ export interface IStorage {
   listLeads(): Promise<Lead[]>;
   listSubscribers(): Promise<Subscriber[]>;
   // Resource files (DB-backed uploads from the admin panel)
-  saveResourceFile(filename: string, mimeType: string, data: Buffer): Promise<void>;
+  saveResourceFile(filename: string, mimeType: string, data: Buffer, isPublic?: boolean): Promise<void>;
   getResourceFile(filename: string): Promise<ResourceFile | undefined>;
   listResourceFilenames(): Promise<string[]>;
 }
@@ -211,12 +211,12 @@ export class DbStorage implements IStorage {
     return db.select().from(subscribers).orderBy(desc(subscribers.createdAt));
   }
 
-  async saveResourceFile(filename: string, mimeType: string, data: Buffer): Promise<void> {
+  async saveResourceFile(filename: string, mimeType: string, data: Buffer, isPublic = false): Promise<void> {
     await db.insert(resourceFiles)
-      .values({ filename, mimeType, size: data.length, data })
+      .values({ filename, mimeType, size: data.length, data, isPublic })
       .onConflictDoUpdate({
         target: resourceFiles.filename,
-        set: { mimeType, size: data.length, data, createdAt: new Date() },
+        set: { mimeType, size: data.length, data, isPublic, createdAt: new Date() },
       });
   }
 

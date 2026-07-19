@@ -62,6 +62,8 @@ const ALLOWED_UPLOAD_EXTENSIONS = new Set([
   ".pdf", ".xlsx", ".xls", ".csv", ".docx", ".pptx", ".zip", ".png", ".jpg", ".jpeg",
 ]);
 
+const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
+
 const subscribeExtrasSchema = z.object({
   questionnaireAnswers: z.record(z.string()).optional(),
   sequenceOptIn: z.boolean().optional(),
@@ -411,27 +413,56 @@ export async function registerRoutes(
     }
   });
 
-  // ── Admin: resource file upload (stored in Postgres) ────────────────────────
+  // ── Public preview images (uploaded via admin, flagged isPublic) ────────────
+  app.get("/api/files/:filename", async (req, res) => {
+    try {
+      const file = await storage.getResourceFile(basename(req.params.filename));
+      if (!file || !file.isPublic) return res.status(404).send("Not found.");
+      res.setHeader("Content-Type", file.mimeType);
+      res.setHeader("Content-Length", String(file.size));
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      return res.send(file.data);
+    } catch {
+      return res.status(404).send("Not found.");
+    }
+  });
+
+  // ── Admin: file upload (stored in Postgres) ─────────────────────────────────
+  // kind=resource (default): private, delivered only through /api/download.
+  // kind=preview: public image, served from /api/files/ (used for previewImages).
   app.post("/api/admin/upload", requireAdmin, upload.single("file"), async (req, res) => {
     try {
       const file = req.file;
       if (!file) return res.status(400).json({ message: "No file received." });
+      const isPreview = req.body?.kind === "preview";
 
       const rawExt = extname(file.originalname);
       const ext = rawExt.toLowerCase();
-      if (!ALLOWED_UPLOAD_EXTENSIONS.has(ext)) {
-        return res.status(400).json({ message: `File type ${ext || "(none)"} isn't allowed.` });
+      const allowed = isPreview ? IMAGE_EXTENSIONS : ALLOWED_UPLOAD_EXTENSIONS;
+      if (!allowed.has(ext)) {
+        return res.status(400).json({
+          message: isPreview
+            ? `Previews must be images (${Array.from(IMAGE_EXTENSIONS).join(", ")}).`
+            : `File type ${ext || "(none)"} isn't allowed.`,
+        });
       }
 
-      // Sanitize to a safe, stable filename
-      const filename =
+      // Sanitize to a safe, stable filename. Previews get a prefix so a public
+      // image can never overwrite (and expose) a private gated resource.
+      let filename =
         basename(file.originalname, rawExt).toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) + ext;
       if (!filename || filename === ext) {
         return res.status(400).json({ message: "Invalid filename." });
       }
+      if (isPreview) filename = `preview-${filename}`;
 
-      await storage.saveResourceFile(filename, file.mimetype || "application/octet-stream", file.buffer);
-      return res.json({ success: true, filename, resourceUrl: `/downloads/${filename}`, size: file.size });
+      await storage.saveResourceFile(filename, file.mimetype || "application/octet-stream", file.buffer, isPreview);
+      return res.json({
+        success: true,
+        filename,
+        resourceUrl: isPreview ? `/api/files/${filename}` : `/downloads/${filename}`,
+        size: file.size,
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Upload failed.";
       // Most likely cause: resource_files table doesn't exist yet

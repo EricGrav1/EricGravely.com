@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { useTheme } from "@/lib/theme";
 import { slugify } from "@shared/slug";
+import { youtubeVideoId } from "@shared/video";
 import type { LeadMagnet, SequenceEmail, QuestionnaireField } from "@shared/schema";
 
 // ── Types for the admin leads endpoint ────────────────────────────────────────
@@ -267,13 +268,16 @@ interface ProductFormData {
   externalUrl: string;
   iconPath: string;
   resourceUrl: string;
+  videoUrl: string;
+  previewImages: string[];
   active: boolean;
 }
 
 function emptyProductForm(): ProductFormData {
   return {
     title: "", description: "", productType: "download",
-    buttonLabel: "", externalUrl: "", iconPath: "", resourceUrl: "", active: true,
+    buttonLabel: "", externalUrl: "", iconPath: "", resourceUrl: "",
+    videoUrl: "", previewImages: [], active: true,
   };
 }
 
@@ -286,6 +290,8 @@ function toApiPayload(f: ProductFormData) {
     externalUrl: f.productType === "external" ? (f.externalUrl.trim() || null) : null,
     iconPath: f.iconPath.trim() || null,
     resourceUrl: f.productType === "download" ? (f.resourceUrl || null) : null,
+    videoUrl: f.videoUrl.trim() || null,
+    previewImages: f.previewImages.length > 0 ? f.previewImages : null,
     active: f.active,
   };
 }
@@ -353,6 +359,93 @@ function FileUploader({
   );
 }
 
+// Upload + remove preview images (public, shown in "Peek inside" and on the
+// product detail page). Order = display order.
+function PreviewImagesManager({
+  images, onChange,
+}: { images: string[]; onChange: (images: string[]) => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFiles = async (files: FileList) => {
+    setUploading(true);
+    setError("");
+    const added: string[] = [];
+    for (const file of Array.from(files)) {
+      try {
+        const fd = new FormData();
+        fd.append("kind", "preview");
+        fd.append("file", file);
+        const res = await fetch("/api/admin/upload", { method: "POST", body: fd, credentials: "include" });
+        const data = await res.json() as { resourceUrl?: string; message?: string };
+        if (!res.ok || !data.resourceUrl) {
+          setError(data.message || `Upload failed for ${file.name}.`);
+          continue;
+        }
+        added.push(data.resourceUrl);
+      } catch {
+        setError(`Upload failed for ${file.name}.`);
+      }
+    }
+    if (added.length > 0) onChange([...images, ...added]);
+    setUploading(false);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  return (
+    <div className="space-y-2">
+      {images.length > 0 && (
+        <div className="flex gap-2 flex-wrap">
+          {images.map((src, i) => (
+            <div key={src} className="relative group">
+              <img
+                src={src}
+                alt={`Preview ${i + 1}`}
+                className="w-16 h-20 object-cover rounded-lg"
+                style={{ border: "1px solid var(--c-border)" }}
+              />
+              <button
+                type="button"
+                onClick={() => onChange(images.filter((_, idx) => idx !== i))}
+                className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full flex items-center justify-center"
+                style={{ background: "var(--c-bg)", border: "1px solid var(--c-border)", color: "var(--c-fg-55)" }}
+                aria-label={`Remove preview ${i + 1}`}
+                data-testid={`button-remove-preview-${i}`}
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={uploading}
+        className="px-3.5 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 disabled:opacity-60"
+        style={{ color: "var(--c-accent)", border: "1px dashed var(--c-accent-15)", background: "var(--c-accent-06)" }}
+        data-testid="button-upload-preview"
+      >
+        {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+        Add preview image{images.length > 0 ? "s" : ""}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".png,.jpg,.jpeg,.webp,.gif"
+        multiple
+        className="hidden"
+        onChange={(e) => { if (e.target.files?.length) handleFiles(e.target.files); }}
+      />
+      {error && <p className="text-xs" style={{ color: "#B4552D" }}>{error}</p>}
+      <p className="text-[11px]" style={{ color: "var(--c-fg-45)" }}>
+        Screenshots of a few pages work great. Shown as a view-only "Peek inside" — visitors still have to sign up for the real file.
+      </p>
+    </div>
+  );
+}
+
 function ProductForm({
   initial, onSave, onCancel, saving, isNew,
 }: {
@@ -371,6 +464,10 @@ function ProductForm({
     if (!form.description.trim()) { setError("Description is required."); return; }
     if (form.productType === "external" && !form.externalUrl.trim()) {
       setError("External products need a link (App Store, checkout page, etc.).");
+      return;
+    }
+    if (form.videoUrl.trim() && !youtubeVideoId(form.videoUrl.trim())) {
+      setError("That doesn't look like a YouTube link — paste the URL of the video (watch, share, or Shorts link).");
       return;
     }
     setError("");
@@ -482,6 +579,29 @@ function ProductForm({
           />
         </div>
       )}
+
+      <div>
+        <label className="text-xs block mb-1" style={labelStyle}>Overview video — YouTube link (optional)</label>
+        <input
+          type="url"
+          value={form.videoUrl}
+          onChange={(e) => set({ videoUrl: e.target.value })}
+          placeholder="https://www.youtube.com/watch?v=…"
+          className="input-dark w-full px-3.5 py-2.5 rounded-lg text-sm"
+          data-testid="input-product-video"
+        />
+        <p className="text-[11px] mt-1" style={{ color: "var(--c-fg-45)" }}>
+          Embedded on the product's page — a walkthrough of the resource converts better than text alone.
+        </p>
+      </div>
+
+      <div>
+        <label className="text-xs block mb-1" style={labelStyle}>Preview images (optional)</label>
+        <PreviewImagesManager
+          images={form.previewImages}
+          onChange={(previewImages) => set({ previewImages })}
+        />
+      </div>
 
       {error && <p className="text-xs" style={{ color: "#B4552D" }}>{error}</p>}
 
@@ -609,6 +729,8 @@ function ProductsTab() {
                   externalUrl: m.externalUrl ?? "",
                   iconPath: m.iconPath ?? "",
                   resourceUrl: m.resourceUrl ?? "",
+                  videoUrl: m.videoUrl ?? "",
+                  previewImages: (m.previewImages as string[] | null) ?? [],
                   active: m.active,
                 }}
                 onSave={(data) => updateMutation.mutate({ id: m.id, data })}
@@ -1038,7 +1160,14 @@ function AdminLogin() {
     },
     onSuccess: () => {
       setError(null);
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/session"] });
+      // Drop any stale/errored admin queries (e.g. a 401'd stats fetch) so
+      // they refetch cleanly with the new session cookie, then mark the
+      // session authenticated directly — relying on invalidate alone races
+      // an in-flight session fetch and can leave the UI on the login screen.
+      queryClient.removeQueries({
+        predicate: (q) => String(q.queryKey[0]).startsWith("/api/admin") && q.queryKey[0] !== "/api/admin/session",
+      });
+      queryClient.setQueryData(["/api/admin/session"], { authenticated: true });
     },
     onError: (err: Error) => {
       const msg = err.message.replace(/^\d+:\s*/, "");

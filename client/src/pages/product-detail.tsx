@@ -9,6 +9,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { ProductSignupFlow } from "@/components/ProductSignupFlow";
 import { usePageMeta, trackProductView } from "@/lib/seo";
 import { slugify } from "@shared/slug";
+import { youtubeVideoId } from "@shared/video";
 import type { LeadMagnet } from "@shared/schema";
 
 function NotFoundState() {
@@ -141,6 +142,26 @@ export default function ProductDetail() {
                         </div>
                       ))}
                     </div>
+
+                    {/* Overview video */}
+                    {youtubeVideoId(product.videoUrl ?? "") && (
+                      <div className="space-y-4 mb-10">
+                        <div className="label-track">Watch the Overview</div>
+                        <div
+                          className="relative w-full overflow-hidden rounded-xl"
+                          style={{ aspectRatio: "16 / 9", border: "1px solid var(--c-border)", background: "var(--c-bg2)" }}
+                        >
+                          <iframe
+                            src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId(product.videoUrl ?? "")}`}
+                            title={`${product.title} — video overview`}
+                            className="absolute inset-0 w-full h-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                            loading="lazy"
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {/* Inline preview gallery */}
                     {previews.length > 0 && (

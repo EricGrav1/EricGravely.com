@@ -49,7 +49,11 @@ export const queryClient = new QueryClient({
         key.startsWith("/api/admin") &&
         key !== "/api/admin/session" &&
         error instanceof Error &&
-        error.message.startsWith("401")
+        error.message.startsWith("401") &&
+        // Only an ACTIVE query's 401 means the session expired — a stale
+        // query erroring out mid-login-transition must not flip the UI
+        // back to the login screen.
+        query.getObserversCount() > 0
       ) {
         queryClient.setQueryData(["/api/admin/session"], { authenticated: false });
       }

@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, timestamp, integer, jsonb, customType } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, boolean, timestamp, integer, jsonb, json, varchar, index, customType } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -17,10 +17,25 @@ export const resourceFiles = pgTable("resource_files", {
   mimeType: text("mime_type").notNull(),
   size: integer("size").notNull(),
   data: bytea("data").notNull(),
+  // Public files (preview images) are served by GET /api/files/:filename.
+  // Private files (the gated resources) are only reachable via /api/download.
+  isPublic: boolean("is_public").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export type ResourceFile = typeof resourceFiles.$inferSelect;
+
+// express-session store (connect-pg-simple). Defined here so `db:push` doesn't
+// offer to drop it — the shape must match connect-pg-simple's table.sql.
+export const session = pgTable(
+  "session",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: json("sess").notNull(),
+    expire: timestamp("expire", { precision: 6 }).notNull(),
+  },
+  (t) => [index("IDX_session_expire").on(t.expire)],
+);
 
 export const leadMagnets = pgTable("lead_magnets", {
   id: serial("id").primaryKey(),
@@ -40,6 +55,8 @@ export const leadMagnets = pgTable("lead_magnets", {
   questionnaireFields: jsonb("questionnaire_fields"),
   // View-only preview images shown on the site (array of public image paths)
   previewImages: jsonb("preview_images"),
+  // Optional YouTube overview video, embedded on the product detail page
+  videoUrl: text("video_url"),
   nextSteps: text("next_steps"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -98,6 +115,7 @@ export const insertLeadMagnetSchema = createInsertSchema(leadMagnets).omit({
 }).extend({
   questionnaireFields: z.array(questionnaireFieldSchema).optional(),
   previewImages: z.array(z.string()).optional().nullable(),
+  videoUrl: z.string().url().optional().nullable(),
   nextSteps: z.string().optional(),
   externalUrl: z.string().url().optional().nullable(),
   buttonLabel: z.string().optional().nullable(),
