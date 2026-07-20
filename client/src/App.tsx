@@ -8,6 +8,7 @@ import Products from "@/pages/products";
 import ProductDetail from "@/pages/product-detail";
 import ThankYou from "@/pages/thank-you";
 import Coaching from "@/pages/coaching";
+import Assessment from "@/pages/assessment";
 import Unsubscribe from "@/pages/unsubscribe";
 import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/products/:slug" component={ProductDetail} />
       <Route path="/thank-you" component={ThankYou} />
       <Route path="/coaching" component={Coaching} />
+      <Route path="/assessment" component={Assessment} />
       <Route path="/unsubscribe" component={Unsubscribe} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />

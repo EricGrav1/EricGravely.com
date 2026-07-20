@@ -285,7 +285,7 @@ export async function registerRoutes(
   app.get("/sitemap.xml", async (req, res) => {
     try {
       const base = getSiteBaseUrl(req as any);
-      const staticPaths = ["/", "/about", "/products", "/coaching"];
+      const staticPaths = ["/", "/about", "/products", "/coaching", "/assessment"];
       const magnets = await storage.listLeadMagnets(true);
       const urls = [
         ...staticPaths,

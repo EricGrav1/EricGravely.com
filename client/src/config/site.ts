@@ -308,6 +308,7 @@ export const site = {
       { label: "Home", href: "/" },
       { label: "About", href: "/about" },
       { label: "Products", href: "/products" },
+      { label: "Assessment", href: "/assessment" },
       { label: "Coaching", href: "/coaching" },
       { label: "YouTube", href: "https://www.youtube.com/@EricGravely", external: true },
       { label: "SalesCoachAI", href: "https://apps.apple.com/us/app/sales-coach-ai/id6748286535", external: true },
