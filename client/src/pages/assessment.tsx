@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { usePageMeta } from "@/lib/seo";
@@ -11,7 +10,8 @@ import { site } from "@/config/site";
    20 general personality questions.
    Results show: personality type + meaning, how it relates to
    sales (style + blind spot), and how to sell to the other types.
-   Email capture posts to /api/subscribe with a deca-<type> tag.
+   Self-contained — the email capture is not wired to any list or
+   sequence.
    ============================================================ */
 
 type TypeKey = "D" | "E" | "C" | "A";
@@ -401,15 +401,13 @@ export default function Assessment() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [openCell, setOpenCell] = useState<TypeKey | null>(null);
-  const [submitStatus, setSubmitStatus] = useState<"idle" | "loading" | "success">("idle");
-  const [submitError, setSubmitError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
   const start = () => {
     setScores({ D: 0, E: 0, C: 0, A: 0 });
     setIdx(0);
     setOrder(QUESTIONS.map((q) => shuffle(q.a)));
-    setSubmitStatus("idle");
-    setSubmitError("");
+    setSubmitted(false);
     setStage("quiz");
     window.scrollTo({ top: 0 });
   };
@@ -425,34 +423,10 @@ export default function Assessment() {
   const secondary = ranked[1]?.t ?? "E";
   const p = PROFILES[primary];
 
-  const submitEmail = async () => {
-    if (!email.includes("@")) {
-      setSubmitError("Please enter a valid email address.");
-      return;
-    }
-    setSubmitStatus("loading");
-    setSubmitError("");
-    try {
-      const res = await fetch("/api/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim(),
-          firstName: name.trim() || undefined,
-          tag: `deca-${primary.toLowerCase()}`,
-        }),
-      });
-      const data = (await res.json()) as { success?: boolean; message?: string };
-      if (!res.ok || !data.success) {
-        setSubmitError(data.message || "Something went wrong. Please try again.");
-        setSubmitStatus("idle");
-        return;
-      }
-      setSubmitStatus("success");
-    } catch {
-      setSubmitError("Network error — please try again.");
-      setSubmitStatus("idle");
-    }
+  // Self-contained — not wired to the email list or any sequence.
+  const submitEmail = () => {
+    if (!email.includes("@")) return;
+    setSubmitted(true);
   };
 
   const card: React.CSSProperties = { width: "100%", maxWidth: 640, margin: "0 auto" };
@@ -637,8 +611,8 @@ export default function Assessment() {
                 ))}
               </div>
 
-              {/* EMAIL CAPTURE */}
-              {submitStatus !== "success" ? (
+              {/* EMAIL CAPTURE (self-contained — not wired to any list/sequence yet) */}
+              {!submitted ? (
                 <div
                   style={{
                     border: `1px solid ${CARD_BORDER}`,
@@ -648,10 +622,10 @@ export default function Assessment() {
                     marginBottom: 20,
                   }}
                 >
-                  <h3 style={h(20)}>Get your results by email</h3>
+                  <h3 style={h(20)}>Keep your playbook</h3>
                   <p style={{ fontSize: 14.5, lineHeight: 1.6, color: MUTED, margin: "10px 0 16px" }}>
-                    Join Eric's list and get one short email a week on selling and coaching — matched
-                    to how you're wired. Unsubscribe anytime.
+                    Get the PDF version of your {p.name} playbook, plus one short email a week on
+                    selling and coaching. Unsubscribe anytime.
                   </p>
                   <div style={{ display: "grid", gap: 12, maxWidth: 420 }}>
                     <input
@@ -671,22 +645,12 @@ export default function Assessment() {
                       data-testid="input-assessment-email"
                       style={{ padding: "14px 16px", fontSize: 15, borderRadius: 8, fontFamily: "'DM Sans', sans-serif" }}
                     />
-                    {submitError && (
-                      <p style={{ fontSize: 13, color: "#B4552D", margin: 0 }} data-testid="text-assessment-error">
-                        {submitError}
-                      </p>
-                    )}
                     <button
-                      style={{ ...goldBtn, opacity: submitStatus === "loading" ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
+                      style={goldBtn}
                       onClick={submitEmail}
-                      disabled={submitStatus === "loading"}
                       data-testid="button-assessment-submit"
                     >
-                      {submitStatus === "loading" ? (
-                        <><Loader2 className="w-4 h-4 animate-spin" /> Sending…</>
-                      ) : (
-                        "Send me my results →"
-                      )}
+                      Send me my playbook →
                     </button>
                   </div>
                 </div>
@@ -696,8 +660,8 @@ export default function Assessment() {
                   data-testid="text-assessment-success"
                 >
                   <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: INK }}>
-                    <strong>You're on the list — check your inbox.</strong> Keep this page open to
-                    revisit your {p.name} breakdown.
+                    <strong>Thanks!</strong> Your {p.name} breakdown stays right here — scroll up any
+                    time to revisit it.
                   </p>
                 </div>
               )}
