@@ -20,6 +20,7 @@ interface AdminLead {
   id: number;
   email: string;
   firstName: string | null;
+  phone: string | null;
   leadMagnetId: number | null;
   resourceTitle: string;
   questionnaireAnswers: Record<string, string> | null;
@@ -228,6 +229,7 @@ function SignupsTab() {
                 </div>
                 <div className="text-xs mt-0.5" style={{ color: "var(--c-fg-45)" }}>
                   {lead.resourceTitle} · {formatDate(lead.createdAt)}
+                  {lead.phone && ` · ${lead.phone}`}
                   {lead.sequenceOptIn && ` · Sequence: email ${lead.sequenceStep} sent`}
                 </div>
               </div>

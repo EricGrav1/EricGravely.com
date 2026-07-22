@@ -17,6 +17,7 @@ import {
   sendLeadMagnetEmail,
   sendNewsletterConfirmationEmail,
   sendSequenceEmail,
+  sendAssessmentResultsEmail,
   validateUnsubscribeToken,
   validateDownloadToken,
   buildDownloadUrl,
@@ -186,6 +187,77 @@ export async function registerRoutes(
     }
   });
 
+  // ── Assessment (DECA) capture + results delivery ────────────────────────────
+  // Always: email the matching results PDF (transactional) + record the lead.
+  // Only when optIn is true: add them to the marketing list (subscriber, Kit,
+  // nurture sequence). The opt-in checkbox is the gate into the ecosystem.
+  const DECA_NAMES: Record<string, string> = {
+    D: "The Dominant", E: "The Ego", C: "The Caring", A: "The Analytical",
+  };
+  const assessmentSchema = z.object({
+    firstName: z.string().trim().min(1, "First name is required").max(80),
+    email: z.string().email("Please enter a valid email address"),
+    phone: z.string().trim().max(40).optional(),
+    decaType: z.enum(["D", "E", "C", "A"]),
+    scores: z.record(z.number()).optional(),
+    optIn: z.boolean().optional(),
+  });
+
+  app.post("/api/assessment", async (req, res) => {
+    try {
+      const parsed = assessmentSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ message: parsed.error.errors[0]?.message || "Invalid submission" });
+      }
+      const { firstName, decaType, phone, scores, optIn } = parsed.data;
+      const email = parsed.data.email.toLowerCase();
+      const siteBaseUrl = getSiteBaseUrl(req as any);
+      const typeName = DECA_NAMES[decaType];
+
+      // Answer summary shown in Admin → Signups
+      const answers: Record<string, string> = { "First name": firstName, "Personality type": typeName };
+      if (scores) {
+        answers["Score breakdown"] = (["D", "E", "C", "A"] as const)
+          .map((t) => `${DECA_NAMES[t].replace("The ", "")} ${scores[t] ?? 0}`)
+          .join(" · ");
+      }
+
+      // Record the lead (admin visibility) — always, and idempotently per email+type
+      try {
+        const existingLeads = await storage.getLeadByEmail(email);
+        const already = existingLeads.some(
+          (l) => !l.leadMagnetId && (l.questionnaireAnswers as Record<string, string> | null)?.["Personality type"] === typeName,
+        );
+        if (!already) await storage.createAssessmentLead(email, phone, answers);
+      } catch (e) {
+        console.error("[assessment] lead record failed:", e instanceof Error ? e.message : e);
+      }
+
+      // Deliver the results PDF — transactional, always
+      const emailResult = await sendAssessmentResultsEmail(email, firstName, decaType, siteBaseUrl);
+      if (!emailResult.success) {
+        console.error("[assessment] email failed:", emailResult.error);
+        return res.status(500).json({ message: "We couldn't email your results right now. Please try again." });
+      }
+
+      // Marketing ecosystem — only with explicit opt-in
+      if (optIn) {
+        const existing = await storage.getSubscriberByEmail(email);
+        if (!existing) {
+          await storage.createSubscriber({ email, firstName, tag: `deca-${decaType.toLowerCase()}` });
+        }
+        await storage.setSequenceOptIn(email, "newsletter");
+        const ck = await subscribeToConvertKit(email, firstName, `deca-${decaType.toLowerCase()}`);
+        if (!ck.success && !ck.skipped) console.error("[assessment] ConvertKit error:", ck.error);
+      }
+
+      return res.json({ success: true });
+    } catch (err) {
+      console.error("Assessment error:", err instanceof Error ? err.message : err);
+      return res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  });
+
   // ── Tokenized download (email-only delivery) ────────────────────────────────
   app.get("/api/download", async (req, res) => {
     try {
@@ -332,10 +404,15 @@ export async function registerRoutes(
       return res.json(
         allLeads.map((l) => {
           const sub = subByEmail.get(l.email);
+          const answers = l.questionnaireAnswers as Record<string, string> | null;
           return {
             ...l,
-            resourceTitle: l.leadMagnetId ? magnetTitles.get(l.leadMagnetId) ?? "Unknown" : "—",
-            firstName: sub?.firstName ?? null,
+            resourceTitle: l.leadMagnetId
+              ? magnetTitles.get(l.leadMagnetId) ?? "Unknown"
+              : answers?.["Personality type"]
+                ? "DECA Assessment"
+                : "—",
+            firstName: sub?.firstName ?? answers?.["First name"] ?? null,
             sequenceOptIn: sub?.sequenceOptIn ?? false,
             sequenceStep: sub?.sequenceStep ?? 0,
             unsubscribed: sub?.unsubscribed ?? l.unsubscribed,

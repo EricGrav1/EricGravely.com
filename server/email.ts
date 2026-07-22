@@ -1,5 +1,7 @@
 import { Resend } from 'resend';
 import crypto from 'crypto';
+import { readFileSync, existsSync } from 'fs';
+import { join } from 'path';
 import { getSiteBaseUrl } from './config';
 
 const APP_STORE_URL = process.env.APP_STORE_URL || "https://apps.apple.com/us/app/sales-coach-ai/id6748286535";
@@ -283,6 +285,102 @@ export async function sendSequenceEmail(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error("Sequence email failed:", msg);
+    return { success: false, error: msg };
+  }
+}
+
+// ── Assessment results (DECA) ─────────────────────────────────────────────────
+// Emails the matching per-type playbook PDF as an attachment. The PDFs live in
+// server/private/downloads/deca-<slug>.pdf and ship with the repo.
+const DECA_SLUG: Record<string, string> = { D: "dominant", E: "ego", C: "caring", A: "analytical" };
+const DECA_NAME: Record<string, string> = { D: "The Dominant", E: "The Ego", C: "The Caring", A: "The Analytical" };
+
+function assessmentEmailHtml(firstName: string, typeName: string, email: string, siteBaseUrl: string): string {
+  const greeting = firstName ? `, ${firstName}` : "";
+  // Optional webinar CTA — appears only once WEBINAR_URL is set (no code change needed later).
+  const webinarUrl = process.env.WEBINAR_URL;
+  const webinarTitle = process.env.WEBINAR_TITLE || "Join my free training";
+  const webinarBlock = webinarUrl
+    ? `<div style="background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:8px;padding:24px;text-align:center;margin-bottom:32px;">
+         <p style="color:#0D0D0D;font-size:14px;margin:0 0 14px;font-weight:600;">${webinarTitle}</p>
+         <a href="${webinarUrl}" style="display:inline-block;background:#0D0D0D;color:#FAF7F2;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:14px;">Save my seat →</a>
+       </div>`
+    : "";
+
+  return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#FAF7F2;margin:0;padding:0;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="background:#ffffff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:48px 40px;">
+      ${brandBadge()}
+      <h1 style="font-size:26px;font-weight:700;color:#0D0D0D;margin:0 0 12px;line-height:1.3;text-align:center;">
+        Your results are in${greeting} — you're ${typeName}
+      </h1>
+      <p style="font-size:15px;color:#555550;margin:0 0 28px;line-height:1.6;text-align:center;">
+        Your full ${typeName.replace(/^The\s+/, "")} sales playbook is attached as a PDF — how you're wired, how it shows up when you sell, your blind spot, and how to sell to every other type.
+      </p>
+      <div style="border-top:1px solid rgba(0,0,0,0.07);padding-top:24px;margin-bottom:28px;">
+        <p style="color:#555550;font-size:14px;line-height:1.7;margin:0 0 14px;">
+          Read it with your current pipeline in mind — then pick ONE thing to try on your next call. Small changes compound faster than you'd think.
+        </p>
+        <p style="color:#555550;font-size:14px;line-height:1.7;margin:0;">
+          Questions, or want me to look at your team? Just reply — I read every email.
+        </p>
+      </div>
+      ${webinarBlock}
+      <div style="background:rgba(201,162,39,0.06);border:1px solid rgba(201,162,39,0.15);border-radius:8px;padding:24px;text-align:center;margin-bottom:32px;">
+        <p style="color:#0D0D0D;font-size:14px;margin:0 0 14px;font-weight:600;">Want on-demand coaching wherever you are?</p>
+        <a href="${APP_STORE_URL}" style="display:inline-block;background:#0D0D0D;color:#FAF7F2;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:14px;">Download SalesCoachAI →</a>
+      </div>
+      ${emailFooter(email, siteBaseUrl)}
+    </div>
+  </div>
+</body>
+</html>`;
+}
+
+export async function sendAssessmentResultsEmail(
+  email: string,
+  firstName: string,
+  decaType: string,
+  siteBaseUrl: string,
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const slug = DECA_SLUG[decaType];
+    const typeName = DECA_NAME[decaType];
+    if (!slug) return { success: false, error: "Unknown assessment type" };
+
+    const filePath = join(process.cwd(), "server", "private", "downloads", `deca-${slug}.pdf`);
+    if (!existsSync(filePath)) {
+      console.error(`[assessment] PDF missing: ${filePath}`);
+      return { success: false, error: "Results file not available" };
+    }
+
+    const { client, fromEmail } = await getUncachableResendClient();
+    if (!fromEmail) return { success: false, error: "From email not configured" };
+
+    const { error } = await client.emails.send({
+      from: fromEmail,
+      replyTo: REPLY_TO,
+      to: email,
+      subject: `Your DECA results: you're ${typeName}`,
+      html: assessmentEmailHtml(firstName, typeName, email, siteBaseUrl),
+      attachments: [
+        // Resend JSON-serializes the body, so content must be a base64 string,
+        // not a raw Buffer (a Buffer would serialize to {"type":"Buffer",...}).
+        {
+          filename: `Eric Gravely - ${typeName} Sales Playbook.pdf`,
+          content: readFileSync(filePath).toString("base64"),
+          contentType: "application/pdf",
+        },
+      ],
+    });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error("Assessment email failed:", msg);
     return { success: false, error: msg };
   }
 }

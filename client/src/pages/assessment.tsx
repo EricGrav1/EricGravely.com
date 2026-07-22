@@ -401,6 +401,11 @@ export default function Assessment() {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [openCell, setOpenCell] = useState<TypeKey | null>(null);
+  const [phone, setPhone] = useState("");
+  const [optIn, setOptIn] = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "loading">("idle");
+  const [formError, setFormError] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   const start = () => {
@@ -408,6 +413,9 @@ export default function Assessment() {
     setIdx(0);
     setOrder(QUESTIONS.map((q) => shuffle(q.a)));
     setSubmitted(false);
+    setShowForm(false);
+    setSubmitStatus("idle");
+    setFormError("");
     setStage("quiz");
     window.scrollTo({ top: 0 });
   };
@@ -422,11 +430,37 @@ export default function Assessment() {
   const primary = ranked[0]?.t ?? "D";
   const secondary = ranked[1]?.t ?? "E";
   const p = PROFILES[primary];
+  const shortName = p.name.replace(/^The\s+/, ""); // "The Dominant" -> "Dominant"
 
-  // Self-contained — not wired to the email list or any sequence.
-  const submitEmail = () => {
-    if (!email.includes("@")) return;
-    setSubmitted(true);
+  const submitEmail = async () => {
+    if (!name.trim()) { setFormError("Please enter your first name."); return; }
+    if (!email.includes("@")) { setFormError("Please enter a valid email address."); return; }
+    setSubmitStatus("loading");
+    setFormError("");
+    try {
+      const res = await fetch("/api/assessment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: name.trim(),
+          email: email.trim(),
+          phone: phone.trim() || undefined,
+          decaType: primary,
+          scores,
+          optIn,
+        }),
+      });
+      const data = (await res.json()) as { success?: boolean; message?: string };
+      if (!res.ok || !data.success) {
+        setFormError(data.message || "Something went wrong. Please try again.");
+        setSubmitStatus("idle");
+        return;
+      }
+      setSubmitted(true);
+    } catch {
+      setFormError("Network error — please try again.");
+      setSubmitStatus("idle");
+    }
   };
 
   const card: React.CSSProperties = { width: "100%", maxWidth: 640, margin: "0 auto" };
@@ -611,8 +645,41 @@ export default function Assessment() {
                 ))}
               </div>
 
-              {/* EMAIL CAPTURE (self-contained — not wired to any list/sequence yet) */}
-              {!submitted ? (
+              {/* EMAIL RESULTS — capture (name, email, phone, opt-in) then deliver the PDF */}
+              {submitted ? (
+                <div
+                  style={{ border: `1px solid ${GOLD}`, background: CARD, padding: "20px 22px", borderRadius: 10, marginBottom: 20 }}
+                  data-testid="text-assessment-success"
+                >
+                  <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: INK }}>
+                    <strong>Sent — check your inbox.</strong> Your {shortName} playbook is on its way as a
+                    PDF{optIn ? ", and you're on the list for more" : ""}. (Check spam if you don't see it in a couple minutes.)
+                  </p>
+                </div>
+              ) : !showForm ? (
+                <div
+                  style={{
+                    border: `1px solid ${CARD_BORDER}`,
+                    background: CARD,
+                    padding: "24px 22px",
+                    borderRadius: 10,
+                    marginBottom: 20,
+                    textAlign: "center",
+                  }}
+                >
+                  <h3 style={h(20)}>Want this as a PDF?</h3>
+                  <p style={{ fontSize: 14.5, lineHeight: 1.6, color: MUTED, margin: "10px 0 16px" }}>
+                    Get your full {shortName} playbook emailed to you — keep it, print it, share it with your team.
+                  </p>
+                  <button
+                    style={goldBtn}
+                    onClick={() => setShowForm(true)}
+                    data-testid="button-email-results"
+                  >
+                    Email Results →
+                  </button>
+                </div>
+              ) : (
                 <div
                   style={{
                     border: `1px solid ${CARD_BORDER}`,
@@ -622,12 +689,11 @@ export default function Assessment() {
                     marginBottom: 20,
                   }}
                 >
-                  <h3 style={h(20)}>Keep your playbook</h3>
+                  <h3 style={h(20)}>Where should I send it?</h3>
                   <p style={{ fontSize: 14.5, lineHeight: 1.6, color: MUTED, margin: "10px 0 16px" }}>
-                    Get the PDF version of your {p.name} playbook, plus one short email a week on
-                    selling and coaching. Unsubscribe anytime.
+                    Your {shortName} playbook, delivered as a PDF.
                   </p>
-                  <div style={{ display: "grid", gap: 12, maxWidth: 420 }}>
+                  <div style={{ display: "grid", gap: 12, maxWidth: 440 }}>
                     <input
                       value={name}
                       onChange={(e) => setName(e.target.value)}
@@ -639,30 +705,45 @@ export default function Assessment() {
                     <input
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Work email"
+                      placeholder="Email"
                       type="email"
                       className="input-dark"
                       data-testid="input-assessment-email"
                       style={{ padding: "14px 16px", fontSize: 15, borderRadius: 8, fontFamily: "'DM Sans', sans-serif" }}
                     />
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="Phone (optional)"
+                      type="tel"
+                      className="input-dark"
+                      data-testid="input-assessment-phone"
+                      style={{ padding: "14px 16px", fontSize: 15, borderRadius: 8, fontFamily: "'DM Sans', sans-serif" }}
+                    />
+                    <label style={{ display: "flex", gap: 10, alignItems: "flex-start", fontSize: 13, lineHeight: 1.5, color: MUTED, cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={optIn}
+                        onChange={(e) => setOptIn(e.target.checked)}
+                        style={{ marginTop: 3, accentColor: GOLD as string }}
+                        data-testid="checkbox-assessment-optin"
+                      />
+                      <span>Add me to Eric's list for sales tips, coaching, and event invites. By opting in you agree to receive emails from Eric Gravely — unsubscribe anytime.</span>
+                    </label>
+                    {formError && (
+                      <p style={{ fontSize: 13, color: "#B4552D", margin: 0 }} data-testid="text-assessment-error">
+                        {formError}
+                      </p>
+                    )}
                     <button
-                      style={goldBtn}
+                      style={{ ...goldBtn, opacity: submitStatus === "loading" ? 0.6 : 1 }}
                       onClick={submitEmail}
+                      disabled={submitStatus === "loading"}
                       data-testid="button-assessment-submit"
                     >
-                      Send me my playbook →
+                      {submitStatus === "loading" ? "Sending…" : "Email me my results →"}
                     </button>
                   </div>
-                </div>
-              ) : (
-                <div
-                  style={{ border: `1px solid ${GOLD}`, background: CARD, padding: "20px 22px", borderRadius: 10, marginBottom: 20 }}
-                  data-testid="text-assessment-success"
-                >
-                  <p style={{ margin: 0, fontSize: 15, lineHeight: 1.6, color: INK }}>
-                    <strong>Thanks!</strong> Your {p.name} breakdown stays right here — scroll up any
-                    time to revisit it.
-                  </p>
                 </div>
               )}
 

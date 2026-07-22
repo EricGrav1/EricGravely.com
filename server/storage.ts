@@ -27,6 +27,7 @@ export interface IStorage {
   getLead(email: string, leadMagnetId?: number): Promise<Lead | undefined>;
   getLeadByEmail(email: string): Promise<Lead[]>;
   createLead(lead: InsertLead): Promise<Lead>;
+  createAssessmentLead(email: string, phone: string | undefined, answers: Record<string, string>): Promise<Lead>;
   updateLead(id: number, updates: Partial<Lead>): Promise<Lead | undefined>;
   markUnsubscribed(email: string): Promise<void>;
   getAnalytics(): Promise<AnalyticsStat[]>;
@@ -98,6 +99,18 @@ export class DbStorage implements IStorage {
 
   async getLeadByEmail(email: string): Promise<Lead[]> {
     return db.select().from(leads).where(eq(leads.email, email.toLowerCase()));
+  }
+
+  // Assessment leads aren't tied to a lead magnet — the result type + phone
+  // are stored so they show in Admin → Signups like any other capture.
+  async createAssessmentLead(email: string, phone: string | undefined, answers: Record<string, string>): Promise<Lead> {
+    const [row] = await db.insert(leads).values({
+      email: email.toLowerCase(),
+      phone: phone ?? null,
+      leadMagnetId: null,
+      questionnaireAnswers: answers,
+    }).returning();
+    return row;
   }
 
   async createLead(lead: InsertLead): Promise<Lead> {
