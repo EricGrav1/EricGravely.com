@@ -164,7 +164,7 @@ export async function seedDatabase() {
       // Backfill default questions on existing download resources that have none
       const existing = await db.select().from(leadMagnets);
       for (const row of existing) {
-        if (row.productType !== "external" && !row.questionnaireFields) {
+        if (row.productType === "download" && !row.questionnaireFields) {
           await db
             .update(leadMagnets)
             .set({ questionnaireFields: DEFAULT_QUESTIONS })

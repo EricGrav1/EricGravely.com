@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, ExternalLink, Mail, PackageOpen, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowLeft, ExternalLink, Gamepad2, Mail, PackageOpen, Play, ShieldCheck, Sparkles } from "lucide-react";
 import { SiApple } from "react-icons/si";
 import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -44,7 +44,9 @@ export default function ProductDetail() {
   });
 
   const product = products?.find((p) => slugify(p.title) === params.slug);
+  const isGame = product?.productType === "game";
   const isExternal = product?.productType === "external";
+  const isOutbound = isExternal || isGame;
   const previews = (product?.previewImages as string[] | null) ?? [];
   const [iconFailed, setIconFailed] = useState(false);
 
@@ -93,10 +95,10 @@ export default function ProductDetail() {
                     transition={{ duration: 0.5 }}
                   >
                     <span className="label-track block mb-5">
-                      {isExternal ? "App" : "Free — Sent to Your Inbox"}
+                      {isGame ? "Interactive Sales Game" : isExternal ? "App" : "Free — Sent to Your Inbox"}
                     </span>
 
-                    {isExternal && product.iconPath && !iconFailed && (
+                    {isOutbound && product.iconPath && !iconFailed && (
                       <img
                         src={product.iconPath}
                         alt={product.title}
@@ -120,7 +122,12 @@ export default function ProductDetail() {
 
                     {/* Trust markers */}
                     <div className="space-y-3 mb-10">
-                      {(isExternal
+                      {(isGame
+                        ? [
+                            { icon: Gamepad2, text: "Built to turn sales practice into repetition" },
+                            { icon: Sparkles, text: "Designed from real coaching scenarios" },
+                          ]
+                        : isExternal
                         ? [
                             { icon: Sparkles, text: "Built from 10+ years of real sales coaching" },
                             { icon: ShieldCheck, text: "Made by a 3x Presidents Club winner" },
@@ -183,7 +190,7 @@ export default function ProductDetail() {
                           ))}
                         </div>
                         <p className="text-xs" style={{ color: "var(--c-fg-45)" }}>
-                          Preview only — the full version is delivered to your inbox.
+                          {isGame ? "Gameplay preview — launch the game when you're ready to play." : isExternal ? "Product preview." : "Preview only — the full version is delivered to your inbox."}
                         </p>
                       </div>
                     )}
@@ -197,13 +204,13 @@ export default function ProductDetail() {
                     className="lg:sticky lg:top-28 rounded-2xl p-7"
                     style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}
                   >
-                    {isExternal ? (
+                    {isOutbound ? (
                       <>
                         <h2 className="font-display text-lg font-bold mb-2" style={{ color: "var(--c-fg)" }}>
-                          Get {product.title}
+                          {isGame ? `Play ${product.title}` : `Get ${product.title}`}
                         </h2>
                         <p className="text-sm leading-relaxed mb-6" style={{ color: "var(--c-fg-55)" }}>
-                          Available now — tap below to download.
+                          {isGame ? "Open the game in a new tab and put the skill into practice." : "Available now — tap below to download."}
                         </p>
                         <a
                           href={product.externalUrl ?? "#"}
@@ -212,8 +219,8 @@ export default function ProductDetail() {
                           className="btn-accent w-full py-3.5 rounded-lg font-bold text-base flex items-center justify-center gap-2"
                           data-testid={`button-external-${product.id}`}
                         >
-                          <SiApple className="w-4 h-4" />
-                          {product.buttonLabel ?? "Get the App"}
+                          {isGame ? <Play className="w-4 h-4 fill-current" /> : <SiApple className="w-4 h-4" />}
+                          {product.buttonLabel ?? (isGame ? "Play Game" : "Get the App")}
                           <ExternalLink className="w-3.5 h-3.5 opacity-70" />
                         </a>
                       </>

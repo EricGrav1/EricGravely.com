@@ -285,7 +285,7 @@ export async function registerRoutes(
   app.get("/sitemap.xml", async (req, res) => {
     try {
       const base = getSiteBaseUrl(req as any);
-      const staticPaths = ["/", "/about", "/products", "/coaching", "/assessment"];
+      const staticPaths = ["/", "/about", "/bio", "/products", "/coaching", "/assessment"];
       const magnets = await storage.listLeadMagnets(true);
       const urls = [
         ...staticPaths,
@@ -398,7 +398,7 @@ export async function registerRoutes(
       const withFileState = await Promise.all(
         magnets.map(async (m) => ({
           ...m,
-          fileUploaded: m.productType === "external" ? null : await resourceFileAvailable(m.resourceUrl),
+          fileUploaded: m.productType === "download" ? await resourceFileAvailable(m.resourceUrl) : null,
         })),
       );
       return res.json(withFileState);

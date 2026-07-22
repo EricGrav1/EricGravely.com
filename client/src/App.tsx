@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/lib/theme";
 import Home from "@/pages/home";
 import About from "@/pages/about";
+import Bio from "@/pages/bio";
 import Products from "@/pages/products";
 import ProductDetail from "@/pages/product-detail";
 import ThankYou from "@/pages/thank-you";
@@ -18,6 +19,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/about" component={About} />
+      <Route path="/bio" component={Bio} />
       <Route path="/products" component={Products} />
       <Route path="/products/:slug" component={ProductDetail} />
       <Route path="/thank-you" component={ThankYou} />

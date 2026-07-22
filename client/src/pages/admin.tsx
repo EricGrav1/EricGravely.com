@@ -282,12 +282,13 @@ function emptyProductForm(): ProductFormData {
 }
 
 function toApiPayload(f: ProductFormData) {
+  const isOutbound = f.productType === "external" || f.productType === "game";
   return {
     title: f.title.trim(),
     description: f.description.trim(),
     productType: f.productType,
     buttonLabel: f.buttonLabel.trim() || null,
-    externalUrl: f.productType === "external" ? (f.externalUrl.trim() || null) : null,
+    externalUrl: isOutbound ? (f.externalUrl.trim() || null) : null,
     iconPath: f.iconPath.trim() || null,
     resourceUrl: f.productType === "download" ? (f.resourceUrl || null) : null,
     videoUrl: f.videoUrl.trim() || null,
@@ -462,8 +463,8 @@ function ProductForm({
   const handleSave = () => {
     if (!form.title.trim()) { setError("Title is required."); return; }
     if (!form.description.trim()) { setError("Description is required."); return; }
-    if (form.productType === "external" && !form.externalUrl.trim()) {
-      setError("External products need a link (App Store, checkout page, etc.).");
+    if (form.productType !== "download" && !form.externalUrl.trim()) {
+      setError("Apps and games need a destination link.");
       return;
     }
     if (form.videoUrl.trim() && !youtubeVideoId(form.videoUrl.trim())) {
@@ -519,6 +520,7 @@ function ProductForm({
           >
             <option value="download">Free download (email-gated)</option>
             <option value="external">External link (app, paid product)</option>
+            <option value="game">Sales game (playable link)</option>
           </select>
         </label>
         <label className="text-xs flex items-center gap-2 cursor-pointer" style={labelStyle}>
@@ -539,16 +541,18 @@ function ProductForm({
           type="text"
           value={form.buttonLabel}
           onChange={(e) => set({ buttonLabel: e.target.value })}
-          placeholder={form.productType === "external" ? "e.g. Download on the App Store" : "e.g. Get the free playbook"}
+          placeholder={form.productType === "game" ? "e.g. Play the game" : form.productType === "external" ? "e.g. Download on the App Store" : "e.g. Get the free playbook"}
           className="input-dark w-full px-3.5 py-2.5 rounded-lg text-sm"
           data-testid="input-product-button"
         />
       </div>
 
-      {form.productType === "external" ? (
+      {form.productType !== "download" ? (
         <>
           <div>
-            <label className="text-xs block mb-1" style={labelStyle}>External link</label>
+            <label className="text-xs block mb-1" style={labelStyle}>
+              {form.productType === "game" ? "Game URL" : "External link"}
+            </label>
             <input
               type="url"
               value={form.externalUrl}
@@ -655,13 +659,13 @@ function ProductsTab() {
   return (
     <div className="space-y-3">
       <p className="text-xs leading-relaxed" style={{ color: "var(--c-fg-45)" }}>
-        Everything shown on /products. Free downloads are email-gated; external products link straight out.
+        Everything shown on /products. Free downloads are email-gated; apps and games link straight out.
         Each product also gets its own page at /products/&lt;name&gt;.
       </p>
 
       {(magnets ?? []).map((m) => {
         const isOpen = editingId === m.id;
-        const needsFile = m.productType !== "external" && m.fileUploaded === false;
+        const needsFile = m.productType === "download" && m.fileUploaded === false;
         return (
           <div
             key={m.id}
@@ -674,7 +678,7 @@ function ProductsTab() {
                 className="text-[11px] font-bold px-2 py-1 rounded-lg flex-shrink-0"
                 style={{ background: "var(--c-accent-10)", color: "var(--c-accent)", border: "1px solid var(--c-accent-15)" }}
               >
-                {m.productType === "external" ? "Link" : "Download"}
+                {m.productType === "game" ? "Game" : m.productType === "external" ? "Link" : "Download"}
               </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1310,7 +1314,7 @@ function QuestionsEditor({ magnet }: { magnet: LeadMagnet }) {
 
 function QuestionsTab() {
   const { data: magnets, isLoading } = useQuery<LeadMagnet[]>({ queryKey: ["/api/admin/lead-magnets"] });
-  const downloadable = (magnets ?? []).filter((m) => m.productType !== "external");
+  const downloadable = (magnets ?? []).filter((m) => m.productType === "download");
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
   if (isLoading) {

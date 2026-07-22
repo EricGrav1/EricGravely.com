@@ -41,7 +41,7 @@ export const leadMagnets = pgTable("lead_magnets", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  // "download" = email-gated free resource | "external" = direct link (no email capture)
+  // "download" = email-gated resource | "external" = app/product link | "game" = playable experience
   productType: text("product_type").notNull().default("download"),
   resourceUrl: text("resource_url"),
   deliveryMethod: text("delivery_method").notNull().default("email"),
@@ -131,6 +131,7 @@ export const insertLeadMagnetSchema = createInsertSchema(leadMagnets).omit({
   submissionCount: true,
   createdAt: true,
 }).extend({
+  productType: z.enum(["download", "external", "game"]),
   questionnaireFields: z.array(questionnaireFieldSchema).optional(),
   previewImages: z.array(z.string()).optional().nullable(),
   videoUrl: z.string().url().optional().nullable(),

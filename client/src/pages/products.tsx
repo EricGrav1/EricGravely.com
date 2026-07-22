@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { PackageOpen, ExternalLink, Eye, ArrowRight } from "lucide-react";
+import { PackageOpen, ExternalLink, Eye, ArrowRight, Gamepad2, Play } from "lucide-react";
 import { SiApple } from "react-icons/si";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -90,6 +90,76 @@ function ExternalProductCard({ product, index }: { product: LeadMagnet; index: n
   );
 }
 
+// ── Game card (playable destination, no email gate) ──────────────────────────
+function GameCard({ product, index }: { product: LeadMagnet; index: number }) {
+  const previews = (product.previewImages as string[] | null) ?? [];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.55, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+      className="rounded-2xl flex flex-col overflow-hidden group"
+      style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}
+      data-testid={`card-game-${product.id}`}
+    >
+      <Link href={`/products/${slugify(product.title)}`} className="block overflow-hidden">
+        {previews[0] ? (
+          <img
+            src={previews[0]}
+            alt={`${product.title} gameplay`}
+            className="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          />
+        ) : (
+          <div
+            className="aspect-video flex items-center justify-center"
+            style={{ background: "linear-gradient(135deg, var(--c-accent-15), var(--c-bg2))" }}
+          >
+            <Gamepad2 className="w-12 h-12" style={{ color: "var(--c-accent)" }} />
+          </div>
+        )}
+      </Link>
+
+      <div className="p-7 flex-1 flex flex-col">
+        <span className="label-track flex items-center gap-2 mb-4">
+          <Gamepad2 className="w-3.5 h-3.5" /> Interactive Sales Game
+        </span>
+        <Link href={`/products/${slugify(product.title)}`}>
+          <h2
+            className="font-display text-2xl font-bold mb-3 leading-snug transition-colors hover:text-accent cursor-pointer"
+            style={{ color: "var(--c-fg)" }}
+          >
+            {product.title}
+          </h2>
+        </Link>
+        <p className="text-sm leading-relaxed mb-6 flex-1" style={{ color: "var(--c-fg-55)" }}>
+          {product.description}
+        </p>
+        <div className="flex items-center gap-4">
+          <Link
+            href={`/products/${slugify(product.title)}`}
+            className="text-sm font-semibold"
+            style={{ color: "var(--c-accent)" }}
+          >
+            Details
+          </Link>
+          <a
+            href={product.externalUrl ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-accent flex-1 py-3 rounded-lg font-bold text-sm flex items-center justify-center gap-2"
+            data-testid={`button-game-${product.id}`}
+          >
+            <Play className="w-4 h-4 fill-current" />
+            {product.buttonLabel ?? "Play Game"}
+          </a>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 // ── Download product card (email-gated, multi-step questionnaire) ─────────────
 function DownloadProductCard({ product, index }: { product: LeadMagnet; index: number }) {
   const previews = (product.previewImages as string[] | null) ?? [];
@@ -156,6 +226,9 @@ function DownloadProductCard({ product, index }: { product: LeadMagnet; index: n
 
 // ── Smart dispatcher ──────────────────────────────────────────────────────────
 function ProductCard({ product, index }: { product: LeadMagnet; index: number }) {
+  if (product.productType === "game") {
+    return <GameCard product={product} index={index} />;
+  }
   if (product.productType === "external") {
     return <ExternalProductCard product={product} index={index} />;
   }
@@ -196,8 +269,9 @@ export default function Products() {
     queryKey: ["/api/lead-magnets"],
   });
 
+  const gameProducts = products?.filter((p) => p.productType === "game") ?? [];
   const appProducts = products?.filter((p) => p.productType === "external") ?? [];
-  const downloadProducts = products?.filter((p) => p.productType !== "external") ?? [];
+  const downloadProducts = products?.filter((p) => p.productType === "download") ?? [];
 
   return (
     <div style={{ backgroundColor: "var(--c-bg)", minHeight: "100vh" }}>
@@ -227,6 +301,27 @@ export default function Products() {
             </motion.div>
           </div>
         </section>
+
+        {/* Games section — only rendered once a game is published */}
+        {gameProducts.length > 0 && (
+          <section className="pb-16" style={{ background: "var(--c-bg)" }}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-end justify-between gap-6 mb-7">
+                <div>
+                  <div className="label-track mb-3">Sales Games</div>
+                  <h2 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "var(--c-fg)" }}>
+                    Practice the skill. Don&apos;t just read about it.
+                  </h2>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="grid-games">
+                {gameProducts.map((game, i) => (
+                  <ProductCard key={game.id} product={game} index={i} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Apps section — only rendered when there are external products */}
         {(isLoading || appProducts.length > 0) && (
