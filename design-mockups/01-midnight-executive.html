@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Eric Gravely — Midnight Executive</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#080B14; --bg2:#0D1220; --bg3:#121A2E;
+    --fg:#EAEEF7; --fg70:rgba(234,238,247,.70); --fg50:rgba(234,238,247,.50); --fg35:rgba(234,238,247,.35);
+    --accent:#5B8DEF; --accent2:#38BDF8; --accent-soft:rgba(91,141,239,.14);
+    --border:rgba(255,255,255,.08); --card:rgba(255,255,255,.025);
+    --disp:'Space Grotesk',sans-serif; --sans:'Inter',sans-serif; --mono:'JetBrains Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--bg);color:var(--fg);font-family:var(--sans);line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:500}
+  .disp{font-family:var(--disp);font-weight:700;letter-spacing:-.02em;line-height:1.08}
+
+  /* Nav */
+  nav{position:sticky;top:0;z-index:50;background:rgba(8,11,20,.72);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+  .nav-in{display:flex;align-items:center;justify-content:space-between;height:70px}
+  .logo{font-family:var(--disp);font-weight:700;font-size:19px;letter-spacing:-.01em}
+  .logo span{color:var(--accent)}
+  .nav-links{display:flex;gap:34px;align-items:center}
+  .nav-links a{font-size:14.5px;color:var(--fg70);font-weight:500;transition:color .2s}
+  .nav-links a:hover{color:var(--fg)}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;border-radius:8px;font-size:14.5px;padding:11px 20px;transition:all .2s;cursor:pointer;border:1px solid transparent}
+  .btn-primary{background:var(--accent);color:#06121f;box-shadow:0 6px 24px rgba(91,141,239,.32)}
+  .btn-primary:hover{background:#6f9df3;transform:translateY(-1px)}
+  .btn-ghost{border-color:var(--border);color:var(--fg);background:var(--card)}
+  .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+  @media(max-width:860px){.nav-links a:not(.btn){display:none}}
+
+  /* Hero */
+  .hero{position:relative;padding:90px 0 70px}
+  .hero::before{content:"";position:absolute;top:-120px;right:-100px;width:620px;height:620px;background:radial-gradient(circle,rgba(91,141,239,.18),transparent 62%);pointer-events:none}
+  .hero::after{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:radial-gradient(circle at 30% 20%,#000,transparent 70%);mask-image:radial-gradient(circle at 30% 20%,#000,transparent 70%);opacity:.5;pointer-events:none}
+  .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.15fr .85fr;gap:56px;align-items:center}
+  .hero h1{font-size:clamp(2.3rem,5vw,3.9rem);margin:22px 0 22px}
+  .hero h1 em{font-style:normal;background:linear-gradient(120deg,var(--accent),var(--accent2));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p.lead{font-size:1.075rem;color:var(--fg70);max-width:540px;margin-bottom:32px}
+  .cta-row{display:flex;gap:14px;flex-wrap:wrap}
+  .portrait-col{display:flex;flex-direction:column;align-items:center;gap:18px}
+  .portrait{position:relative;width:100%;max-width:340px;aspect-ratio:5/6;border-radius:18px;overflow:hidden;border:1px solid var(--border);box-shadow:0 30px 70px rgba(0,0,0,.55)}
+  .portrait img{width:100%;height:100%;object-fit:cover;object-position:center 12%}
+  .portrait::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(8,11,20,.55),transparent 45%)}
+  .badges{display:flex;gap:12px;width:100%;max-width:340px}
+  .badge{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+  .badge b{font-family:var(--disp);display:block;font-size:1.5rem;color:var(--accent2)}
+  .badge span{font-size:11.5px;color:var(--fg50);letter-spacing:.03em}
+  @media(max-width:860px){.hero-grid{grid-template-columns:1fr;gap:40px}.portrait-col{order:-1}}
+
+  /* Stats */
+  .stats{border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--bg2)}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+  .stat{padding:44px 20px;text-align:center;border-right:1px solid var(--border)}
+  .stat:last-child{border-right:none}
+  .stat b{font-family:var(--disp);font-size:2.7rem;color:var(--fg);display:block}
+  .stat span{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg50)}
+  @media(max-width:680px){.stats-grid{grid-template-columns:1fr 1fr}.stat{border-bottom:1px solid var(--border)}.stat:nth-child(2n){border-right:none}}
+
+  /* Section */
+  section.block{padding:96px 0}
+  .head{max-width:640px;margin-bottom:52px}
+  .head h2{font-size:clamp(1.9rem,4vw,2.7rem);margin:16px 0 14px}
+  .head p{color:var(--fg70);font-size:1.05rem}
+
+  /* YouTube */
+  .vids{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+  .vid{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden;transition:all .25s}
+  .vid:hover{border-color:var(--accent);transform:translateY(-3px)}
+  .thumb{position:relative;aspect-ratio:16/9;background:linear-gradient(135deg,#16233f,#0d1524);display:flex;align-items:center;justify-content:center}
+  .thumb img{width:100%;height:100%;object-fit:cover}
+  .play{position:absolute;width:56px;height:56px;border-radius:50%;background:rgba(91,141,239,.92);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 30px rgba(91,141,239,.5)}
+  .play svg{margin-left:3px}
+  .vid-body{padding:20px 22px 24px}
+  .vid-body h3{font-family:var(--disp);font-size:1.12rem;margin-bottom:8px;line-height:1.3}
+  .vid-body p{font-size:.92rem;color:var(--fg50)}
+  @media(max-width:680px){.vids{grid-template-columns:1fr}}
+
+  /* Coaching */
+  .coach{background:var(--bg2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .coach-in{display:grid;grid-template-columns:1fr 1.2fr;gap:60px;align-items:center}
+  .benefits{display:flex;flex-direction:column;gap:18px}
+  .benefit{display:flex;gap:16px;padding:20px 22px;background:var(--card);border:1px solid var(--border);border-radius:12px}
+  .benefit .ico{flex-shrink:0;width:40px;height:40px;border-radius:9px;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;color:var(--accent)}
+  .benefit h4{font-family:var(--disp);font-size:1.05rem;margin-bottom:4px}
+  .benefit p{font-size:.9rem;color:var(--fg50)}
+  @media(max-width:860px){.coach-in{grid-template-columns:1fr;gap:40px}}
+
+  /* Footer */
+  footer{padding:64px 0 40px}
+  .foot-top{display:flex;justify-content:space-between;flex-wrap:wrap;gap:32px;padding-bottom:36px;border-bottom:1px solid var(--border)}
+  .foot-links{display:flex;gap:28px;flex-wrap:wrap}
+  .foot-links a{font-size:14px;color:var(--fg70)}
+  .foot-links a:hover{color:var(--accent)}
+  .foot-bot{padding-top:26px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--fg35)}
+  .note{font-family:var(--mono);font-size:11px;color:var(--fg35);text-align:center;padding:10px;letter-spacing:.08em;border-bottom:1px solid var(--border)}
+</style>
+</head>
+<body>
+<div class="note">DESIGN 1 — “MIDNIGHT EXECUTIVE” · deep navy + steel-blue · tech-authority direction</div>
+<nav><div class="wrap nav-in">
+  <div class="logo">Eric<span>Gravely</span></div>
+  <div class="nav-links">
+    <a href="#">About</a><a href="#">Products</a><a href="#">Coaching</a><a href="#">YouTube</a>
+    <a href="#" class="btn btn-primary">Book a Call</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap hero-grid">
+  <div>
+    <span class="eyebrow">Sales · Leadership · Coaching</span>
+    <h1 class="disp">Most companies never train their sales managers. They hand you a team and a quota and leave you to <em>figure it out.</em></h1>
+    <p class="lead">I went from rep to trainer to sales manager and learned it the hard way: closing deals and coaching closers are two different jobs. I help sales leaders master the second one — developing reps, running the number, and building teams that win without you selling for them.</p>
+    <div class="cta-row">
+      <a href="#" class="btn btn-primary">Book a Discovery Call →</a>
+      <a href="#" class="btn btn-ghost">Free Resources</a>
+    </div>
+  </div>
+  <div class="portrait-col">
+    <div class="portrait"><img src="nicholas.jpg" alt="Eric Gravely" /></div>
+    <div class="badges">
+      <div class="badge"><b>3x</b><span>Presidents Club</span></div>
+      <div class="badge"><b>100s</b><span>Reps Coached</span></div>
+    </div>
+  </div>
+</div></header>
+
+<section class="stats"><div class="wrap"><div class="stats-grid">
+  <div class="stat"><b>10+</b><span>Years in Sales</span></div>
+  <div class="stat"><b>100s</b><span>of Reps Coached</span></div>
+  <div class="stat"><b>3x</b><span>Presidents Club</span></div>
+  <div class="stat"><b>3</b><span>Teams Built</span></div>
+</div></div></section>
+
+<section class="block"><div class="wrap">
+  <div class="head">
+    <span class="eyebrow">On YouTube · @EricGravely</span>
+    <h2 class="disp">Real talk on coaching, leadership &amp; rep development</h2>
+    <p>Built for reps who want to grow and managers who want to lead. New content weekly.</p>
+  </div>
+  <div class="vids">
+    <a class="vid" href="#"><div class="thumb"><img src="https://i.ytimg.com/vi/jJejUZmq76s/hqdefault.jpg" alt=""/><div class="play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#06121f"><path d="M8 5v14l11-7z"/></svg></div></div><div class="vid-body"><h3>What They Don't Tell You About Gen Z Sales Reps</h3><p>The real truth about managing and coaching them.</p></div></a>
+    <a class="vid" href="#"><div class="thumb"><img src="https://i.ytimg.com/vi/rQD84vvo6ec/hqdefault.jpg" alt=""/><div class="play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#06121f"><path d="M8 5v14l11-7z"/></svg></div></div><div class="vid-body"><h3>How to Coach a Sales Rep</h3><p>Keep coaching simple — but understand the “why” behind it.</p></div></a>
+    <a class="vid" href="#"><div class="thumb"><img src="https://i.ytimg.com/vi/0jPL2BkFJ-M/hqdefault.jpg" alt=""/><div class="play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#06121f"><path d="M8 5v14l11-7z"/></svg></div></div><div class="vid-body"><h3>Coaching New Sales Agents — My Actual Process</h3><p>A real look at how I coach brand-new agents.</p></div></a>
+    <a class="vid" href="#"><div class="thumb"><img src="https://i.ytimg.com/vi/0JX1z6bTufk/hqdefault.jpg" alt=""/><div class="play"><svg width="18" height="18" viewBox="0 0 24 24" fill="#06121f"><path d="M8 5v14l11-7z"/></svg></div></div><div class="vid-body"><h3>How to Win as a Sales Leader in 2026</h3><p>Nobody told them how to lead. Here's how to actually win.</p></div></a>
+  </div>
+</div></section>
+
+<section class="coach"><div class="wrap block" style="padding-top:80px;padding-bottom:80px"><div class="coach-in">
+  <div>
+    <span class="eyebrow">1-on-1 Sales Coaching</span>
+    <h2 class="disp" style="font-size:clamp(1.9rem,4vw,2.6rem);margin:16px 0 16px">Ready to level up your sales career?</h2>
+    <p style="color:var(--fg70);margin-bottom:26px">Personalized coaching for reps and new managers who want real results — not recycled advice. Built on 10+ years in the field and 3 Presidents Club wins.</p>
+    <a href="#" class="btn btn-primary">Apply for Coaching →</a>
+    <p style="font-family:var(--mono);font-size:11.5px;color:var(--fg35);margin-top:16px;letter-spacing:.06em">Limited spots · Application required</p>
+  </div>
+  <div class="benefits">
+    <div class="benefit"><div class="ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg></div><div><h4>1-on-1 Coaching Sessions</h4><p>Direct coaching tailored to your role, challenges, and goals — not a one-size-fits-all curriculum.</p></div></div>
+    <div class="benefit"><div class="ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></div><div><h4>Real-World Frameworks</h4><p>Every tactic comes from the field. Tested on real teams, refined over 10+ years in sales.</p></div></div>
+    <div class="benefit"><div class="ico"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg></div><div><h4>Accountability &amp; Progress</h4><p>Weekly check-ins, action items, and honest feedback to keep you moving — not just inspired.</p></div></div>
+  </div>
+</div></div></section>
+
+<footer><div class="wrap">
+  <div class="foot-top">
+    <div class="logo">Eric<span>Gravely</span><div style="font-family:var(--mono);font-size:11px;color:var(--fg35);letter-spacing:.1em;margin-top:8px;font-weight:400">SALES. COACHING. LEADERSHIP.</div></div>
+    <div class="foot-links"><a href="#">Home</a><a href="#">About</a><a href="#">Products</a><a href="#">Assessment</a><a href="#">Coaching</a><a href="#">YouTube</a><a href="#">SalesCoachAI</a></div>
+  </div>
+  <div class="foot-bot"><span>© 2026 Eric Gravely. All rights reserved.</span><a href="#" style="color:var(--accent)">Download SalesCoachAI →</a></div>
+</div></footer>
+</body>
+</html>
