@@ -17,6 +17,7 @@ export function SiteNav() {
   const [logoFailed, setLogoFailed] = useState(false);
   const [location] = useLocation();
   const { theme, toggle } = useTheme();
+  const overVideoHero = location === "/" && !scrolled && !mobileOpen;
 
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
@@ -54,7 +55,7 @@ export function SiteNav() {
                   src="/nav-logo.png"
                   alt={site.name}
                   onError={() => setLogoFailed(true)}
-                  className="h-9 md:h-11 w-auto dark:invert"
+                  className={`h-9 md:h-11 w-auto ${overVideoHero ? "invert" : "dark:invert"}`}
                 />
               )}
             </Link>
@@ -66,7 +67,11 @@ export function SiteNav() {
                   key={link.href}
                   href={link.href}
                   className="text-sm font-medium transition-colors duration-200"
-                  style={{ color: location === link.href ? "var(--c-fg)" : "var(--c-fg-55)" }}
+                  style={{
+                    color: overVideoHero
+                      ? location === link.href ? "#FFFFFF" : "rgba(255,255,255,0.72)"
+                      : location === link.href ? "var(--c-fg)" : "var(--c-fg-55)",
+                  }}
                 >
                   {link.label}
                 </Link>
@@ -78,7 +83,10 @@ export function SiteNav() {
               <button
                 onClick={toggle}
                 className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
-                style={{ color: "var(--c-fg-45)", border: "1px solid var(--c-border)" }}
+                style={{
+                  color: overVideoHero ? "rgba(255,255,255,0.72)" : "var(--c-fg-45)",
+                  border: overVideoHero ? "1px solid rgba(255,255,255,0.22)" : "1px solid var(--c-border)",
+                }}
                 aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
                 data-testid="button-theme-toggle"
               >
@@ -87,6 +95,7 @@ export function SiteNav() {
               <Link
                 href="/products"
                 className="btn-accent px-4 py-2 rounded-lg text-sm font-semibold"
+                style={overVideoHero ? { background: "#F5F5F3", color: "#090909" } : undefined}
                 data-testid="button-nav-cta"
               >
                 Free Resources
@@ -98,14 +107,14 @@ export function SiteNav() {
               <button
                 onClick={toggle}
                 className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
-                style={{ color: "var(--c-fg-45)" }}
+                style={{ color: overVideoHero ? "rgba(255,255,255,0.72)" : "var(--c-fg-45)" }}
                 aria-label="Toggle theme"
               >
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
               <button
                 className="p-2 transition-colors"
-                style={{ color: "var(--c-fg-70)" }}
+                style={{ color: overVideoHero ? "rgba(255,255,255,0.82)" : "var(--c-fg-70)" }}
                 onClick={() => setMobileOpen((o) => !o)}
                 aria-label="Toggle mobile menu"
                 data-testid="button-mobile-menu"

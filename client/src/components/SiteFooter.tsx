@@ -37,11 +37,11 @@ export function SiteFooter() {
   };
 
   const SOCIAL_ICONS = [
-    { href: social.youtube,   Icon: Youtube,      label: "YouTube"    },
-    { href: social.instagram, Icon: SiInstagram,  label: "Instagram"  },
-    { href: social.linkedin,  Icon: Linkedin,     label: "LinkedIn"   },
-    { href: social.twitter,   Icon: SiX,          label: "X (Twitter)" },
-    { href: "https://github.com/EricGrav1/EricGrav1/blob/main/README.md", Icon: SiGithub, label: "GitHub" },
+    { href: social.youtube,   Icon: Youtube,      label: "YouTube",     color: "#FF0033" },
+    { href: social.instagram, Icon: SiInstagram,  label: "Instagram",   color: "#D62976" },
+    { href: social.linkedin,  Icon: Linkedin,     label: "LinkedIn",    color: "#0A66C2" },
+    { href: social.twitter,   Icon: SiX,          label: "X (Twitter)", color: "var(--c-fg)" },
+    { href: "https://github.com/EricGrav1/EricGrav1/blob/main/README.md", Icon: SiGithub, label: "GitHub", color: "var(--c-fg-70)" },
   ];
 
   return (
@@ -63,16 +63,14 @@ export function SiteFooter() {
               {footer.tagline}
             </p>
             <div className="flex gap-3">
-              {SOCIAL_ICONS.map(({ href, Icon, label }) => (
+              {SOCIAL_ICONS.map(({ href, Icon, label, color }) => (
                 <a
                   key={label}
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors"
-                  style={{ border: "1px solid var(--c-border)", color: "var(--c-fg-45)" }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "var(--c-accent)")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "var(--c-fg-45)")}
+                  className="w-9 h-9 rounded-lg flex items-center justify-center transition-all hover:-translate-y-0.5 hover:shadow-sm"
+                  style={{ border: "1px solid var(--c-border)", color, background: "var(--c-bg2)" }}
                   aria-label={label}
                   data-testid={`link-social-${label.toLowerCase().replace(/[^a-z]/g, "")}`}
                 >

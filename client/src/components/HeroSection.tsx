@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "wouter";
 import { ArrowDown } from "lucide-react";
 import { site } from "@/config/site";
@@ -14,12 +14,37 @@ const fadeUp = {
 };
 
 export function HeroSection() {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <section
-      className="relative min-h-screen flex flex-col justify-center overflow-hidden"
-      style={{ background: "var(--c-bg)" }}
+      className="hero-video-shell relative min-h-screen flex flex-col justify-center overflow-hidden"
       aria-label="Hero"
     >
+      <div className="absolute inset-0 z-0 overflow-hidden bg-[#090909]" aria-hidden="true">
+        {shouldReduceMotion ? (
+          <img
+            src="/hero-background-poster.jpg"
+            alt=""
+            className="hero-video-media h-full w-full object-cover"
+          />
+        ) : (
+          <video
+            className="hero-video-media h-full w-full object-cover"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            poster="/hero-background-poster.jpg"
+            disablePictureInPicture
+          >
+            <source src="/hero-background.mp4" type="video/mp4" />
+          </video>
+        )}
+        <div className="hero-video-overlay absolute inset-0" />
+      </div>
+
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
 
         {/* Mobile-only photo — centered, above headline */}
@@ -62,7 +87,7 @@ export function HeroSection() {
               animate="visible"
               custom={0.1}
               variants={fadeUp}
-              className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold leading-[1.1] mb-6"
+              className="hero-display text-[2.55rem] sm:text-[3rem] lg:text-[3.25rem] font-semibold leading-[1.08] mb-6"
               style={{ color: "var(--c-fg)" }}
               data-testid="text-hero-headline"
             >
@@ -109,29 +134,13 @@ export function HeroSection() {
             </motion.div>
           </div>
 
-          {/* Right — Photo + badges (desktop only) */}
+          {/* Right — video sits behind this lightweight social proof rail */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            className="hidden lg:flex flex-col items-center gap-5 pt-2"
+            className="hidden lg:flex w-72 min-h-[540px] flex-col items-center justify-end gap-5 pb-6"
           >
-            {/* Photo — smaller, fully visible */}
-            <div
-              className="w-64 h-72 rounded-2xl overflow-hidden flex-shrink-0"
-              style={{
-                border: "1px solid var(--c-border)",
-                boxShadow: "0 6px 32px rgba(0,0,0,0.10)",
-              }}
-            >
-              <img
-                src="/nicholas.jpg"
-                alt="Eric Gravely — Sales Leadership Coach"
-                className="w-full h-full object-cover"
-                style={{ objectPosition: "center 12%" }}
-              />
-            </div>
-
             <SocialIcons />
 
             {/* Stat badges — below photo, never overlapping */}
