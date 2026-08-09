@@ -3,11 +3,11 @@ import { motion } from "framer-motion";
 import { PackageOpen, ExternalLink, Eye, ArrowRight, Gamepad2, Play } from "lucide-react";
 import { SiApple } from "react-icons/si";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ProductSignupFlow, PreviewLightbox } from "@/components/ProductSignupFlow";
 import { usePageMeta } from "@/lib/seo";
+import { usePublishedProducts } from "@/lib/products";
 import { slugify } from "@shared/slug";
 import type { LeadMagnet } from "@shared/schema";
 
@@ -265,9 +265,7 @@ export default function Products() {
     "Free sales frameworks, tools, and apps from Eric Gravely — built from 10+ years coaching sales reps and leading top-performing teams.",
   );
 
-  const { data: products, isLoading, isError } = useQuery<LeadMagnet[]>({
-    queryKey: ["/api/lead-magnets"],
-  });
+  const { data: products, isLoading, isError } = usePublishedProducts();
 
   const gameProducts = products?.filter((p) => p.productType === "game") ?? [];
   const appProducts = products?.filter((p) => p.productType === "external") ?? [];
@@ -279,17 +277,17 @@ export default function Products() {
 
       <main className="pt-24">
         {/* Page header */}
-        <section className="pt-20 pb-12 md:pt-24 md:pb-16" style={{ background: "var(--c-bg)" }}>
+        <section className="pt-12 pb-12 md:pt-16 md:pb-14" style={{ background: "var(--c-bg)" }}>
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="max-w-2xl"
+              className="max-w-4xl"
             >
               <span className="label-track block mb-6">Tools &amp; Resources</span>
               <h1
-                className="font-display text-4xl md:text-5xl font-bold mb-5 leading-tight"
+                className="hero-display text-4xl md:text-5xl font-semibold mb-5 leading-[1.08]"
                 style={{ color: "var(--c-fg)" }}
               >
                 I wasn't always good — I just never stopped trying to get better.{" "}
@@ -302,51 +300,11 @@ export default function Products() {
           </div>
         </section>
 
-        {/* Games section — only rendered once a game is published */}
-        {gameProducts.length > 0 && (
-          <section className="pb-16" style={{ background: "var(--c-bg)" }}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="flex items-end justify-between gap-6 mb-7">
-                <div>
-                  <div className="label-track mb-3">Sales Games</div>
-                  <h2 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "var(--c-fg)" }}>
-                    Practice the skill. Don&apos;t just read about it.
-                  </h2>
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="grid-games">
-                {gameProducts.map((game, i) => (
-                  <ProductCard key={game.id} product={game} index={i} />
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Apps section — only rendered when there are external products */}
-        {(isLoading || appProducts.length > 0) && (
-          <section className="pb-16" style={{ background: "var(--c-bg)" }}>
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="label-track mb-6">Apps</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {isLoading && (
-                  <div
-                    className="rounded-2xl h-64 animate-pulse"
-                    style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}
-                  />
-                )}
-                {appProducts.map((p, i) => (
-                  <ProductCard key={p.id} product={p} index={i} />
-                ))}
-              </div>
-            </div>
-          </section>
-        )}
-
         {/* Free Resources section */}
         <section
+          id="free-resources"
           className="py-16 md:py-20"
-          style={{ background: "var(--c-bg2)", borderTop: "1px solid var(--c-border)" }}
+          style={{ background: "var(--c-bg2)", borderTop: "1px solid var(--c-border)", scrollMarginTop: "5rem" }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="label-track mb-8">Free Resources</div>
@@ -375,6 +333,47 @@ export default function Products() {
             </div>
           </div>
         </section>
+
+        {/* Apps section — only rendered when there are external products */}
+        {(isLoading || appProducts.length > 0) && (
+          <section className="py-16" style={{ background: "var(--c-bg)" }}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="label-track mb-6">Apps</div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {isLoading && (
+                  <div
+                    className="rounded-2xl h-64 animate-pulse"
+                    style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}
+                  />
+                )}
+                {appProducts.map((p, i) => (
+                  <ProductCard key={p.id} product={p} index={i} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Games section — only rendered once a game is published */}
+        {gameProducts.length > 0 && (
+          <section className="py-16" style={{ background: "var(--c-bg2)", borderTop: "1px solid var(--c-border)" }}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-end justify-between gap-6 mb-7">
+                <div>
+                  <div className="label-track mb-3">Sales Games</div>
+                  <h2 className="font-display text-2xl md:text-3xl font-bold" style={{ color: "var(--c-fg)" }}>
+                    Practice the skill. Don&apos;t just read about it.
+                  </h2>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" data-testid="grid-games">
+                {gameProducts.map((game, i) => (
+                  <ProductCard key={game.id} product={game} index={i} />
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Bottom CTA */}
         <section

@@ -3,14 +3,18 @@ import { motion } from "framer-motion";
 import { ArrowLeft, ExternalLink, Gamepad2, Mail, PackageOpen, Play, ShieldCheck, Sparkles } from "lucide-react";
 import { SiApple } from "react-icons/si";
 import { Link, useParams } from "wouter";
-import { useQuery } from "@tanstack/react-query";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ProductSignupFlow } from "@/components/ProductSignupFlow";
 import { usePageMeta, trackProductView } from "@/lib/seo";
+import { usePublishedProducts } from "@/lib/products";
 import { slugify } from "@shared/slug";
 import { youtubeVideoId } from "@shared/video";
-import type { LeadMagnet } from "@shared/schema";
+
+const fallbackPreviewByProduct: Record<string, string> = {
+  "The Ask & Close Playbook": "/ask-close-playbook-preview.jpg",
+  "Sales Rep Self-Coaching Tool": "/sales-rep-self-coaching-preview.png",
+};
 
 function NotFoundState() {
   return (
@@ -39,15 +43,19 @@ function NotFoundState() {
 
 export default function ProductDetail() {
   const params = useParams<{ slug: string }>();
-  const { data: products, isLoading } = useQuery<LeadMagnet[]>({
-    queryKey: ["/api/lead-magnets"],
-  });
+  const { data: products, isLoading } = usePublishedProducts();
 
   const product = products?.find((p) => slugify(p.title) === params.slug);
   const isGame = product?.productType === "game";
   const isExternal = product?.productType === "external";
   const isOutbound = isExternal || isGame;
-  const previews = (product?.previewImages as string[] | null) ?? [];
+  const savedPreviews = (product?.previewImages as string[] | null) ?? [];
+  const fallbackPreview = product ? fallbackPreviewByProduct[product.title] : undefined;
+  const previews = savedPreviews.length > 0
+    ? savedPreviews
+    : fallbackPreview
+      ? [fallbackPreview]
+      : [];
   const [iconFailed, setIconFailed] = useState(false);
 
   usePageMeta(
@@ -185,6 +193,10 @@ export default function ProductDetail() {
                               alt={`${product.title} preview page ${i + 1}`}
                               className="w-full rounded-xl pointer-events-none"
                               draggable={false}
+                              loading="lazy"
+                              decoding="async"
+                              width={1878}
+                              height={1448}
                               style={{ border: "1px solid var(--c-border)" }}
                             />
                           ))}

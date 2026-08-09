@@ -1,32 +1,65 @@
+import { createContext, useContext } from "react";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { ArrowRight, CalendarCheck, Linkedin, PackageOpen, Play, Sparkles, Youtube } from "lucide-react";
+import { ArrowRight, CalendarCheck, Linkedin, Moon, PackageOpen, Play, Sparkles, Sun, Youtube } from "lucide-react";
 import { SiInstagram, SiX } from "react-icons/si";
 import { site } from "@/config/site";
 import { usePageMeta } from "@/lib/seo";
+import { usePublishedProducts } from "@/lib/products";
+import { useTheme } from "@/lib/theme";
 import { slugify } from "@shared/slug";
-import type { LeadMagnet } from "@shared/schema";
 
-const palette = {
+const darkPalette = {
+  canvas: "#090909",
+  surface: "#121212",
+  card: "#181818",
+  ink: "#F5F5F3",
+  body: "#B5B5B0",
+  muted: "#858581",
+  line: "#292929",
+  bronze: "#D0D0CC",
+  bronzeSoft: "#222222",
+  primary: "#E3E3DF",
+  primaryInk: "#090909",
+  primaryDescription: "rgba(9,9,9,.62)",
+  primaryIconBg: "rgba(9,9,9,.09)",
+  footer: "#0E0E0E",
+  shadow: "0 28px 80px rgba(0,0,0,.38)",
+  photoShadow: "0 8px 26px rgba(0,0,0,.32)",
+};
+
+const lightPalette: typeof darkPalette = {
   canvas: "#EEECE6",
   surface: "#FAF9F6",
+  card: "#FFFFFF",
   ink: "#171815",
   body: "#595B55",
   muted: "#898A84",
   line: "#DEDDD7",
   bronze: "#92722F",
   bronzeSoft: "#EEE7D7",
+  primary: "#171815",
+  primaryInk: "#F8F6F0",
+  primaryDescription: "rgba(248,246,240,.58)",
+  primaryIconBg: "rgba(255,255,255,.09)",
+  footer: "#F5F3EE",
+  shadow: "0 28px 80px rgba(33,34,29,.08)",
+  photoShadow: "0 8px 26px rgba(23,24,21,.12)",
 };
+
+const BioPaletteContext = createContext(darkPalette);
+const useBioPalette = () => useContext(BioPaletteContext);
 
 const socialLinks = [
   { label: "LinkedIn", href: site.social.linkedin, Icon: Linkedin, color: "#0A66C2" },
   { label: "YouTube", href: site.social.youtube, Icon: Youtube, color: "#FF0033" },
   { label: "Instagram", href: site.social.instagram, Icon: SiInstagram, color: "#D62976" },
-  { label: "X", href: site.social.twitter, Icon: SiX, color: "#111111" },
+  { label: "X", href: site.social.twitter, Icon: SiX, color: undefined },
 ];
 
 function SocialLinks() {
+  const palette = useBioPalette();
+
   return (
     <div className="col-span-full flex sm:flex-wrap gap-2 mt-1 sm:mt-5" aria-label="Social media links">
       {socialLinks.map(({ label, href, Icon, color }) => (
@@ -36,11 +69,11 @@ function SocialLinks() {
           target="_blank"
           rel="noopener noreferrer"
           className="flex-1 sm:flex-none h-9 sm:px-3 rounded-[9px] flex items-center justify-center gap-2 text-[11px] font-semibold transition-all hover:-translate-y-0.5"
-          style={{ color: palette.body, background: "#FFF", border: `1px solid ${palette.line}` }}
+          style={{ color: palette.body, background: palette.card, border: `1px solid ${palette.line}` }}
           aria-label={label}
           data-testid={`link-bio-${label.toLowerCase()}`}
         >
-          <Icon className="w-3.5 h-3.5" style={{ color }} />
+          <Icon className="w-3.5 h-3.5" style={{ color: label === "X" ? palette.ink : color }} />
           <span className="hidden sm:inline" style={{ color: palette.body }}>{label}</span>
         </a>
       ))}
@@ -61,29 +94,31 @@ function ActionCard({
   icon: typeof CalendarCheck;
   primary?: boolean;
 }) {
+  const palette = useBioPalette();
+
   return (
     <Link
       href={href}
       className="group grid grid-cols-[40px,1fr,auto] gap-3.5 items-center min-h-[88px] px-4 sm:px-5 py-4 rounded-[14px] transition-all hover:-translate-y-0.5"
       style={{
-        color: primary ? "#F8F6F0" : palette.ink,
-        background: primary ? palette.ink : "#FFF",
-        border: `1px solid ${primary ? palette.ink : palette.line}`,
+        color: primary ? palette.primaryInk : palette.ink,
+        background: primary ? palette.primary : palette.card,
+        border: `1px solid ${primary ? palette.primary : palette.line}`,
       }}
     >
       <span
         className="w-10 h-10 rounded-[10px] flex items-center justify-center"
-        style={{ color: primary ? "#F4D78C" : palette.bronze, background: primary ? "rgba(255,255,255,.09)" : palette.bronzeSoft }}
+        style={{ color: primary ? palette.primaryInk : palette.bronze, background: primary ? palette.primaryIconBg : palette.bronzeSoft }}
       >
         <Icon className="w-[18px] h-[18px]" />
       </span>
       <span className="min-w-0">
         <span className="bio-serif block text-[18px] font-semibold leading-tight tracking-[-0.02em] mb-1">{title}</span>
-        <span className="block text-[11px] sm:text-xs leading-relaxed" style={{ color: primary ? "rgba(248,246,240,.58)" : palette.muted }}>
+        <span className="block text-[11px] sm:text-xs leading-relaxed" style={{ color: primary ? palette.primaryDescription : palette.muted }}>
           {description}
         </span>
       </span>
-      <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-1" style={{ color: primary ? "#F4D78C" : palette.bronze }} />
+      <ArrowRight className="w-[18px] h-[18px] transition-transform group-hover:translate-x-1" style={{ color: primary ? palette.primaryInk : palette.bronze }} />
     </Link>
   );
 }
@@ -107,6 +142,8 @@ function ProductRow({
   imagePosition?: string;
   external?: boolean;
 }) {
+  const palette = useBioPalette();
+
   const content = (
     <>
       <span
@@ -124,7 +161,7 @@ function ProductRow({
       <span className="min-w-0">
         <span className="flex items-center gap-2 mb-1.5">
           <span className="text-[9px] font-bold uppercase tracking-[0.14em]" style={{ color: palette.bronze }}>{type}</span>
-          <span className="w-[3px] h-[3px] rounded-full bg-[#BBB8AE]" />
+          <span className="w-[3px] h-[3px] rounded-full bg-[#5E5E5B]" />
           <span className="text-[10px]" style={{ color: palette.muted }}>{availability}</span>
         </span>
         <span className="bio-serif block text-[21px] font-semibold tracking-[-0.025em] leading-tight mb-1">{title}</span>
@@ -137,7 +174,7 @@ function ProductRow({
   );
 
   const classes = "group grid grid-cols-[56px,1fr] sm:grid-cols-[64px,1fr,auto] items-center gap-3.5 sm:gap-5 p-[18px] sm:p-5 rounded-[14px] transition-all hover:-translate-y-0.5";
-  const styles = { color: palette.ink, background: "#FFF", border: `1px solid ${palette.line}` };
+  const styles = { color: palette.ink, background: palette.card, border: `1px solid ${palette.line}` };
 
   return external ? (
     <a href={href} target="_blank" rel="noopener noreferrer" className={classes} style={styles}>{content}</a>
@@ -152,20 +189,36 @@ export default function Bio() {
     "Connect with Eric Gravely and explore sales coaching, resources, software, and tools.",
   );
 
-  const { data: products } = useQuery<LeadMagnet[]>({ queryKey: ["/api/lead-magnets"] });
+  const { data: products } = usePublishedProducts();
+  const { theme, toggle } = useTheme();
+  const palette = theme === "dark" ? darkPalette : lightPalette;
   const additionalProducts = (products ?? []).filter((product) => {
     const title = product.title.toLowerCase();
     return !title.includes("sales coach ai") && !title.includes("clipfarmer") && !title.includes("clippfarmer");
   });
 
   return (
-    <div className="min-h-screen" style={{ background: palette.canvas, color: palette.ink }}>
+    <BioPaletteContext.Provider value={palette}>
+    <div className="min-h-screen transition-colors duration-300" style={{ background: palette.canvas, color: palette.ink }}>
       <main className="w-[calc(100%-20px)] sm:w-[calc(100%-32px)] max-w-[760px] mx-auto py-[18px] sm:py-9 pb-8 sm:pb-16">
         <nav className="flex items-center justify-between px-1 mb-4 sm:mb-7">
           <Link href="/" className="bio-serif text-[21px] font-semibold tracking-[-0.03em]">Eric Gravely</Link>
-          <Link href="/" className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: palette.muted }}>
-            Visit main site&nbsp; ↗
-          </Link>
+          <div className="flex items-center gap-2.5">
+            <Link href="/" className="text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.12em]" style={{ color: palette.muted }}>
+              Visit main site&nbsp; ↗
+            </Link>
+            <button
+              type="button"
+              onClick={toggle}
+              className="w-9 h-9 rounded-[9px] flex items-center justify-center transition-all hover:-translate-y-0.5"
+              style={{ color: palette.body, background: palette.card, border: `1px solid ${palette.line}` }}
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              data-testid="button-bio-theme-toggle"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+          </div>
         </nav>
 
         <motion.div
@@ -173,7 +226,7 @@ export default function Bio() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45 }}
           className="overflow-hidden rounded-[19px] sm:rounded-3xl"
-          style={{ background: palette.surface, border: "1px solid rgba(23,24,21,.08)", boxShadow: "0 28px 80px rgba(33,34,29,.08)" }}
+          style={{ background: palette.surface, border: `1px solid ${palette.line}`, boxShadow: palette.shadow }}
         >
           <header className="px-6 sm:px-11 py-8 sm:py-10 border-b" style={{ borderColor: palette.line }}>
             <div className="grid grid-cols-[82px,1fr] sm:grid-cols-[116px,1fr] gap-[18px] sm:gap-[30px] items-start sm:items-center">
@@ -181,7 +234,7 @@ export default function Bio() {
                 src="/nicholas.jpg"
                 alt="Eric Gravely"
                 className="w-[82px] h-[82px] sm:w-[116px] sm:h-[116px] rounded-[14px] sm:rounded-[18px] object-cover object-[50%_34%]"
-                style={{ filter: "saturate(.88) contrast(1.02)", boxShadow: "0 8px 26px rgba(23,24,21,.12)" }}
+                style={{ filter: "saturate(.88) contrast(1.02)", boxShadow: palette.photoShadow }}
               />
               <div>
                 <h1 className="bio-serif text-[32px] sm:text-[42px] leading-none font-semibold tracking-[-0.045em] mb-2">Eric Gravely</h1>
@@ -233,7 +286,7 @@ export default function Bio() {
                   type="Creator software"
                   availability="Available now"
                   title="ClippFarmer"
-                  description="Visit the ClippFarmer product page to explore the software, pricing, and purchase options."
+                  description="Automatically finds standout moments in YouTube videos and live streams, then turns them into captioned vertical clips ready for TikTok, Reels, and Shorts."
                   image="/clippfarmer-icon.png"
                 />
                 <ProductRow
@@ -260,12 +313,13 @@ export default function Bio() {
             </section>
           </div>
 
-          <footer className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-6 sm:px-11 py-5 text-[10px] border-t" style={{ color: palette.muted, background: "#F5F3EE", borderColor: palette.line }}>
+          <footer className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-6 sm:px-11 py-5 text-[10px] border-t" style={{ color: palette.muted, background: palette.footer, borderColor: palette.line }}>
             <span>© {new Date().getFullYear()} Eric Gravely</span>
             <span>Sales · Coaching · Leadership</span>
           </footer>
         </motion.div>
       </main>
     </div>
+    </BioPaletteContext.Provider>
   );
 }

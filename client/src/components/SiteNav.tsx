@@ -92,14 +92,14 @@ export function SiteNav() {
               >
                 {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
-              <Link
-                href="/products"
+              <a
+                href="/products#free-resources"
                 className="btn-accent px-4 py-2 rounded-lg text-sm font-semibold"
                 style={overVideoHero ? { background: "#F5F5F3", color: "#090909" } : undefined}
                 data-testid="button-nav-cta"
               >
                 Free Resources
-              </Link>
+              </a>
             </div>
 
             {/* Mobile right */}
@@ -142,12 +142,12 @@ export function SiteNav() {
               </Link>
             ))}
             <div className="pt-3">
-              <Link
-                href="/products"
+              <a
+                href="/products#free-resources"
                 className="block btn-accent px-4 py-3 rounded-lg text-sm font-semibold text-center"
               >
                 Free Resources
-              </Link>
+              </a>
             </div>
           </div>
         )}

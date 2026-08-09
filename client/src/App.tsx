@@ -1,4 +1,5 @@
-import { Switch, Route } from "wouter";
+import { useLayoutEffect } from "react";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "@/lib/theme";
@@ -13,6 +14,25 @@ import Assessment from "@/pages/assessment";
 import Unsubscribe from "@/pages/unsubscribe";
 import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
+
+function ScrollRestoration() {
+  const [location] = useLocation();
+
+  useLayoutEffect(() => {
+    const hash = window.location.hash.slice(1);
+
+    if (hash) {
+      const frame = window.requestAnimationFrame(() => {
+        document.getElementById(decodeURIComponent(hash))?.scrollIntoView();
+      });
+      return () => window.cancelAnimationFrame(frame);
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location]);
+
+  return null;
+}
 
 function Router() {
   return (
@@ -36,6 +56,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
+        <ScrollRestoration />
         <Router />
       </ThemeProvider>
     </QueryClientProvider>
