@@ -9,6 +9,7 @@ const navLinks = [
   { label: "Products", href: "/products" },
   { label: "Assessment", href: "/assessment" },
   { label: "Coaching", href: "/coaching" },
+  { label: "Games", href: "/games" },
 ];
 
 export function SiteNav() {

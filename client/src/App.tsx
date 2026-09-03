@@ -10,6 +10,7 @@ import Products from "@/pages/products";
 import ProductDetail from "@/pages/product-detail";
 import ThankYou from "@/pages/thank-you";
 import Coaching from "@/pages/coaching";
+import Games from "@/pages/games";
 import Assessment from "@/pages/assessment";
 import Unsubscribe from "@/pages/unsubscribe";
 import Admin from "@/pages/admin";
@@ -44,6 +45,7 @@ function Router() {
       <Route path="/products/:slug" component={ProductDetail} />
       <Route path="/thank-you" component={ThankYou} />
       <Route path="/coaching" component={Coaching} />
+      <Route path="/games" component={Games} />
       <Route path="/assessment" component={Assessment} />
       <Route path="/unsubscribe" component={Unsubscribe} />
       <Route path="/admin" component={Admin} />
