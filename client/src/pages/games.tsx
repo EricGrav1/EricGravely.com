@@ -95,12 +95,12 @@ export default function Games() {
                   Practice, made playable
                 </span>
                 <h1 className="hero-display max-w-4xl text-5xl font-bold leading-[0.95] md:text-7xl lg:text-[5.4rem]" style={{ color: "var(--c-fg)" }}>
-                  Build the reflexes your next call will demand.
+                  Build sales skills. Have fun doing it.
                 </h1>
               </div>
               <div className="border-l pl-6 md:pl-8" style={{ borderColor: "var(--c-border)" }}>
                 <p className="max-w-lg text-lg leading-relaxed" style={{ color: "var(--c-fg-55)" }}>
-                  Short, focused sales games built to turn good advice into instinct. Choose a challenge and play directly in your browser.
+                  Use quick mini games to practice real sales skills, sharpen your instincts, and have fun at the same time.
                 </p>
               </div>
             </motion.div>
