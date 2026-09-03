@@ -168,3 +168,48 @@ export type Subscriber = typeof subscribers.$inferSelect;
 export type InsertSubscriber = z.infer<typeof insertSubscriberSchema>;
 export type SequenceEmail = typeof sequenceEmails.$inferSelect;
 export type InsertSequenceEmail = z.infer<typeof insertSequenceEmailSchema>;
+
+// ── Read the Room (sales game) ───────────────────────────────────────────────
+// One row per player, keyed by email. The leaderboard shows displayName +
+// bestScore only; emails are visible in /admin.
+export const gamePlayers = pgTable("game_players", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  displayName: text("display_name").notNull(),
+  bestScore: integer("best_score").notNull().default(0),
+  // Snapshot of the run that set bestScore (accuracy, streak, deals, profile)
+  bestRun: jsonb("best_run"),
+  plays: integer("plays").notNull().default(0),
+  lastPlayedAt: timestamp("last_played_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// Every verified run (for admin analytics + fraud review).
+export const gameRuns = pgTable("game_runs", {
+  id: serial("id").primaryKey(),
+  playerId: integer("player_id").references(() => gamePlayers.id),
+  score: integer("score").notNull(),
+  seed: integer("seed").notNull(),
+  summary: jsonb("summary"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type GamePlayer = typeof gamePlayers.$inferSelect;
+export type GameRun = typeof gameRuns.$inferSelect;
+
+export const gameSubmitSchema = z.object({
+  seed: z.number().int().min(0).max(0x7fffffff),
+  events: z
+    .array(z.object({ move: z.enum(["ask", "tell", "close", "none"]), ms: z.number().finite().min(0) }))
+    .min(1)
+    .max(200),
+  displayName: z
+    .string()
+    .trim()
+    .min(2, "Display name must be at least 2 characters")
+    .max(20, "Display name must be 20 characters or fewer")
+    .regex(/^[A-Za-z0-9\u00C0-\u024F ._'-]+$/, "Display name can only use letters, numbers, spaces, and . _ ' -"),
+  email: z.string().trim().email("Please enter a valid email address"),
+  sequenceOptIn: z.boolean().optional(),
+});
+export type GameSubmit = z.infer<typeof gameSubmitSchema>;

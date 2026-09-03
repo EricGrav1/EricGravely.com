@@ -4,7 +4,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import {
   Users, Mail, ListChecks, ChevronDown, ChevronUp,
   Plus, Trash2, Loader2, Save, X, Pencil, Lock, LogOut,
-  LayoutDashboard, Package, Upload, CheckCircle2, AlertTriangle, ExternalLink,
+  LayoutDashboard, Package, Upload, CheckCircle2, AlertTriangle, ExternalLink, Gamepad2,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -14,6 +14,7 @@ import { useTheme } from "@/lib/theme";
 import { slugify } from "@shared/slug";
 import { youtubeVideoId } from "@shared/video";
 import type { LeadMagnet, SequenceEmail, QuestionnaireField } from "@shared/schema";
+import { formatMoney } from "@shared/salesGame";
 
 // ── Types for the admin leads endpoint ────────────────────────────────────────
 interface AdminLead {
@@ -1242,7 +1243,64 @@ function AdminLogin() {
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
-type Tab = "dashboard" | "signups" | "products" | "sequence" | "questions";
+
+// ── Game (Read the Room) tab ──────────────────────────────────────────────────
+interface GamePlayerRow {
+  rank: number;
+  id: number;
+  email: string;
+  displayName: string;
+  bestScore: number;
+  plays: number;
+  lastPlayedAt: string;
+  createdAt: string;
+  bestRun: { accuracy?: number; bestStreak?: number; dealsClosed?: number; profile?: { title?: string } } | null;
+}
+interface GameAdminData { players: GamePlayerRow[]; totalRuns: number; avgScore: number }
+
+function GameTab() {
+  const { data, isLoading } = useQuery<GameAdminData>({ queryKey: ["/api/admin/game/players"] });
+  if (isLoading) {
+    return <div className="py-16 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto" style={{ color: "var(--c-accent)" }} /></div>;
+  }
+  const players = data?.players ?? [];
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <StatTile label="Players" value={players.length} hint="unique emails" />
+        <StatTile label="Runs" value={data?.totalRuns ?? 0} hint="verified submissions" />
+        <StatTile label="Avg score" value={formatMoney(data?.avgScore ?? 0)} />
+        <StatTile label="Top score" value={players[0] ? formatMoney(players[0].bestScore) : "—"} hint={players[0]?.displayName} />
+      </div>
+      {players.length === 0 ? (
+        <p className="py-10 text-center text-sm" style={{ color: "var(--c-fg-45)" }} data-testid="text-no-players">
+          No one has saved a score yet. Share /game and watch this fill up.
+        </p>
+      ) : (
+        <div className="space-y-2">
+          {players.map((p) => (
+            <div key={p.id} className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }} data-testid={`row-player-${p.id}`}>
+              <span className="w-8 text-center font-display font-bold text-sm" style={{ color: p.rank <= 3 ? "var(--c-accent)" : "var(--c-fg-45)" }}>#{p.rank}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold truncate" style={{ color: "var(--c-fg)" }}>
+                  {p.displayName} <span className="font-normal" style={{ color: "var(--c-fg-45)" }}>· {p.email}</span>
+                </div>
+                <div className="text-xs mt-0.5" style={{ color: "var(--c-fg-45)" }}>
+                  {p.plays} run{p.plays === 1 ? "" : "s"} · last {formatDate(p.lastPlayedAt)}
+                  {p.bestRun?.profile?.title && ` · ${p.bestRun.profile.title}`}
+                  {p.bestRun?.accuracy !== undefined && ` · ${p.bestRun.accuracy}% · ${p.bestRun.dealsClosed ?? 0} deals`}
+                </div>
+              </div>
+              <span className="font-display font-bold text-sm tabular-nums" style={{ color: "var(--c-fg)" }}>{formatMoney(p.bestScore)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+type Tab = "dashboard" | "signups" | "products" | "sequence" | "questions" | "game";
 
 const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -1250,6 +1308,7 @@ const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
   { id: "products", label: "Products", icon: Package },
   { id: "sequence", label: "Sequence", icon: Mail },
   { id: "questions", label: "Questions", icon: ListChecks },
+  { id: "game", label: "Game", icon: Gamepad2 },
 ];
 
 export default function Admin() {
@@ -1290,7 +1349,7 @@ export default function Admin() {
               Admin
             </h1>
             <p className="text-xs mt-1" style={{ color: "var(--c-fg-45)" }}>
-              Stats, signups, products, nurture sequence, and questionnaires
+              Stats, signups, products, nurture sequence, questionnaires, and game players
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -1339,6 +1398,7 @@ export default function Admin() {
         {tab === "products" && <ProductsTab />}
         {tab === "sequence" && <SequenceTab />}
         {tab === "questions" && <QuestionsTab />}
+        {tab === "game" && <GameTab />}
       </div>
     </div>
   );

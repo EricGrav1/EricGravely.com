@@ -22,7 +22,8 @@ Pages under `client/src/pages/`:
 - Products (`/products`) — resource cards with multi-step questionnaire (auto-advance selects, progress bar), contact step with nurture-sequence opt-in checkbox (unchecked by default), and view-only preview lightbox (renders `previewImages` when present). The signup flow lives in `components/ProductSignupFlow.tsx` (shared with detail pages).
 - Product detail (`/products/:slug`) — per-product page with its own meta tags; slug is derived from the title via `shared/slug.ts` (renaming a product changes its URL). Records a view on open.
 - Thank you (`/thank-you`), Unsubscribe (`/unsubscribe`)
-- Admin (`/admin`) — five tabs: Dashboard (stat tiles, 30-day signups chart, per-product conversion table), Signups (expandable questionnaire answers), Products (create/edit products, active toggle, resource file upload), Sequence (CRUD editor), Questions (per-resource questionnaire editor)
+- Game (`/game`, alias `/play`) — "Read the Room", a 60-second sales game (see below). Also teased on the home page (`components/GameTeaser.tsx`) and linked in the nav as "Play".
+- Admin (`/admin`) — six tabs: Dashboard (stat tiles, 30-day signups chart, per-product conversion table), Signups (expandable questionnaire answers), Products (create/edit products, active toggle, resource file upload), Sequence (CRUD editor), Questions (per-resource questionnaire editor), Game (every player with email, best score, plays, instinct profile)
 - Per-page SEO titles/descriptions via `usePageMeta` in `client/src/lib/seo.ts`; `robots.txt` + `sitemap.xml` served by Express (sitemap includes product slugs)
 
 ### Backend Architecture
@@ -43,6 +44,17 @@ Key API endpoints:
 - Products also support `videoUrl` (YouTube link, validated + embedded on the product detail page via `shared/video.ts`) and `previewImages` (managed in admin → Products with upload/remove).
 - The express-session `session` table is declared in `shared/schema.ts` (so `db:push` doesn't offer to drop it) and also created at startup in `adminAuth.ts` (connect-pg-simple's `createTableIfMissing` breaks inside the esbuild bundle).
 - `GET/POST/PATCH/DELETE /api/admin/sequence-emails` — Nurture sequence CRUD
+- `GET /api/game/leaderboard` — Top 25 players (display name + score only, never emails) and total player count
+- `POST /api/game/runs` — Score submission: `{ seed, events, displayName, email, sequenceOptIn? }`. The server **replays the run** through `shared/salesGame.ts` and stores the recomputed score — it never trusts a client-claimed score. Upserts `game_players` (best score only goes up), logs `game_runs`, creates a `subscribers` row tagged `sales-game` (idempotent, never resurrects an unsubscribe) + ConvertKit sync, and sets the nurture opt-in only if the box was checked. Rate-limited 40/10min/IP.
+- `GET /api/admin/game/players` — All players with emails (these are leads), runs count, average score
+
+### Read the Room (sales game)
+- Engine + content live in `shared/salesGame.ts` and run identically in the browser and on the server. A run is `(seed, events[])`; the deck is generated deterministically from the seed (mulberry32), so `replayRun()` can verify any submission.
+- Mechanic: a buyer line + a **stage chip** (First call → Final meeting). Player picks ASK / TELL / CLOSE within a shrinking window (6s → 3.6s as deals progress). Correct = +2s and streak multiplier (×1.0 → ×3.0); wrong = −5s and streak reset. Each deal's last line is a **decision point**: a real buying signal (close) or a decoy (ask). Correct decision banks 10% of the deal value × multiplier as "commission" — the score. Clock is the only life; hard cap of 120 lines.
+- Tier 3 lines share identical text with different stages and different right answers (e.g. "Send me a proposal" — ask on Pricing, close in Final meeting). That is the "read the room" skill the game is named for.
+- Results screen: stats, an **instinct profile** (Room Reader / Presenter / Sprinter / Interviewer / Hesitator, derived from the wrong-move matrix) with a CTA to the Ask & Close Playbook, then a save-score form (display name + email, optional nurture opt-in, both remembered in localStorage) and the leaderboard.
+- Tables `game_players` / `game_runs` are declared in `shared/schema.ts` and also created at boot by `ensureGameTables()` in `server/game.ts` (same approach as the session table) so the game works before `npm run db:push`.
+- To add or edit buyer lines: edit `LINES` in `shared/salesGame.ts` (one right move + a one-line "why" per line). Scores of past runs stay valid because the deck is rebuilt from stored `seed`s only at submit time, never re-verified later.
 
 ### Nurture Sequence
 - `server/sequence.ts` — scheduler started from `server/index.ts`; ticks every 10 min (first pass 15s after boot), max 25 sends/run, 1 email per subscriber per tick.
@@ -55,6 +67,8 @@ Key API endpoints:
 
 Data models:
 - `lead_magnets`: id, title, description, productType (download|external), resourceUrl, externalUrl, buttonLabel, iconPath, deliveryMethod, active, viewCount, submissionCount, questionnaireFields (jsonb: id/label/required/type("text"|"select")/options), previewImages (jsonb string[]), nextSteps, createdAt
+- `game_players`: id, email (unique), displayName, bestScore, bestRun (jsonb summary), plays, lastPlayedAt, createdAt
+- `game_runs`: id, playerId (FK), score, seed, summary (jsonb), createdAt
 - `subscribers`: id, email, firstName, tag, unsubscribed, sequenceOptIn, sequenceOptInAt, sequenceStep, lastSequenceSentAt, createdAt
 - `leads`: id, email, leadMagnetId (FK), questionnaireAnswers (jsonb), unsubscribed, createdAt
 - `sequence_emails`: id, dayOffset, subject, body (plain text, {{first_name}} personalization), active, createdAt

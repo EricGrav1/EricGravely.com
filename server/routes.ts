@@ -22,6 +22,7 @@ import {
 import { subscribeToConvertKit } from "./convertkit";
 import { getSiteBaseUrl, PRODUCT_CK_TAGS } from "./config";
 import { setupAdminAuth, requireAdmin } from "./adminAuth";
+import { ensureGameTables, registerGameRoutes } from "./game";
 
 // Legacy tag → resource title map (homepage lead capture used tags historically).
 // Resolved against the DB so delivery always goes through the tokenized flow.
@@ -75,6 +76,10 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   await setupAdminAuth(app);
+
+  // ── Read the Room (sales game): leaderboard + verified score submission ─────
+  await ensureGameTables();
+  registerGameRoutes(app);
 
   // ── Main subscribe endpoint ──────────────────────────────────────────────────
   // Accepts:
@@ -279,7 +284,7 @@ export async function registerRoutes(
   app.get("/sitemap.xml", async (req, res) => {
     try {
       const base = getSiteBaseUrl(req as any);
-      const staticPaths = ["/", "/about", "/products", "/coaching"];
+      const staticPaths = ["/", "/about", "/products", "/coaching", "/game"];
       const magnets = await storage.listLeadMagnets(true);
       const urls = [
         ...staticPaths,

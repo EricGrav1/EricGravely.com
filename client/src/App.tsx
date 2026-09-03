@@ -10,6 +10,7 @@ import ThankYou from "@/pages/thank-you";
 import Coaching from "@/pages/coaching";
 import Unsubscribe from "@/pages/unsubscribe";
 import Admin from "@/pages/admin";
+import GamePage from "@/pages/game";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -22,6 +23,8 @@ function Router() {
       <Route path="/thank-you" component={ThankYou} />
       <Route path="/coaching" component={Coaching} />
       <Route path="/unsubscribe" component={Unsubscribe} />
+      <Route path="/game" component={GamePage} />
+      <Route path="/play" component={GamePage} />
       <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
