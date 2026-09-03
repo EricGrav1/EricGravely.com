@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Objection Defense — Sales Coach AI</title>
+<title>Objection Defenders — Sales Coach AI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 <style>
@@ -152,7 +152,7 @@
 <div id="app">
   <div id="shell">
     <div id="topbar">
-      <div class="brand"><span class="dot"></span> Objection Defense <span class="label" style="margin-left:6px">Sales Coach AI</span></div>
+      <div class="brand"><span class="dot"></span> Objection Defenders <span class="label" style="margin-left:6px">Sales Coach AI</span></div>
       <div class="row" style="gap:8px">
         <span id="bestLbl" class="hint" style="display:none">Best <b id="bestVal" style="color:var(--fg)"></b></span>
         <button class="iconbtn" id="soundBtn" title="Sound">🔇</button>
@@ -165,7 +165,7 @@
       <section class="screen on scroll" id="s-title">
         <div class="hero">
           <div class="label" style="color:var(--gold)">Five waves · Three lives · One boss per wave</div>
-          <h1 class="display">Objection <span class="u">Defense</span></h1>
+          <h1 class="display">Objection <span class="u">Defenders</span></h1>
           <p class="lead">Objections come down the screen. Shoot them with the right response before they reach you. Every wave ends with a boss objection you have to <b style="color:var(--fg)">answer in your own words</b> — Sales Coach AI grades it live.</p>
         </div>
         <div class="grid3">
@@ -753,7 +753,7 @@ function renderBoard(mine){
 $("saveBtn").onclick=()=>{ const name=$("nameInput").value.trim().slice(0,20); if(name.length<2){ toast("Give us a name, 2+ characters."); return; }
   const b=loadBoard(); b.push({name,score:G.score,at:Date.now()}); store.set(KEYS_LS.board,JSON.stringify(b)); store.set(KEYS_LS.name,name); $("nameRow").style.display="none"; renderBoard({name,score:G.score}); toast("Saved."); };
 $("againBtn").onclick=start; $("startBtn").onclick=start;
-$("shareBtn").onclick=async()=>{ const t=`I scored ${fmt(G.score)} in Objection Defense by Eric Gravely. Think you can handle a buyer better than me?`; try{ if(navigator.share) await navigator.share({text:t}); else { await navigator.clipboard.writeText(t); toast("Copied. Paste it anywhere."); } }catch{} };
+$("shareBtn").onclick=async()=>{ const t=`I scored ${fmt(G.score)} in Objection Defenders by Eric Gravely. Think you can handle a buyer better than me?`; try{ if(navigator.share) await navigator.share({text:t}); else { await navigator.clipboard.writeText(t); toast("Copied. Paste it anywhere."); } }catch{} };
 
 // ── Keys + misc ──────────────────────────────────────────────────────────────
 addEventListener("keydown", e=>{
