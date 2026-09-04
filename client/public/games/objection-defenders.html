@@ -1,0 +1,1532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Objection Defenders</title>
+<meta name="description" content="Blast objections. Build skills. Close more deals. An arcade objection-handling game by Eric Gravely, sponsored by Sales Coach AI.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#040918; --bg2:#08123a; --panel:rgba(6,14,38,.92); --tile:rgba(9,20,50,.85);
+    --fg:#f2f8ff; --fg70:rgba(242,248,255,.74); --fg55:rgba(242,248,255,.58); --fg45:rgba(190,214,240,.5); --fg30:rgba(170,200,235,.32); --fg20:rgba(150,190,230,.18);
+    --cyan:#3ee0ff; --cyan-h:#9df3ff; --teal:#12b5a3; --teal-h:#2fe0cb; --teal-d:#0a8f81;
+    --orange:#ff9d2f; --gold:#ffd23f; --violet:#7a5cff; --magenta:#ff4fd8;
+    --green:#4ef2a4; --red:#ff4a5a; --amber:#ffb84d;
+    --border:rgba(62,224,255,.45); --border-soft:rgba(62,224,255,.22);
+    --px:"Press Start 2P","Orbitron",monospace; --ui:Orbitron,"Space Grotesk",sans-serif; --body:"Space Grotesk",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--fg);font-family:var(--body);-webkit-text-size-adjust:100%;overscroll-behavior:none}
+  body{background:
+    radial-gradient(circle at 12% 8%,rgba(122,92,255,.16),transparent 32%),
+    radial-gradient(circle at 90% 90%,rgba(18,181,163,.14),transparent 34%),
+    linear-gradient(160deg,#040918 0%,#06102e 50%,#0a0a2a 100%)}
+  button,input,textarea{font:inherit;color:inherit}
+  button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+  button:focus-visible,textarea:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+  svg{display:block}
+  .display{font-family:var(--ui);font-weight:800;letter-spacing:.015em}
+  .label{font-family:var(--ui);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--fg45)}
+  .hint{font-size:12px;color:var(--fg45);line-height:1.5}
+  .center{text-align:center}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .row.end{justify-content:flex-end}
+  .row.between{justify-content:space-between}
+  .cyan{color:var(--cyan-h)}
+
+  /* ── Shell ─────────────────────────────────────────────────────────────── */
+  #app{width:min(100%,980px);margin:0 auto;padding:12px;min-height:100vh;display:flex;flex-direction:column;gap:10px}
+  #shell{position:relative;isolation:isolate;flex:1;display:flex;flex-direction:column;border:2px solid rgba(62,224,255,.32);border-radius:16px;overflow:hidden;background:#050b1e;box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 60px rgba(62,224,255,.1),inset 0 0 60px rgba(62,224,255,.04)}
+  #shell::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--teal-h),transparent);box-shadow:0 0 16px var(--cyan);z-index:9;pointer-events:none}
+  #topbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:2px solid rgba(62,224,255,.16);position:relative;z-index:4;background:linear-gradient(90deg,rgba(5,11,30,.98),rgba(8,14,44,.95))}
+  #topbar .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--fg);font-family:var(--px);font-size:11px;letter-spacing:.02em;text-transform:uppercase;line-height:1}
+  #topbar .brand .brand-ico{width:22px;height:24px}
+  #topbar .brand .brand-ico svg{width:100%;height:100%;filter:drop-shadow(0 0 6px rgba(62,224,255,.6))}
+  #topbar .brand em{font-style:normal;color:var(--cyan-h)}
+  #topbar .brand .label{margin-left:8px;font-size:9px;color:var(--fg45)}
+  .chip{font-family:var(--ui);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--fg45);padding:8px 10px;border:2px solid var(--border-soft);border-radius:8px;background:rgba(9,20,50,.7)}
+  .chip b{color:var(--gold);font-variant-numeric:tabular-nums}
+  .iconbtn{width:38px;height:38px;border-radius:8px;border:2px solid var(--border-soft);background:rgba(9,20,50,.85);color:var(--fg70);display:grid;place-items:center;padding:0;box-shadow:inset 0 0 12px rgba(62,224,255,.05);transition:border-color .15s,box-shadow .15s}
+  .iconbtn svg{width:16px;height:16px}
+  .iconbtn:hover{border-color:var(--cyan);box-shadow:0 0 16px rgba(62,224,255,.25)}
+  .month-leader-btn{min-width:118px;height:38px;display:grid;grid-template-columns:auto auto;align-items:center;justify-content:center;gap:8px;padding:4px 12px;border:2px solid var(--border-soft);border-radius:8px;background:rgba(9,20,50,.85);color:var(--fg);transition:border-color .15s,box-shadow .15s,transform .15s}
+  .month-leader-btn:hover{border-color:var(--cyan);box-shadow:0 0 18px rgba(62,224,255,.2);transform:translateY(-1px)}
+  .month-leader-btn span{font-family:var(--ui);font-size:8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--fg45);line-height:1.2}
+  .month-leader-btn strong{font-family:var(--ui);font-size:13px;color:var(--gold);font-variant-numeric:tabular-nums;text-shadow:0 0 10px rgba(255,210,63,.35)}
+
+  #arena{position:relative;flex:1;min-height:640px;overflow:hidden;touch-action:none;background:
+    radial-gradient(ellipse at 18% 12%,rgba(122,92,255,.28),transparent 42%),
+    radial-gradient(ellipse at 86% 68%,rgba(18,181,163,.16),transparent 38%),
+    radial-gradient(ellipse at 60% 30%,rgba(62,224,255,.08),transparent 40%),
+    linear-gradient(180deg,#050b1e 0%,#07113a 55%,#0a1a4c 100%)}
+  canvas#game{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;z-index:3}
+  .screen.on{display:flex}
+  .screen.menu{background:linear-gradient(180deg,rgba(4,9,24,.5),rgba(4,9,24,.8))}
+  .scroll{overflow-y:auto;padding:22px 20px 26px}
+  .scroll::-webkit-scrollbar,.panel::-webkit-scrollbar{width:8px}
+  .scroll::-webkit-scrollbar-thumb,.panel::-webkit-scrollbar-thumb{background:rgba(62,224,255,.25);border-radius:4px}
+  .menu-wrap{width:min(100%,460px);margin:0 auto;display:flex;flex-direction:column;gap:14px}
+  .menu-wrap.wide{width:min(100%,740px)}
+  .screen-head{display:grid;grid-template-columns:38px 1fr 38px;align-items:center;gap:10px}
+  .screen-title{margin:0;font-family:var(--ui);font-weight:800;font-size:clamp(17px,3vw,22px);letter-spacing:.08em;text-transform:uppercase;text-align:center;color:var(--fg);text-shadow:0 0 18px rgba(62,224,255,.25)}
+  .backlink{display:inline-block;margin:6px auto 0;color:var(--fg45);font-size:12px;text-decoration:none;font-family:var(--ui);letter-spacing:.1em;text-transform:uppercase}
+  .backlink:hover{color:var(--cyan-h)}
+
+  /* ── Pixel 3D title ─────────────────────────────────────────────────────── */
+  /* Base layer carries the stepped extrusion; ::after repeats the text with a gradient fill on top. */
+  .px3d{position:relative;display:inline-block;font-family:var(--px);text-transform:uppercase;line-height:1.15;color:var(--ex);text-shadow:2px 2px 0 var(--ex),4px 4px 0 var(--ex2),6px 6px 0 var(--ex2),0 0 28px var(--glow)}
+  .px3d::after{content:attr(data-t);position:absolute;left:0;top:0;right:0;text-shadow:none;color:transparent;background-image:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-stroke:1px rgba(0,0,0,.5)}
+  .t1{--grad:linear-gradient(180deg,#fff2b8 0%,#ffc247 36%,#ff8f1f 68%,#ef5f12 100%);--ex:#7a2b04;--ex2:#3a1204;--glow:rgba(255,160,40,.6)}
+  .t2{--grad:linear-gradient(180deg,#ecfeff 0%,#7fe9ff 40%,#2bb8ea 74%,#1e6fc4 100%);--ex:#0a3e6e;--ex2:#061f40;--glow:rgba(62,224,255,.6)}
+  .t3{--grad:linear-gradient(180deg,#ffd6dc 0%,#ff7a88 40%,#ff4a5a 74%,#b31b34 100%);--ex:#5a0b16;--ex2:#2c0510;--glow:rgba(255,74,90,.55)}
+  .game-title{margin:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .game-title .px3d{font-size:clamp(26px,5.4vw,46px)}
+  .title-ship{width:72px;height:78px;margin:8px auto 4px;animation:hover 3s ease-in-out infinite}
+  .title-ship svg{width:100%;height:100%;filter:drop-shadow(0 0 14px rgba(62,224,255,.6))}
+  @keyframes hover{50%{transform:translateY(-6px)}}
+  .tagline{margin:6px 0 4px;text-align:center;font-family:var(--ui);font-size:clamp(9px,1.5vw,11px);font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan-h);text-shadow:0 0 12px rgba(62,224,255,.4)}
+
+  /* ── Menu buttons ───────────────────────────────────────────────────────── */
+  .menu-stack{display:grid;gap:12px;width:min(100%,400px);margin:6px auto 0}
+  .mbtn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:52px;padding:12px 18px;border-radius:10px;border:2px solid var(--border);background:linear-gradient(180deg,rgba(11,28,66,.92),rgba(6,14,38,.96));color:var(--fg);font-family:var(--ui);font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;box-shadow:0 0 14px rgba(62,224,255,.12),inset 0 0 14px rgba(62,224,255,.05);transition:transform .12s,box-shadow .15s,border-color .15s,filter .15s}
+  .mbtn:hover:not(:disabled){border-color:var(--cyan);box-shadow:0 0 22px rgba(62,224,255,.3),inset 0 0 18px rgba(62,224,255,.08);transform:translateY(-1px)}
+  .mbtn:active:not(:disabled){transform:translateY(1px)}
+  .mbtn:disabled{opacity:.5;cursor:default}
+  .mbtn.primary{min-height:60px;font-size:16px;background:linear-gradient(180deg,#1ad0b8,#0c9d8b);border-color:#93f6ff;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35);box-shadow:0 0 28px rgba(26,208,184,.45),inset 0 1px 0 rgba(255,255,255,.28),inset 0 -3px 0 rgba(0,0,0,.18)}
+  .mbtn.primary:hover:not(:disabled){filter:brightness(1.08);border-color:#fff;box-shadow:0 0 34px rgba(26,208,184,.6)}
+  .mbtn.danger{border-color:rgba(255,74,90,.5)}
+  .mbtn.danger:hover:not(:disabled){border-color:var(--red);box-shadow:0 0 22px rgba(255,74,90,.3)}
+  .mbtn.auto{width:auto;display:inline-flex;min-height:46px;font-size:12px;padding:10px 18px}
+  .mbtn.auto.primary{min-height:50px;font-size:13px}
+  .mbtn .ico{width:18px;height:18px;flex:0 0 auto;display:grid;place-items:center}
+  .mbtn .ico svg{width:100%;height:100%}
+  .mbtn.primary .ico svg{filter:drop-shadow(0 1px 0 rgba(0,0,0,.3))}
+
+  /* ── Panels ─────────────────────────────────────────────────────────────── */
+  .panel{position:relative;background:linear-gradient(160deg,rgba(8,18,48,.95),rgba(5,10,30,.97));border:2px solid var(--border-soft);border-radius:12px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.6),0 0 40px rgba(62,224,255,.08),inset 0 0 40px rgba(62,224,255,.04)}
+  .panel.frame{border-color:rgba(62,224,255,.32)}
+  .panel.frame::after{content:"";position:absolute;inset:6px;pointer-events:none;border-radius:8px;
+    --c:var(--cyan);
+    background-image:linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c)),linear-gradient(var(--c),var(--c));
+    background-repeat:no-repeat;
+    background-size:22px 2px,2px 22px,22px 2px,2px 22px,22px 2px,2px 22px,22px 2px,2px 22px;
+    background-position:0 0,0 0,100% 0,100% 0,0 100%,0 100%,100% 100%,100% 100%;opacity:.9}
+  .panel>*{position:relative;z-index:1}
+
+  /* ── Sponsor badge ──────────────────────────────────────────────────────── */
+  .sponsor{display:block;text-decoration:none;color:inherit;text-align:center;margin:10px auto 0;width:max-content;max-width:100%}
+  .sponsor .sp-lbl{font-family:var(--ui);font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--fg55);margin-bottom:8px}
+  .sponsor .sp-row{display:flex;align-items:center;gap:12px;padding:9px 14px;border:2px solid rgba(62,224,255,.28);border-radius:12px;background:rgba(6,14,38,.75);transition:border-color .15s,box-shadow .15s}
+  .sponsor:hover .sp-row{border-color:var(--teal-h);box-shadow:0 0 22px rgba(18,181,163,.3)}
+  .sponsor img{width:52px;height:52px;border-radius:12px;box-shadow:0 0 16px rgba(18,181,163,.4)}
+  .sponsor .sp-logo{display:grid;place-items:center;width:52px;height:52px;border-radius:12px;background:#12b5a3;color:#f5f1e6;font-family:var(--ui);font-weight:900;font-size:8px;line-height:1.3;text-align:center;box-shadow:0 0 16px rgba(18,181,163,.4)}
+  .sponsor .sp-tag{font-family:var(--ui);font-size:10px;font-weight:700;letter-spacing:.14em;line-height:1.6;text-transform:uppercase;color:var(--cyan-h);text-align:left}
+  .sponsor.compact .sp-lbl{margin-bottom:6px}
+  .sponsor.compact img{width:42px;height:42px}
+  .sponsor.compact .sp-tag{font-size:9px}
+
+  /* ── Level select ───────────────────────────────────────────────────────── */
+  .level-list{display:grid;gap:10px}
+  .lvl{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;width:100%;text-align:left;padding:10px 14px 10px 10px;border:2px solid var(--border-soft);border-radius:12px;background:rgba(8,18,48,.88);color:var(--fg);transition:border-color .15s,box-shadow .15s,transform .12s}
+  .lvl .lvl-n{width:46px;height:46px;display:grid;place-items:center;border:2px solid var(--border);border-radius:9px;font-family:var(--px);font-size:16px;background:rgba(62,224,255,.08);color:var(--cyan-h)}
+  .lvl .lvl-txt b{display:block;font-family:var(--ui);font-weight:700;font-size:14px;letter-spacing:.04em}
+  .lvl .lvl-txt small{display:block;margin-top:3px;font-size:12px;color:var(--fg55)}
+  .lvl .lvl-right{display:flex;gap:4px;align-items:center}
+  .lvl .lvl-right svg{width:18px;height:18px}
+  .lvl.unlocked:hover{border-color:var(--cyan);box-shadow:0 0 20px rgba(62,224,255,.25);transform:translateX(3px)}
+  .lvl.next{border-color:var(--teal-h);background:rgba(18,181,163,.14);box-shadow:0 0 22px rgba(18,181,163,.3)}
+  .lvl.next .lvl-n{border-color:var(--teal-h);background:rgba(18,181,163,.2);color:#fff}
+  .lvl.locked{opacity:.55;cursor:not-allowed}
+  .lvl.locked .lvl-n{color:var(--fg45)}
+  .motto{margin:14px 0 0;text-align:center;font-family:var(--ui);font-weight:800;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--cyan-h);line-height:1.8;text-shadow:0 0 14px rgba(62,224,255,.4)}
+
+  /* ── How to play / settings rows ────────────────────────────────────────── */
+  .info-list{display:grid;gap:10px}
+  .info{display:grid;grid-template-columns:54px 1fr;gap:14px;align-items:center;padding:12px 14px;border:2px solid var(--border-soft);border-radius:12px;background:rgba(8,18,48,.88)}
+  .info .ico{width:54px;height:54px;display:grid;place-items:center;border:2px solid var(--border);border-radius:10px;background:rgba(62,224,255,.06)}
+  .info .ico svg{width:32px;height:32px}
+  .info b{display:block;font-family:var(--ui);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+  .info p{margin:4px 0 0;font-size:13px;color:var(--fg70);line-height:1.45}
+  .setting{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;border:2px solid var(--border-soft);border-radius:12px;background:rgba(8,18,48,.88)}
+  .setting b{display:block;font-family:var(--ui);font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase}
+  .setting p{margin:4px 0 0;font-size:12px;color:var(--fg55);line-height:1.45}
+  .setting.stack{flex-direction:column;align-items:stretch}
+  .toggle{flex:0 0 auto;min-width:88px;padding:10px 14px;border-radius:8px;border:2px solid var(--border);background:rgba(62,224,255,.06);font-family:var(--ui);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg55)}
+  .toggle.on{background:linear-gradient(180deg,#1ad0b8,#0c9d8b);border-color:#93f6ff;color:#fff;box-shadow:0 0 18px rgba(26,208,184,.4)}
+  input.field{width:100%;padding:11px 13px;border-radius:8px;border:2px solid var(--border-soft);background:rgba(3,10,28,.9);outline:none;color:var(--fg)}
+  input.field:focus{border-color:var(--cyan)}
+
+  /* ── Level complete / results ───────────────────────────────────────────── */
+  .complete-title,.res-title{margin:0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .complete-title .px3d,.res-title .px3d{font-size:clamp(20px,4.2vw,34px)}
+  .stars{display:flex;justify-content:center;gap:12px;margin:6px 0 2px}
+  .stars svg{width:44px;height:40px;filter:drop-shadow(0 0 10px rgba(255,210,63,.45))}
+  .stars .dim svg{filter:none;opacity:.6}
+  .stars .pop{animation:starpop .5s cubic-bezier(.2,1.4,.4,1) both}
+  @keyframes starpop{from{transform:scale(.2) rotate(-30deg);opacity:0}to{transform:none;opacity:1}}
+  .stat-table{border:2px solid var(--border-soft);border-radius:12px;background:rgba(8,18,48,.88);overflow:hidden}
+  .srow{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 16px;font-family:var(--ui);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg70)}
+  .srow+.srow{border-top:1px solid rgba(62,224,255,.18)}
+  .srow b{font-family:var(--px);font-size:12px;color:var(--fg);letter-spacing:0;text-transform:none;font-variant-numeric:tabular-nums;text-align:right}
+  .srow b.gold{color:var(--gold);text-shadow:0 0 12px rgba(255,210,63,.35)}
+  .results-hero{text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 16px 14px}
+  .score{font-family:var(--px);font-size:clamp(30px,7vw,54px);color:var(--gold);text-shadow:0 0 28px rgba(255,210,63,.4),3px 3px 0 #6b3d00;line-height:1;margin:6px 0 2px}
+  .best-badge{display:none;width:max-content;padding:6px 10px;border:2px solid rgba(78,242,164,.35);border-radius:8px;background:rgba(78,242,164,.1);color:var(--green);font-family:var(--ui);font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+  .best-badge:not(:empty){display:block}
+  .result-summary{max-width:560px;margin:0 auto;color:var(--fg70);font-size:14px;line-height:1.5}
+  .results-profile{display:grid;grid-template-columns:minmax(160px,220px) 1fr;gap:18px;align-items:center;padding:16px 18px}
+  .profile-heading .display{font-size:19px;margin-top:5px;color:var(--fg)}
+  .profile-copy{color:var(--fg70);font-size:14px;line-height:1.5}
+  #bossLog{display:grid;gap:8px}#bossLog:empty{display:none}
+  .box{position:relative;border:2px solid var(--border-soft);border-radius:10px;padding:12px 14px;background:rgba(8,18,48,.88);font-size:13px;line-height:1.45}
+  .box .t{font-family:var(--ui);font-weight:800;font-size:12px;letter-spacing:.06em;margin-bottom:6px}
+  .box p{margin:6px 0 0;color:var(--fg55)}
+  .result-panel{padding:16px 18px}
+  .result-panel-title{font-family:var(--ui);font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+  .result-panel-copy{margin:0 0 12px;color:var(--fg55);font-size:12px}
+  #nameRow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px}
+  ol.board{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:6px}
+  ol.board li{display:flex;gap:10px;align-items:center;min-height:42px;border:2px solid var(--border-soft);border-radius:9px;padding:8px 12px;font-size:14px;background:rgba(4,12,34,.8)}
+  ol.board li.me{border-color:var(--teal-h);background:rgba(18,181,163,.14)}
+  ol.board li:first-child{border-color:rgba(255,210,63,.45);background:rgba(255,210,63,.07)}
+  ol.board .r{width:30px;color:var(--fg45);font-family:var(--px);font-size:10px}
+  ol.board .s{margin-left:auto;font-family:var(--px);font-size:11px;color:var(--gold)}
+
+  /* ── HUD over canvas ────────────────────────────────────────────────────── */
+  #hud{position:absolute;left:0;right:0;top:0;z-index:4;display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:start;padding:12px 14px;pointer-events:none}
+  .hud-block{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:2px solid var(--border-soft);border-radius:10px;background:rgba(6,14,38,.72);backdrop-filter:blur(6px);min-width:150px;max-width:230px}
+  .hud-block.right{align-items:flex-end;margin-left:auto}
+  .hud-lvl,.hud-score{font-family:var(--px);font-size:11px;letter-spacing:.02em;text-transform:uppercase;color:var(--fg);display:flex;align-items:baseline;gap:8px;line-height:1}
+  .hud-lvl b,.hud-score b{font-size:13px;font-variant-numeric:tabular-nums}
+  .hud-lvl b{color:var(--cyan-h)}
+  .hud-score b{color:var(--gold);text-shadow:0 0 10px rgba(255,210,63,.4)}
+  .hud-bar{width:100%;height:10px;border:2px solid var(--border);border-radius:6px;background:rgba(3,10,28,.9);overflow:hidden}
+  .hud-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--teal),var(--cyan-h));box-shadow:0 0 12px var(--cyan);transition:width .25s ease}
+  .hud-sub{font-family:var(--ui);font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--fg45)}
+  .hud-sub.hot{color:var(--orange);text-shadow:0 0 10px rgba(255,157,47,.5)}
+  .hearts{display:flex;gap:6px}
+  .hearts svg{width:22px;height:19px;filter:drop-shadow(0 0 6px rgba(255,74,90,.55))}
+  .hearts .lost svg{filter:none;opacity:.45}
+  .hud-pause{pointer-events:auto;width:40px;height:40px;border-radius:9px;border:2px solid var(--border-soft);background:rgba(6,14,38,.8);color:var(--fg70);display:grid;place-items:center;padding:0}
+  .hud-pause svg{width:14px;height:16px}
+  .hud-pause:hover{border-color:var(--cyan)}
+  .pulse{animation:pop .3s ease}
+  @keyframes pop{from{transform:scale(1.14)}to{transform:scale(1)}}
+  #ammoBar{position:absolute;left:12px;right:12px;bottom:12px;z-index:4;pointer-events:none;display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+  .slot{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .slot-ico{width:58px;height:58px;display:grid;place-items:center;border:2px solid var(--border);border-radius:10px;background:rgba(6,14,38,.85);box-shadow:0 0 14px rgba(62,224,255,.15)}
+  .slot-ico svg{width:34px;height:34px}
+  .slot-lbl{font-family:var(--ui);font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--fg70);white-space:nowrap;font-variant-numeric:tabular-nums}
+  #pips{width:auto;min-width:58px;padding:0 9px;display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:12px;gap:4px;align-content:center;justify-items:center}
+  #pips i{width:9px;height:12px;border-radius:2px;background:linear-gradient(180deg,var(--cyan-h),var(--cyan));box-shadow:0 0 8px rgba(62,224,255,.6);transition:background .15s,box-shadow .15s}
+  #pips i.off{background:var(--fg20);box-shadow:none}
+  #pips.low i:not(.off){background:linear-gradient(180deg,#ff8a95,var(--red));box-shadow:0 0 8px rgba(255,74,90,.7)}
+  #pips.low{border-color:rgba(255,74,90,.6);box-shadow:0 0 14px rgba(255,74,90,.25)}
+  #touchpad{position:absolute;left:0;right:0;bottom:96px;z-index:4;display:none;justify-content:space-between;align-items:center;padding:0 14px;pointer-events:none}
+  #touchpad button{pointer-events:auto;width:64px;height:64px;border-radius:12px;border:2px solid var(--border);background:rgba(6,14,38,.8);color:var(--fg70);display:grid;place-items:center;padding:0}
+  #touchpad button svg{width:22px;height:22px}
+  #touchpad .fire{width:88px;height:88px;background:linear-gradient(180deg,#1ad0b8,#0c9d8b);border-color:#93f6ff;color:#fff;font-family:var(--ui);font-size:12px;font-weight:800;letter-spacing:.14em;box-shadow:0 0 24px rgba(26,208,184,.4)}
+  @media (pointer:coarse){#touchpad{display:flex}}
+
+  /* ── Overlays ───────────────────────────────────────────────────────────── */
+  .overlay{position:absolute;inset:0;z-index:6;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(3,7,22,.78);backdrop-filter:blur(8px) saturate(1.2)}
+  .overlay.on{display:flex}
+  .card{width:min(100%,640px);max-height:100%;overflow:auto}
+  .cat{display:inline-block;font-family:var(--ui);font-size:9px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;padding:6px 10px;border-radius:6px;background:rgba(62,224,255,.12);border:2px solid rgba(62,224,255,.35);color:var(--cyan-h)}
+  .cat.boss{background:rgba(255,74,90,.14);border-color:var(--red);color:#ffb5c3}
+  .warn{font-family:var(--ui);font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--red);text-shadow:0 0 10px rgba(255,74,90,.4)}
+  .q{font-family:var(--ui);font-weight:800;font-size:clamp(15px,2.5vw,20px);line-height:1.4;margin:14px 0;letter-spacing:.01em;color:var(--fg)}
+  .timer{height:10px;border:2px solid var(--border-soft);border-radius:6px;background:rgba(3,10,28,.9);overflow:hidden;margin:0 0 14px}
+  .timer i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--teal),var(--cyan-h));box-shadow:0 0 12px var(--cyan);transition:width 80ms linear,background .2s}
+  .timer i.low{background:linear-gradient(90deg,#ff8a95,var(--red));box-shadow:0 0 12px var(--red)}
+  #options{display:grid;gap:8px}
+  .opt{position:relative;display:flex;gap:12px;align-items:center;text-align:left;border:2px solid var(--border-soft);border-radius:10px;background:rgba(8,18,48,.88);padding:11px 12px;line-height:1.4;font-size:14px;color:var(--fg);transition:transform .12s,border-color .12s,box-shadow .12s,background .12s}
+  .opt:hover:not(:disabled){border-color:var(--cyan);transform:translateX(4px);box-shadow:0 0 18px rgba(62,224,255,.2)}
+  .opt:disabled{opacity:.6;cursor:default}
+  .opt .k{flex:0 0 30px;height:30px;border-radius:7px;display:grid;place-items:center;border:2px solid var(--border);background:rgba(62,224,255,.08);font-family:var(--px);font-size:11px;color:var(--cyan-h)}
+  .opt.good{border-color:var(--teal-h);background:rgba(18,181,163,.18);box-shadow:0 0 18px rgba(18,181,163,.3);opacity:1}
+  .opt.good .k{border-color:var(--teal-h);background:rgba(18,181,163,.25);color:#fff}
+  .opt.bad{border-color:var(--red);background:rgba(255,74,90,.12);opacity:1}
+  .opt.bad .k{border-color:var(--red);color:#ffb5c3}
+  .opt .tag{margin-left:auto;font-family:var(--ui);font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--red);white-space:nowrap}
+  .opt.good .tag{color:var(--green)}
+  #coach{margin-top:12px;font-size:13px;color:var(--fg70);min-height:18px;line-height:1.5}
+  #coach b{color:var(--fg)}
+  textarea{width:100%;min-height:96px;resize:vertical;background:rgba(3,10,28,.9);border:2px solid var(--border-soft);border-radius:10px;padding:12px 14px;line-height:1.5;font-size:14px;color:var(--fg)}
+  textarea:focus{border-color:var(--cyan);outline:none;box-shadow:0 0 0 1px rgba(62,224,255,.2)}
+  #bossbox{align-items:flex-end;padding:0;background:linear-gradient(0deg,rgba(3,7,22,.97) 55%,rgba(3,7,22,0));backdrop-filter:none;pointer-events:none}
+  .boss-sheet{pointer-events:auto;width:100%;border-radius:14px 14px 0 0;border-color:rgba(255,74,90,.4);border-bottom:0;box-shadow:0 -10px 50px rgba(255,74,90,.15)}
+  .grade{display:flex;align-items:baseline;gap:10px;margin-top:8px}
+  .grade .big{font-family:var(--px);font-size:42px;line-height:1;text-shadow:0 0 22px currentColor}
+  .grade .pts{margin-left:auto;font-family:var(--px);font-size:14px;color:var(--gold);text-shadow:0 0 12px rgba(255,210,63,.4)}
+  .rubric{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;margin:14px 0}
+  .rub{font-size:12px;color:var(--fg55);font-family:var(--ui);letter-spacing:.06em}
+  .rub .bar{height:8px;border:2px solid var(--border-soft);border-radius:5px;background:rgba(3,10,28,.9);margin-top:6px;overflow:hidden}
+  .rub .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--cyan-h));box-shadow:0 0 9px var(--cyan);transition:width .6s ease}
+  .quote{border-left:3px solid var(--teal-h);padding:10px 12px;margin:10px 0;background:linear-gradient(90deg,rgba(18,181,163,.12),transparent);border-radius:0 8px 8px 0;font-size:14px;line-height:1.5}
+  .pause-panel{width:min(100%,440px);text-align:center;padding:26px 24px 22px}
+  .pause-panel .screen-title{font-size:clamp(18px,3.4vw,24px);margin-bottom:18px}
+  .leaderboard-modal{width:min(100%,540px)}
+  .leaderboard-modal-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+  .leaderboard-modal-title{font-family:var(--ui);font-size:18px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-top:4px}
+  .month-champion{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:14px;margin-bottom:12px;border:2px solid rgba(255,210,63,.4);border-radius:10px;background:linear-gradient(110deg,rgba(255,210,63,.1),rgba(62,224,255,.08))}
+  .month-champion .crown{width:28px;height:28px}.month-champion .crown svg{width:100%;height:100%;filter:drop-shadow(0 0 8px rgba(255,210,63,.5))}
+  .month-champion .champ-name{font-weight:700}.month-champion .champ-meta{font-size:11px;color:var(--fg45);margin-top:2px}
+  .month-champion .champ-score{font-family:var(--px);font-size:16px;color:var(--gold);font-variant-numeric:tabular-nums}
+  #monthBoard{margin-top:0}
+  #banner{position:absolute;left:0;right:0;top:34%;z-index:5;text-align:center;pointer-events:none;opacity:0}
+  #banner.on{animation:banner 1.9s ease forwards}
+  @keyframes banner{0%{opacity:0;transform:translateY(12px)}15%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
+  #banner .w{font-family:var(--px);font-size:clamp(18px,4.4vw,34px);letter-spacing:.02em;text-transform:uppercase;color:var(--cyan-h);text-shadow:3px 3px 0 #0a3e6e,0 0 16px rgba(62,224,255,.8),0 0 40px rgba(62,224,255,.35)}
+  #banner .w.boss{color:#ff7a88;text-shadow:3px 3px 0 #5a0b16,0 0 16px rgba(255,74,90,.8),0 0 40px rgba(255,74,90,.35)}
+  #banner .label{margin-top:10px;color:var(--fg70)}
+  .shake{animation:shake .35s ease} @keyframes shake{20%{transform:translate(6px,-4px)}40%{transform:translate(-6px,4px)}60%{transform:translate(4px,3px)}80%{transform:translate(-3px,-2px)}}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(10px);background:#071529;border:2px solid var(--border);color:var(--fg);padding:10px 14px;border-radius:8px;font-size:13px;box-shadow:0 0 25px rgba(62,224,255,.15);opacity:0;transition:.2s;z-index:50;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%)}
+
+  /* ── Footer strip ───────────────────────────────────────────────────────── */
+  #footer{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;font-family:var(--ui);font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--fg45)}
+  #footer .sep{color:var(--fg20)}
+  #footer .grow{flex:1}
+  #footer .cyan{color:var(--cyan-h)}
+
+  @media (max-width:640px){
+    #app{padding:6px;gap:8px}#topbar{padding:8px 10px}#topbar .brand{font-size:8px;gap:6px;white-space:nowrap}#topbar .brand .brand-ico{width:18px;height:20px}#topbar .brand .label,#bestLbl{display:none!important}#topbar .row{flex-wrap:nowrap;gap:6px!important}
+    .month-leader-btn{min-width:86px;padding:4px 8px;gap:5px}.month-leader-btn span{font-size:7px}.month-leader-btn strong{font-size:11px}
+    .scroll{padding:16px 12px 22px}.panel{padding:16px}.card .q{font-size:15px}
+    .hud-block{min-width:0;padding:8px 10px;gap:4px}.hud-lvl,.hud-score{font-size:9px}.hud-lvl b,.hud-score b{font-size:11px}.hearts svg{width:18px;height:16px}
+    .slot-ico{width:50px;height:50px}#pips{min-width:50px;padding:0 6px}#pips i{width:7px;height:10px}
+    .results-profile{grid-template-columns:1fr;gap:8px}#nameRow{grid-template-columns:1fr}#nameRow .mbtn{width:100%}.rubric{grid-template-columns:1fr}
+    .info{grid-template-columns:46px 1fr;gap:10px}.info .ico{width:46px;height:46px}.info .ico svg{width:26px;height:26px}
+    #footer{justify-content:center;text-align:center;gap:8px}#footer .grow{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="shell">
+    <div id="topbar">
+      <a class="brand" href="/games" title="All games"><span class="brand-ico" data-ico="ship"></span><span>Objection <em>Defenders</em></span><span class="label">Sales Coach AI</span></a>
+      <div class="row" style="gap:8px">
+        <span id="bestLbl" class="chip" style="display:none">Best <b id="bestVal"></b></span>
+        <button class="month-leader-btn" id="leaderBtn" type="button" aria-label="Open this month's leaderboard"><span id="monthTopLabel">Month top</span><strong id="monthTop">—</strong></button>
+        <button class="iconbtn" id="soundBtn" title="Sound" aria-label="Toggle sound"></button>
+      </div>
+    </div>
+    <div id="arena">
+      <canvas id="game"></canvas>
+
+      <!-- MAIN MENU -->
+      <section class="screen on scroll menu" id="s-title">
+        <div class="menu-wrap">
+          <div class="title-ship" data-ico="ship"></div>
+          <h1 class="game-title"><span class="px3d t1" data-t="Objection">Objection</span><span class="px3d t2" data-t="Defenders">Defenders</span></h1>
+          <p class="tagline">Blast objections. Build skills. Close more deals.</p>
+          <div class="menu-stack">
+            <button class="mbtn primary" id="startBtn"><span class="ico" data-ico="play"></span>Play</button>
+            <button class="mbtn" id="trainBtn"><span class="ico" data-ico="cap"></span>Training mode</button>
+            <button class="mbtn" id="scoresBtn"><span class="ico" data-ico="trophy"></span>High scores</button>
+            <button class="mbtn" id="howBtn"><span class="ico" data-ico="book"></span>How to play</button>
+            <button class="mbtn" id="settingsBtn"><span class="ico" data-ico="gear"></span>Settings</button>
+          </div>
+          <p class="hint center" style="margin:4px 0 0">Enter to launch · ← → to steer · Space to fire</p>
+          <div class="sponsor-slot"></div>
+          <a href="/games" class="backlink">← All games</a>
+        </div>
+      </section>
+
+      <!-- LEVEL SELECT (training mode) -->
+      <section class="screen scroll menu" id="s-levels">
+        <div class="menu-wrap">
+          <div class="screen-head"><button class="iconbtn" data-back aria-label="Back"><span data-ico="back"></span></button><h2 class="screen-title">Choose a level</h2><span></span></div>
+          <p class="hint center" style="margin:0">Practice any wave you've reached in a full run. Training runs don't count toward the leaderboard.</p>
+          <div class="level-list" id="levelList"></div>
+          <p class="motto">“Practice today.<br>Close tomorrow.”</p>
+          <div class="sponsor-slot"></div>
+        </div>
+      </section>
+
+      <!-- HOW TO PLAY -->
+      <section class="screen scroll menu" id="s-howto" style="z-index:8">
+        <div class="menu-wrap">
+          <div class="screen-head"><button class="iconbtn" data-back aria-label="Back"><span data-ico="back"></span></button><h2 class="screen-title">How to play</h2><span></span></div>
+          <div class="info-list">
+            <div class="info"><span class="ico" data-ico="ship"></span><div><b>Move</b><p>Drag on the screen or use ← → (or A / D) to fly your ship.</p></div></div>
+            <div class="info"><span class="ico" data-ico="bullet"></span><div><b>Shoot</b><p>Tap FIRE or press Space. Ten shots per clip. Big rocks take three hits and pay the most.</p></div></div>
+            <div class="info"><span class="ico" data-ico="rock"></span><div><b>Destroy objections</b><p>Hit the asteroids before they reach the planet. Clear ten rocks to finish the wave.</p></div></div>
+            <div class="info"><span class="ico" data-ico="bolt"></span><div><b>Reload with the right answer</b><p>Empty clip? A buyer objection appears with four responses. The one that acknowledges and asks refills you. Argue, cave, or dodge and you lose a life.</p></div></div>
+            <div class="info"><span class="ico" data-ico="boss"></span><div><b>Boss rocks</b><p>After every wave a boss rock descends with a stacked objection. Bullets bounce off. Type your own rebuttal and Sales Coach AI grades it 1–10.</p></div></div>
+            <div class="info"><span class="ico" data-ico="heart"></span><div><b>Don't get hit</b><p>You have 3 lives. A rock that lands or a wrong reload costs one. Right answers build your heat multiplier.</p></div></div>
+          </div>
+          <div class="motto" style="margin-top:6px">Real practice. Real progress.</div>
+          <div class="sponsor-slot"></div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="screen scroll menu" id="s-settings">
+        <div class="menu-wrap">
+          <div class="screen-head"><button class="iconbtn" data-back aria-label="Back"><span data-ico="back"></span></button><h2 class="screen-title">Settings</h2><span></span></div>
+          <div class="info-list">
+            <div class="setting"><div><b>Sound effects</b><p>Retro synth blips for shots, hits, and reloads.</p></div><button class="toggle" id="soundToggle" type="button">Off</button></div>
+            <div class="setting stack">
+              <div><b>Boss grading</b><p id="graderMode">Mock mode (no key) — add an API key for live Sales Coach AI grading.</p></div>
+              <input id="apiKey" class="field" type="password" autocomplete="off" placeholder="Anthropic API key (stays in this browser only)">
+              <p class="hint" style="margin:0">Prototype only. In production the key lives on the server and the browser calls your own /api/grade endpoint.</p>
+            </div>
+            <div class="setting"><div><b>Level progress</b><p>Relock training levels and clear earned stars on this browser.</p></div><button class="toggle" id="resetProgressBtn" type="button">Reset</button></div>
+          </div>
+          <div class="sponsor-slot"></div>
+        </div>
+      </section>
+
+      <!-- LEVEL COMPLETE -->
+      <section class="screen scroll menu" id="s-complete">
+        <div class="menu-wrap">
+          <h2 class="complete-title"><span class="px3d t1" data-t="Level">Level</span><span class="px3d t1" data-t="Complete!">Complete!</span></h2>
+          <div class="stars" id="cStars"></div>
+          <p class="hint center" id="cSub" style="margin:0"></p>
+          <div class="stat-table">
+            <div class="srow"><span>Objections destroyed</span><b id="cRocks">0</b></div>
+            <div class="srow"><span>Reload accuracy</span><b id="cAcc">—</b></div>
+            <div class="srow"><span>Boss rebuttal</span><b id="cBoss">—</b></div>
+            <div class="srow"><span>Time</span><b id="cTime">00:00</b></div>
+            <div class="srow"><span>Score</span><b class="gold" id="cScore">0</b></div>
+          </div>
+          <div class="menu-stack">
+            <button class="mbtn primary" id="nextLevelBtn"><span class="ico" data-ico="next"></span>Next level</button>
+            <button class="mbtn" id="replayLevelBtn"><span class="ico" data-ico="restart"></span>Replay level</button>
+            <button class="mbtn" id="completeMenuBtn"><span class="ico" data-ico="home"></span>Main menu</button>
+          </div>
+          <div class="sponsor-slot"></div>
+        </div>
+      </section>
+
+      <!-- PLAY HUD -->
+      <div id="hud" style="display:none">
+        <div class="hud-block left">
+          <div class="hud-lvl">Level <b id="wave">1</b></div>
+          <div class="hud-bar"><i id="waveBar"></i></div>
+          <div class="hud-sub" id="streak">Heat ×1</div>
+        </div>
+        <button class="hud-pause" id="pauseBtn" type="button" aria-label="Pause"><span data-ico="pause"></span></button>
+        <div class="hud-block right">
+          <div class="hud-score">Score <b id="score">0</b></div>
+          <div class="hearts" id="lives"></div>
+        </div>
+      </div>
+      <div id="ammoBar" style="display:none">
+        <div class="slot"><div class="slot-ico" id="pips"></div><div class="slot-lbl">Ammo (<span id="ammoN">10</span>)</div></div>
+        <div class="slot"><div class="slot-ico" data-ico="rock"></div><div class="slot-lbl" id="waveGoal">0/10 rocks</div></div>
+      </div>
+      <div id="touchpad"><button id="tLeft" aria-label="Move left"><span data-ico="back"></span></button><button class="fire" id="tFire">FIRE</button><button id="tRight" aria-label="Move right"><span data-ico="next"></span></button></div>
+
+      <!-- RELOAD CHALLENGE -->
+      <div class="overlay" id="challenge"><div class="panel frame card">
+        <div class="row between"><span class="cat" id="cCat">Price</span><span class="warn">Out of ammo · answer to reload</span></div>
+        <div class="q" id="cText"></div>
+        <div class="timer"><i id="cTimer" style="width:100%"></i></div>
+        <div id="options"></div>
+        <div id="coach"></div>
+        <div class="row end" style="margin-top:14px"><button class="mbtn primary auto" id="cNext" style="display:none"><span class="ico" data-ico="next"></span>Back to the fight</button></div>
+      </div></div>
+
+      <!-- BOSS -->
+      <div class="overlay" id="bossbox"><div class="panel boss-sheet">
+        <div class="row between"><span class="cat boss" id="bCat">Boss</span><span class="hint">Bullets don't work on this one. Words do.</span></div>
+        <div class="q" id="bText" style="font-size:clamp(14px,2.3vw,17px)"></div>
+        <textarea id="bossInput" maxlength="600" placeholder="Say what you'd actually say to this buyer. Acknowledge, ask, reframe, advance."></textarea>
+        <div class="row between" style="margin-top:10px"><span class="hint"><span id="charCount">0</span>/600 · Ctrl+Enter fires</span><button class="mbtn primary auto" id="fireBtn">Fire rebuttal ▲</button></div>
+      </div></div>
+
+      <!-- REVEAL -->
+      <div class="overlay" id="reveal"><div class="panel frame card" id="revealCard"></div></div>
+
+      <!-- PAUSE -->
+      <div class="overlay" id="pausebox"><div class="panel frame pause-panel" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+        <h2 class="screen-title" id="pauseTitle">Game paused</h2>
+        <div class="menu-stack">
+          <button class="mbtn primary" id="resumeBtn"><span class="ico" data-ico="play"></span>Resume</button>
+          <button class="mbtn" id="restartBtn"><span class="ico" data-ico="restart"></span>Restart level</button>
+          <button class="mbtn" id="pauseHowBtn"><span class="ico" data-ico="book"></span>How to play</button>
+          <button class="mbtn" id="pauseMenuBtn"><span class="ico" data-ico="home"></span>Main menu</button>
+        </div>
+        <div class="sponsor-slot compact"></div>
+      </div></div>
+
+      <!-- MONTHLY LEADERBOARD -->
+      <div class="overlay" id="leaderOverlay" style="z-index:10"><div class="panel frame leaderboard-modal" role="dialog" aria-modal="true" aria-labelledby="leaderTitle">
+        <div class="leaderboard-modal-head">
+          <div><div class="label" id="leaderMonth">This month</div><div class="leaderboard-modal-title" id="leaderTitle">High scores</div></div>
+          <button class="iconbtn" id="leaderClose" type="button" aria-label="Close leaderboard">✕</button>
+        </div>
+        <div class="month-champion" id="monthChampion"></div>
+        <ol class="board" id="monthBoard"></ol>
+        <p class="hint" style="margin:10px 0 0">Monthly scores saved on this browser.</p>
+      </div></div>
+
+      <!-- RESULTS -->
+      <section class="screen scroll menu" id="s-results" style="z-index:7">
+        <div class="menu-wrap wide">
+          <div class="results-hero">
+            <div class="label" id="resKicker">Final score</div>
+            <h2 class="res-title"><span class="px3d t1" id="resTitle" data-t="Game over">Game over</span></h2>
+            <div class="score" id="resScore">0</div>
+            <div class="best-badge" id="resBest"></div>
+            <p class="result-summary" id="resSummary"></p>
+          </div>
+          <div class="stat-table">
+            <div class="srow"><span>Rocks cleared</span><b id="rRocks">0</b></div>
+            <div class="srow"><span>Reload accuracy</span><b id="rAcc">—</b></div>
+            <div class="srow"><span>Boss wins</span><b id="rBoss">Not reached</b></div>
+            <div class="srow"><span>Best rebuttal</span><b id="rTop">Not attempted</b></div>
+          </div>
+          <div class="panel results-profile" id="profile"></div>
+          <div id="bossLog"></div>
+          <div class="panel result-panel" id="savePanel">
+            <div class="result-panel-title">Save this run</div>
+            <p class="result-panel-copy">Add your name to this browser's monthly leaderboard.</p>
+            <div id="nameRow"><input id="nameInput" class="field" maxlength="20" placeholder="Display name"><button class="mbtn primary auto" id="saveBtn">Save score</button></div>
+            <ol class="board" id="board"></ol>
+          </div>
+          <div class="menu-stack">
+            <button class="mbtn primary" id="againBtn"><span class="ico" data-ico="restart"></span>Launch again</button>
+            <button class="mbtn" id="shareBtn"><span class="ico" data-ico="share"></span>Challenge a rep</button>
+            <button class="mbtn" id="resMenuBtn"><span class="ico" data-ico="home"></span>Main menu</button>
+          </div>
+          <div class="sponsor-slot"></div>
+        </div>
+      </section>
+
+      <div id="banner"><div class="w"></div><div class="label" id="bsub"></div></div>
+    </div>
+  </div>
+  <div id="footer"><span>Objection Defenders</span><span class="sep">|</span><span>Sponsored by Sales Coach AI</span><span class="sep">|</span><span>Practice smarter. Sell better.</span><span class="grow"></span><span class="cyan">Turn objections into opportunities.</span></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>window.addEventListener("error",e=>{const t=document.getElementById("toast");if(t){t.textContent="Script error: "+e.message;t.classList.add("show");}});</script>
+<script>
+"use strict";
+/* ============================================================================
+   OBJECTION DEFENDERS — arcade prototype
+   Steer the ship (← → / drag), shoot asteroids labeled with objections
+   (Space / tap FIRE). Ten shots per clip. Empty clip => a full buyer
+   objection with four responses; the right one reloads you, a wrong one
+   costs a life. Clear the wave's rock quota => boss rock: typed rebuttal,
+   graded 1–10 (mock by default, live with an API key).
+   ============================================================================ */
+const MODEL = "claude-opus-5";
+const KEYS_LS = { key:"odf-key", sound:"odf-sound", best:"odf-best", board:"odf-board", name:"odf-name", questionDecks:"odf-question-decks-v2", progress:"odf-progress" };
+const mem = {};
+const store = { get(k){ try { return window.localStorage.getItem(k); } catch { return mem[k] ?? null; } }, set(k,v){ try { window.localStorage.setItem(k,v); } catch { mem[k]=v; } } };
+
+const WAVES = [
+  { name:"Price", color:"#2DE2E6", items:[
+    { t:"Your price is too high.", o:[
+      ["R","Fair. Compared to what — the budget you set, or another quote you're looking at?"],
+      ["A","It's actually very competitive for what you get."],
+      ["C","I can probably knock 15% off if that helps."],
+      ["D","Let me show you a few more features first."]],
+      why:"Price objections are rarely about price. Find the comparison point before you defend or discount." },
+    { t:"We don't have budget for this right now.", o:[
+      ["R","Understood. Is it that there's no budget this period, or that this hasn't earned a line in it yet?"],
+      ["A","Most companies your size find the budget for this."],
+      ["C","We could do a smaller package to fit."],
+      ["D","No problem, I'll check back next quarter."]],
+      why:"'No budget' means either timing or priority. Those need different answers, so ask which." },
+    { t:"Your competitor is 20% cheaper.", o:[
+      ["R","They might be. What's included in their quote — do you know what's in and out?"],
+      ["A","Cheaper tools cost more in the long run."],
+      ["C","If I match it, can we sign today?"],
+      ["D","Well, everyone's pricing is different."]],
+      why:"Never match a number you haven't seen. Ask what's inside it first." },
+    { t:"Can you just send me your best price?", o:[
+      ["R","Happy to. What would 'best' need to look like for this to be an easy yes on your end?"],
+      ["A","The price is the price — we don't play games."],
+      ["C","Sure, I'll take 10% off the quote right now."],
+      ["D","Let me get you a deck with everything first."]],
+      why:"'Best price' is a negotiation opener. Define what a yes looks like before you name a number." },
+    { t:"I can get this cheaper through a reseller.", o:[
+      ["R","Possibly. What matters more to you here — the lowest number, or who supports you after you buy?"],
+      ["A","Resellers don't know the product like we do."],
+      ["C","I'll beat whatever they quoted."],
+      ["D","Anyway, let me tell you about our roadmap."]],
+      why:"Reframe from price to what they're actually buying — but do it as a question, not a claim." },
+    { t:"The first-year cost is more than we can justify.", o:[
+      ["R","I hear you. Is the concern the total investment, or proving enough value in year one to defend it?"],
+      ["A","The first year is when you'll get the most value."],
+      ["C","We can cut the first-year price in half."],
+      ["D","Let me show you what year two looks like."]],
+      why:"Separate affordability from confidence in the first-year return before changing the deal." },
+    { t:"Why is there an implementation fee?", o:[
+      ["R","Fair question. Is the concern the extra line item, or whether the implementation work is worth that amount?"],
+      ["A","Every serious vendor charges for implementation."],
+      ["C","I can ask to have the fee removed."],
+      ["D","The subscription is really the important part."]],
+      why:"Find out whether they question the fee itself or the value behind it before defending the charge." },
+    { t:"Per-seat pricing doesn't work for us.", o:[
+      ["R","Got it. What breaks for you — the number of occasional users, growth uncertainty, or how you allocate the cost?"],
+      ["A","Per-seat pricing is the fairest model."],
+      ["C","We'll give you unlimited seats for the same price."],
+      ["D","Our enterprise features are worth looking at first."]],
+      why:"Name the possible friction, then let the buyer tell you which pricing constraint is real." },
+    { t:"I need a hard ROI before I spend this much.", o:[
+      ["R","That makes sense. Which result has to move, by how much, and over what period for the investment to clear your bar?"],
+      ["A","Our customers always see a positive ROI."],
+      ["C","We can lower the price until the ROI works."],
+      ["D","I can send you our ROI calculator."]],
+      why:"Turn a general ROI demand into the buyer's metric, threshold, and timeline." },
+    { t:"If we sign for three years, I expect a big discount.", o:[
+      ["R","A longer commitment should earn something. Besides price, what would make a three-year structure valuable and safe for you?"],
+      ["A","Three-year terms already include our best rate."],
+      ["C","Absolutely — tell me the discount you want."],
+      ["D","Let's talk about the contract after the demo."]],
+      why:"Acknowledge the give-and-get, then learn which terms create value before trading margin." },
+    { t:"Their package includes this feature at no charge.", o:[
+      ["R","Good to know. How important is that feature to the outcome you're buying, and what would you pay to get that outcome right?"],
+      ["A","Their free version of that feature isn't nearly as good."],
+      ["C","We'll include ours free too."],
+      ["D","We have several other features they don't."]],
+      why:"Establish the feature's actual value before matching a competitor's bundle." },
+    { t:"My CFO says the proposal has to come down by 25%.", o:[
+      ["R","Understood. If we solve the 25%, is everything else approved — and is the target tied to a budget cap or a value concern?"],
+      ["A","Your CFO is asking for an unrealistic cut."],
+      ["C","I'll take 25% out and resend it."],
+      ["D","Could we bring your CFO into another demo?"]],
+      why:"Isolate whether price is the final obstacle and learn what created the target before conceding." },
+    { t:"Services push this over our approval threshold.", o:[
+      ["R","That's helpful. What's the threshold, and which services are required now versus useful later?"],
+      ["A","Skipping services is why implementations fail."],
+      ["C","We'll make the services free."],
+      ["D","The software portion is under the threshold."]],
+      why:"Map the rule and the required scope so you can structure the rollout without hiding cost." },
+    { t:"This quote is higher than the one you sent last month.", o:[
+      ["R","You're right to flag it. Which change surprised you — scope, quantity, or the rate itself?"],
+      ["A","The earlier quote was only preliminary."],
+      ["C","I'll honor the old quote without checking."],
+      ["D","The new proposal has a lot more detail."]],
+      why:"Own the discrepancy and identify the unexpected change before explaining it." },
+    { t:"We only have budget for half of this rollout.", o:[
+      ["R","Got it. Which outcome matters most this period, and what is the smallest phase that can prove it?"],
+      ["A","Half a rollout won't get you the result."],
+      ["C","We'll deliver the full rollout for half the price."],
+      ["D","Maybe we should wait until you have the full budget."]],
+      why:"Use the constraint to prioritize a viable phase instead of discounting or abandoning the deal." },
+  ], boss:{
+      t:"Look, I like it, but it's 20% over what I budgeted and my CFO already pushed back once. Unless the number changes, I don't see this happening this quarter.",
+      better:"That's fair, and I'd rather solve it than discount around it. Quick question: if the number were inside budget, is this the tool you'd pick, or is something else holding it? Then let's look at scope: which piece of the rollout could move to next quarter so the year-one number fits, and what would your CFO need to see to say yes?",
+      focus:"Isolate price as the only objection, then restructure scope instead of discounting." } },
+  { name:"Timing", color:"#5B8CFF", items:[
+    { t:"Now isn't a good time.", o:[
+      ["R","Fair. What would make the timing feel right?"],
+      ["A","There's never a perfect time — that's exactly why teams put it off."],
+      ["C","Okay, I'll follow up in six months."],
+      ["D","It only takes five minutes, I promise."]],
+      why:"Don't argue timing. Uncover the condition behind the delay." },
+    { t:"Let's revisit this next quarter.", o:[
+      ["R","Sure. What changes next quarter?"],
+      ["A","Waiting will just cost you another quarter of the problem."],
+      ["C","No worries, I'll put a reminder in."],
+      ["D","Did I mention we have a new integration coming?"]],
+      why:"If nothing changes next quarter, the delay is a soft no. Ask so you know which one you have." },
+    { t:"We're in the middle of a big migration right now.", o:[
+      ["R","When does the migration land, and who owns the work?"],
+      ["A","This is actually the perfect time to add it."],
+      ["C","I'll wait until it's done and check in."],
+      ["D","Migrations, right? Anyway, about the pricing..."]],
+      why:"Respect the constraint, then map it: date, owner, dependency. Now you have a real next step." },
+    { t:"Can you call me back in a few weeks?", o:[
+      ["R","What changes in a few weeks?"],
+      ["A","A few weeks won't change anything."],
+      ["C","Sure, whenever works for you."],
+      ["D","Before I go, let me quickly show you one thing."]],
+      why:"Agree, then attach a reason to the callback. Otherwise it's a polite hang-up." },
+    { t:"We just signed a contract with someone else.", o:[
+      ["R","What tipped the decision in their favor?"],
+      ["A","You should've talked to us first."],
+      ["C","Understood, I'll leave you alone."],
+      ["D","Well, contracts end. Let me tell you what we do."]],
+      why:"A lost deal is free intel. Learn what won it and stay in the relationship for the renewal." },
+    { t:"We're in our busiest season. We can't take this on.", o:[
+      ["R","Makes sense. When does the seasonal pressure finally ease?"],
+      ["A","Busy season is exactly when you need this most."],
+      ["C","No problem, I'll disappear until things calm down."],
+      ["D","The rollout is easier than it looks."]],
+      why:"Respect the workload, identify the real window, and preserve a low-effort next step." },
+    { t:"We have a hiring freeze, so this has to wait.", o:[
+      ["R","Is the freeze blocking the budget or the staff needed?"],
+      ["A","A hiring freeze makes automation more urgent."],
+      ["C","I'll call when you're hiring again."],
+      ["D","This doesn't come from the headcount budget."]],
+      why:"A hiring freeze can hide different constraints. Isolate the one that actually stops the deal." },
+    { t:"Our fiscal year ends soon. Nothing new gets approved now.", o:[
+      ["R","When exactly does planning for the new fiscal year begin?"],
+      ["A","Companies make exceptions at year-end all the time."],
+      ["C","Fine, I'll send this again next fiscal year."],
+      ["D","Could I show you the annual plan first?"]],
+      why:"Map both the approval cutoff and the planning window so the opportunity has a dated path." },
+    { t:"Let's wait until our current contract is closer to renewal.", o:[
+      ["R","When is the actual renewal decision window?"],
+      ["A","Waiting gives the incumbent an unfair advantage."],
+      ["C","Sure, call me when you're ready to switch."],
+      ["D","We can still replace them before renewal."]],
+      why:"Turn an undefined wait into a decision timeline and an agreed evaluation plan." },
+    { t:"The team has no bandwidth to implement another tool.", o:[
+      ["R","Which part of implementation feels heaviest?"],
+      ["A","Our implementation is lighter than every other tool."],
+      ["C","We'll do absolutely everything for you."],
+      ["D","The product saves time once it's live."]],
+      why:"Diagnose the workload they fear before proposing a way to reduce it." },
+    { t:"We need to clean up our data before we start.", o:[
+      ["R","What must be clean for day one?"],
+      ["A","Your data will never be perfectly clean."],
+      ["C","We'll wait until all of it is fixed."],
+      ["D","Our platform has strong reporting tools."]],
+      why:"Define the minimum readiness condition, owner, and dependency instead of accepting an endless delay." },
+    { t:"Half the team is out over the summer.", o:[
+      ["R","Who must be present, and when are they back?"],
+      ["A","Summer schedules shouldn't stop a business decision."],
+      ["C","I'll reach back out in the fall."],
+      ["D","We can run the demo for whoever is here."]],
+      why:"Find the required people and a real date rather than letting a season become an open-ended stall." },
+    { t:"We're launching a major product next month.", o:[
+      ["R","Does this compete with the launch or support it?"],
+      ["A","You should implement this before the launch."],
+      ["C","I'll wait until after launch and hope it goes well."],
+      ["D","Our product has helped with launches before."]],
+      why:"Clarify whether the initiative is a conflict or a relevant enabler before pushing timing." },
+    { t:"Leadership is resetting priorities at the offsite.", o:[
+      ["R","What would help this survive the leadership offsite?"],
+      ["A","This should already be a leadership priority."],
+      ["C","I'll wait for leadership to decide everything."],
+      ["D","Can I send you our executive overview?"]],
+      why:"Equip the internal conversation and attach your follow-up to the decision date." },
+    { t:"We can't look at this until after the audit.", o:[
+      ["R","Understood. When does the audit end?"],
+      ["A","The audit has nothing to do with this purchase."],
+      ["C","No problem, I'll try again someday after it ends."],
+      ["D","Our compliance features may actually help."]],
+      why:"Respect the event, then establish its end date and the smallest useful preparation step." },
+  ], boss:{
+      t:"Honestly, this is a next-year thing. We've got a reorg, a new VP starting in March, and nobody wants to sign anything until she's in the seat. Ping me in Q2.",
+      better:"Makes sense, nobody wants to hand a new VP a contract she didn't choose. Two questions so I don't ping you blindly: what's the problem this was going to fix, and does it get worse between now and March? If it does, would it help her to walk into a decision that's already scoped, a one-pager she can approve or kill in her first week?",
+      focus:"Quantify the cost of waiting, then make the new VP's decision easier instead of pushing for a signature now." } },
+  { name:"Trust", color:"#A56EFF", items:[
+    { t:"I've never heard of your company.", o:[
+      ["R","Fair. What proof would make us credible enough to evaluate?"],
+      ["A","We have thousands of customers, you just haven't looked."],
+      ["C","I understand if you'd rather go with a bigger name."],
+      ["D","Well, let me tell you about our founders."]],
+      why:"Let the buyer define credible proof. Then you know exactly what to show them." },
+    { t:"How do I know this will actually work for us?", o:[
+      ["R","What exact result would make this a clear win for you?"],
+      ["A","It works for everyone — you'd be the first it didn't."],
+      ["C","We'll give you a money-back guarantee, whatever you need."],
+      ["D","Our reviews are excellent, check them out."]],
+      why:"Turn uncertainty into a measurable success criterion the buyer wrote." },
+    { t:"We got burned by a vendor like you last year.", o:[
+      ["R","What went wrong with the last vendor?"],
+      ["A","We're nothing like them."],
+      ["C","I understand if you're not ready to try again."],
+      ["D","Well, let me walk you through our features."]],
+      why:"Understand the scar before you promise it won't happen again." },
+    { t:"Your reviews online are mixed.", o:[
+      ["R","Which reviews concern you most?"],
+      ["A","Those are mostly from people who didn't set it up right."],
+      ["C","I get it, maybe we're not the right fit."],
+      ["D","Every company has a few bad reviews."]],
+      why:"Own it and get specific. Blaming reviewers confirms the review." },
+    { t:"I'd need to see this working somewhere first.", o:[
+      ["R","What kind of customer reference would count?"],
+      ["A","You don't need a reference — the demo speaks for itself."],
+      ["C","We can do a free six-month pilot, no strings."],
+      ["D","Let me send over our case study library."]],
+      why:"Proof requested. Ask what proof counts before you dump case studies on them." },
+    { t:"I'm worried about giving you access to our data.", o:[
+      ["R","Which data risk concerns you most?"],
+      ["A","Our security is better than most enterprise vendors."],
+      ["C","We can skip the security review if you want."],
+      ["D","Let me show you what the dashboard does with the data."]],
+      why:"Validate the concern and identify the exact risk so the right evidence can answer it." },
+    { t:"What happens if your company gets acquired or shuts down?", o:[
+      ["R","What continuity protection would make your team comfortable?"],
+      ["A","We're growing fast, so that's not going to happen."],
+      ["C","You can cancel anytime, no questions asked."],
+      ["D","Our investors are very well known."]],
+      why:"Don't predict the future. Let the buyer define the continuity safeguards that matter." },
+    { t:"Your uptime claim sounds too good to be true.", o:[
+      ["R","What uptime proof would you trust?"],
+      ["A","The uptime numbers are independently verified."],
+      ["C","We'll promise whatever SLA you need."],
+      ["D","Our customer support is available around the clock."]],
+      why:"Translate skepticism into an operational threshold and an acceptable source of proof." },
+    { t:"I'm not convinced your support team will respond when we need them.", o:[
+      ["R","What response time would feel dependable?"],
+      ["A","Our support ratings prove you're worrying about nothing."],
+      ["C","I'll give you my personal cell number forever."],
+      ["D","Most customers never need urgent support."]],
+      why:"Define dependable support in the buyer's terms before presenting commitments." },
+    { t:"That integration broke the last time we tried something like this.", o:[
+      ["R","Where did the last integration fail?"],
+      ["A","Our integration is completely different."],
+      ["C","We'll build a custom integration for free."],
+      ["D","You can also use the product without that integration."]],
+      why:"Diagnose the prior failure before claiming your integration will be different." },
+    { t:"Your results sound like marketing numbers.", o:[
+      ["R","Which claim feels least credible?"],
+      ["A","Those numbers came from real customers."],
+      ["C","Ignore the results — we'll lower the price instead."],
+      ["D","Let me show you a different slide."]],
+      why:"Invite scrutiny and let the buyer set the standard for credible evidence." },
+    { t:"I need a reference from our exact industry.", o:[
+      ["R","What must an industry reference share?"],
+      ["A","Industry matters less than the use case."],
+      ["C","I'll find anyone who will take the call."],
+      ["D","We have strong references in adjacent industries."]],
+      why:"Clarify what makes a reference relevant before searching for a logo that merely looks similar." },
+    { t:"I'm worried the team won't adopt it.", o:[
+      ["R","What usually stops adoption on your team?"],
+      ["A","The product is so intuitive that adoption won't be a problem."],
+      ["C","We'll make the rollout completely free."],
+      ["D","Our admins usually love the reporting."]],
+      why:"Make adoption concrete by finding the behavior or ownership problem behind the fear." },
+    { t:"How do I know there won't be hidden costs later?", o:[
+      ["R","Which future costs have surprised your team before?"],
+      ["A","We don't have hidden fees, period."],
+      ["C","We'll cap every possible cost indefinitely."],
+      ["D","The proposal includes a detailed feature list."]],
+      why:"Surface the buyer's prior surprise, then address it with the right commercial detail." },
+    { t:"Your roadmap could change after we buy.", o:[
+      ["R","Which roadmap item is decision-critical?"],
+      ["A","We always deliver everything on our roadmap."],
+      ["C","I'll guarantee every roadmap date in the contract."],
+      ["D","There are plenty of features available today."]],
+      why:"Identify whether an unshipped feature is truly decision-critical before making promises." },
+  ], boss:{
+      t:"I'll be honest, this is the third tool we've looked at this year. The last two overpromised, the team stopped using them in a month, and I was the one who had to explain it. Why is this any different?",
+      better:"That's a fair thing to be worried about, and I'd rather earn it than promise it. What killed adoption on the last two: setup, the workflow, or nobody owning it? Here's what I'd propose: a 30-day rollout with one team, a weekly check-in with me personally, and a written adoption target we agree on up front. If we miss it, you don't expand. Does that give you something to stand behind?",
+      focus:"Acknowledge the personal risk, diagnose why the last tools died, then de-risk with a structured pilot and a real commitment." } },
+  { name:"Competition", color:"#FF4FD8", items:[
+    { t:"We're already using a competitor and it's fine.", o:[
+      ["R","What would you change about it?"],
+      ["A","They're honestly behind on features."],
+      ["C","Call me when the contract's up."],
+      ["D","Have you seen our new dashboard?"]],
+      why:"Never attack the incumbent. Respect it and find the gap in their own words." },
+    { t:"What makes you different from them?", o:[
+      ["R","What should your current setup do noticeably better?"],
+      ["A","We're faster, cheaper, and easier. Simple."],
+      ["C","Honestly they're pretty similar."],
+      ["D","Let me pull up our comparison chart."]],
+      why:"Differentiation only matters against a need. Get the need first." },
+    { t:"They're throwing in free onboarding.", o:[
+      ["R","What is their free onboarding actually worth to you?"],
+      ["A","Free onboarding usually means bad onboarding."],
+      ["C","We'll throw it in too then."],
+      ["D","Speaking of onboarding, our support is 24/7."]],
+      why:"Price the perk before you match it. It might be worth less than you think." },
+    { t:"We're evaluating three vendors.", o:[
+      ["R","What are your criteria and final decision date?"],
+      ["A","The other two can't do what we do."],
+      ["C","Let me know if we make the cut."],
+      ["D","Let me walk you through everything we offer."]],
+      why:"Ask for the criteria and the timeline. Now you know what game you're playing." },
+    { t:"Their demo was honestly more impressive.", o:[
+      ["R","Which demo moment impressed you most?"],
+      ["A","Demos are theater. Ours is real."],
+      ["C","I can redo the demo with more features."],
+      ["D","Yeah, they have a big demo team."]],
+      why:"Separate impressive from useful. That's a question, not a rebuttal." },
+    { t:"Our current vendor is already bundled into the suite we own.", o:[
+      ["R","Where does the bundled tool fall short?"],
+      ["A","Bundled tools are rarely best in class."],
+      ["C","We'll price ours like an add-on."],
+      ["D","Our platform connects to that suite."]],
+      why:"Respect the bundle economics and use the buyer's own gaps to establish whether change is worthwhile." },
+    { t:"We're locked into a two-year agreement with them.", o:[
+      ["R","When are its review and exit windows?"],
+      ["A","Their contract shouldn't stop you from choosing a better tool."],
+      ["C","We'll cover all of your remaining contract."],
+      ["D","Two years goes by quickly."]],
+      why:"Map the contract and quantify the reason to act before discussing any competitive offset." },
+    { t:"My team already knows their workflow.", o:[
+      ["R","Where does the familiar workflow slow you down?"],
+      ["A","Familiar doesn't mean efficient."],
+      ["C","We'll copy their workflow exactly."],
+      ["D","Our interface only takes a few minutes to learn."]],
+      why:"Acknowledge switching cost, then find whether the status quo has a meaningful workflow gap." },
+    { t:"They integrate with a system you don't support yet.", o:[
+      ["R","What must that integration actually do?"],
+      ["A","Most customers don't need that integration."],
+      ["C","We'll promise to build it next month."],
+      ["D","We support dozens of other systems."]],
+      why:"Qualify the integration's actual job and business impact before defending coverage or promising delivery." },
+    { t:"IT has standardized on the other vendor.", o:[
+      ["R","What drove IT's standard?"],
+      ["A","IT shouldn't dictate the business solution."],
+      ["C","Then there's probably no point continuing."],
+      ["D","Our security documentation is excellent."]],
+      why:"Find the reason and rule behind the standard so you know whether an exception is possible." },
+    { t:"They have one feature you simply don't.", o:[
+      ["R","Is that feature required or preferred?"],
+      ["A","That feature is overrated and rarely used."],
+      ["C","We'll add it to the roadmap for you."],
+      ["D","We beat them on several other features."]],
+      why:"Own the gap and determine its consequence instead of minimizing it or making a reckless promise." },
+    { t:"Switching vendors isn't worth the disruption.", o:[
+      ["R","What improvement would justify switching?"],
+      ["A","You're underestimating the cost of staying."],
+      ["C","We'll handle every part of the switch for free."],
+      ["D","Lots of companies switch vendors successfully."]],
+      why:"Let the buyer define the threshold that makes a switch rational before making your case." },
+    { t:"Their local team can be onsite whenever we need them.", o:[
+      ["R","When is onsite support truly necessary?"],
+      ["A","Remote support is faster and more efficient."],
+      ["C","We'll hire someone locally for you."],
+      ["D","Our online help center is available 24/7."]],
+      why:"Measure the practical value of local presence before trying to counter it." },
+    { t:"They guaranteed the result in writing.", o:[
+      ["R","What exactly did they guarantee?"],
+      ["A","No honest vendor can guarantee a business result."],
+      ["C","We'll guarantee a better result."],
+      ["D","Our customer results speak for themselves."]],
+      why:"Inspect the guarantee's metric, conditions, and remedy before reacting to the headline." },
+    { t:"The incumbent just offered us a steep renewal discount.", o:[
+      ["R","At equal prices, why would you still switch?"],
+      ["A","They're discounting because they know you're about to leave."],
+      ["C","We'll beat their renewal price."],
+      ["D","Our implementation plan is much stronger."]],
+      why:"Remove price hypothetically to isolate the remaining reason for change before negotiating." },
+  ], boss:{
+      t:"We're down to you and one other vendor. Their price is lower, they're throwing in training, and my team liked their demo. Right now you're second. Give me a reason to flip it.",
+      better:"Appreciate the straight answer. Before I make a case: when you picture the team six months in, what's the outcome that makes this a win, not the demo, the result? If that result depends on something we do differently, here's exactly where, and here's a customer who'll tell you that on the phone this week. On price: I won't match blind, but if we get the outcome right, I'll structure the year-one number so it isn't the reason you pick second.",
+      focus:"Anchor on the outcome, differentiate against that outcome with proof, and handle price by structure, not by caving." } },
+  { name:"Authority", color:"#FF5D8F", items:[
+    { t:"I need to run this by my boss.", o:[
+      ["R","What will your boss ask first?"],
+      ["A","You told me you were the decision maker."],
+      ["C","Sure, let me know what they say."],
+      ["D","Let me send you a deck to forward."]],
+      why:"Help your champion prepare. Their conversation with the boss is your pitch, secondhand." },
+    { t:"I'm not the one who signs.", o:[
+      ["R","Who signs, and what matters to them?"],
+      ["A","Then why are we on this call?"],
+      ["C","Okay, just have them reach out."],
+      ["D","Well, let me finish the demo anyway."]],
+      why:"Map the decision: who signs, what they care about, how you get in the room." },
+    { t:"The committee meets next month.", o:[
+      ["R","What must the committee see, and who presents?"],
+      ["A","A month is a long time to keep bleeding on this."],
+      ["C","I'll wait to hear back."],
+      ["D","Committees, huh. Anyway, have you seen our reporting?"]],
+      why:"You can't be in the room, so arm the person who will be." },
+    { t:"My team would have to approve this.", o:[
+      ["R","What might the team resist?"],
+      ["A","It's your call, though, right?"],
+      ["C","Take all the time you need."],
+      ["D","Our tool is very easy to adopt."]],
+      why:"Surface the team's objection now, while you can still answer it." },
+    { t:"Procurement will never approve a new vendor this year.", o:[
+      ["R","What procurement rule is actually blocking this?"],
+      ["A","Procurement always says that."],
+      ["C","Understood, let's try next year."],
+      ["D","We work with lots of procurement teams."]],
+      why:"'Never' usually has a rule behind it. Find the rule; rules have exceptions and owners." },
+    { t:"The CFO has final approval on anything this size.", o:[
+      ["R","What criteria does the CFO use?"],
+      ["A","The CFO shouldn't override the business owner."],
+      ["C","I'll cut the price below their approval limit."],
+      ["D","I can send you a finance-friendly brochure."]],
+      why:"Learn the approver's criteria and create access instead of asking your contact to carry the deal alone." },
+    { t:"Legal needs to review the agreement first.", o:[
+      ["R","What clauses slow legal down, and who owns it?"],
+      ["A","Our agreement is standard and rarely needs changes."],
+      ["C","We'll accept whatever edits legal makes."],
+      ["D","Let's finalize the business terms before worrying about legal."]],
+      why:"Map concerns, owner, and timing so legal review becomes a managed step rather than a black box." },
+    { t:"IT owns the technical decision, not me.", o:[
+      ["R","Who owns it in IT, and what do they require?"],
+      ["A","This is a business decision, not an IT decision."],
+      ["C","I'll wait for IT to contact me."],
+      ["D","Our technical documentation answers most questions."]],
+      why:"Map the true decision owner and earn a path to the technical conversation." },
+    { t:"The board has to approve this investment.", o:[
+      ["R","What must the board believe, and by when?"],
+      ["A","This shouldn't require board-level attention."],
+      ["C","We'll wait until after the next board meeting."],
+      ["D","I can send over our company overview."]],
+      why:"Work backward from the board's criteria, presenter, and submission deadline." },
+    { t:"We don't have an executive sponsor for this.", o:[
+      ["R","Which executive is accountable for this problem?"],
+      ["A","A project this valuable shouldn't need a sponsor."],
+      ["C","You can be the executive sponsor."],
+      ["D","Let's start with a small user group instead."]],
+      why:"Identify the executive who owns the consequence and what case could earn their support." },
+    { t:"Procurement only lets us consider approved vendors.", o:[
+      ["R","Who owns approval, and are exceptions allowed?"],
+      ["A","Approved-vendor lists block innovation."],
+      ["C","We'll partner with anyone already on the list."],
+      ["D","Many large companies already buy from us."]],
+      why:"Find the rule, owner, and exception process before deciding the door is closed." },
+    { t:"My manager only asked me to gather information.", o:[
+      ["R","What decision is the research meant to support?"],
+      ["A","You can't evaluate this properly without decision authority."],
+      ["C","I'll just send you everything we have."],
+      ["D","Let me give you the full product tour."]],
+      why:"Help the researcher succeed while learning the real decision and criteria behind the assignment." },
+    { t:"The budget committee cut this from the plan.", o:[
+      ["R","Why was it cut, and what could reopen it?"],
+      ["A","The committee clearly doesn't understand the impact."],
+      ["C","We'll lower the price until they put it back."],
+      ["D","Maybe another department has budget."]],
+      why:"Learn why the initiative lost and what evidence or condition could reopen the decision." },
+    { t:"Security can veto any new platform.", o:[
+      ["R","Who leads security review, and what can block it?"],
+      ["A","Security teams are always overly cautious."],
+      ["C","We'll agree to every security request."],
+      ["D","Our product team can answer technical questions later."]],
+      why:"Bring a veto player in early and uncover their criteria before the deal reaches a final gate." },
+    { t:"My business partner has to agree before we move.", o:[
+      ["R","What matters to your partner most?"],
+      ["A","You shouldn't let one partner hold up the decision."],
+      ["C","I'll wait until you convince them."],
+      ["D","I can send you a summary to forward."]],
+      why:"Understand the unseen stakeholder and ask for a direct, collaborative next step." },
+  ], boss:{
+      t:"I want this. My VP doesn't — she thinks it's a nice-to-have and she's protecting headcount budget. I've got one shot to bring it to her. What do I say?",
+      better:"First, thank you for telling me that, it changes what I should give you. What's she measured on this year? Then let's build the one-pager in her language: the problem in her metric, what it costs today, what this changes in 90 days, and the risk of doing nothing. I'll write the draft tonight, you make it yours. Want to book 20 minutes before she sees it so you're not walking in alone?",
+      focus:"Coach the champion: translate the case into the VP's metric and give them a tool, not a pitch." } },
+];
+
+// Short labels painted on the rocks, per wave
+const ROCKS = [
+  ["Too expensive","No budget","Competitor's cheaper","Send best price","Reseller is cheaper","Not worth it","Need a discount","Over budget"],
+  ["Not a good time","Next quarter","Mid-migration","Call me later","Just signed elsewhere","Too busy","Next year","After the reorg"],
+  ["Never heard of you","Will it work?","Got burned before","Mixed reviews","Show me proof","Too new","Sounds too good","Who uses it?"],
+  ["Already use X","What's different?","Free onboarding","Three vendors","Better demo","They're bigger","Switching is hard","We're locked in"],
+  ["Ask my boss","Not the signer","Committee decides","Team must approve","Procurement says no","Legal review","CFO won't sign","Need buy-in"],
+];
+const TYPE_LABEL = { A:"That's arguing", C:"That's caving", D:"That's dodging" };
+const TYPE_WHY = { A:"You defended instead of understanding. The buyer digs in.", C:"You gave something away before you knew what the objection was.", D:"You changed the subject. The objection is still there, and now they know you avoid it." };
+// One real objection line per wave, shown as the level subtitle in training mode.
+const LEVEL_SUB = ["“Your price is too high.”","“Now isn't a good time.”","“I've never heard of your company.”","“We're already using a competitor.”","“I need to run this by my boss.”"];
+const SPONSOR_URL = "https://apps.apple.com/us/app/sales-coach-ai/id6748286535";
+
+const CLIP = 10, LIVES = 3, KILLS_PER_WAVE = 10, CHALLENGE_MS = 14000;
+
+// ── State ────────────────────────────────────────────────────────────────────
+const $ = (id) => document.getElementById(id);
+const G = {};
+let sound = store.get(KEYS_LS.sound) === "on";
+let apiKey = store.get(KEYS_LS.key) || "";
+$("apiKey").value = apiKey;
+function reset(){
+  Object.assign(G, {
+    phase:"idle", wave:0, startWave:0, training:false, score:0, streak:0, bestStreak:0, lives:LIVES, ammo:CLIP, kills:0, rocksTotal:0,
+    answered:0, correct:0, wrongTypes:{A:0,C:0,D:0,T:0}, bossResults:[],
+    ship:{x:.5, vx:0}, bullets:[], rocks:[], parts:[], floats:[], boss:null, spawnAt:0, lastShot:0, t:0,
+    keys:{left:false,right:false}, challengeTimer:null, bossAttempt:0, grading:false, pausedPhase:null,
+    waveStart:null, waveStat:{answered:0,correct:0,livesLost:0,t:0,bossGrade:0},
+  });
+}
+const mult = () => 1 + 0.25 * Math.min(G.streak, 8);
+const fmt = (n) => Math.round(n).toLocaleString("en-US");
+const mmss = (t) => { t=Math.max(0,Math.round(t)); return String(Math.floor(t/60)).padStart(2,"0")+":"+String(t%60).padStart(2,"0"); };
+
+// ── Pixel art ────────────────────────────────────────────────────────────────
+// Sprites are tiny character maps; each letter is a palette entry, "." is empty.
+const PAL = { W:"#f4f8ff", w:"#c9d6ea", G:"#9fb0c8", D:"#3b4a6b", C:"#3ee0ff", c:"#1a8fb8", O:"#ff9d2f", Y:"#ffd23f", R:"#ff4a5a", B:"#7a5a44", b:"#4a3527", L:"#a88a6e", K:"#12172a" };
+const PIX = {
+  ship:["......W......","......W......",".....WwW.....",".....WCW.....","....WwCwW....","....WGCGW....","...WwGCGwW...","..WwGGwGGwW..",".WwGGGwGGGwW.",".WGGRGwGRGGW.","WwGGGwwwGGGwW","WDDDGwwwGDDDW",".D..OOOOO..D.","....OYYYO....",".....OOO....."],
+  heart:[".RR.RR.","RWRRRRR","RRRRRRR",".RRRRR.","..RRR..","...R..."],
+  star:["....Y....","...YWY...","...YYY...","YYYYYYYYY",".YYYYYYY.","..YYYYY..",".YYY.YYY.",".Y.....Y."],
+  lock:["..GGG..",".G...G.",".G...G.","GGGGGGG","GwwwwwG","GwwKwwG","GwwKwwG","GwwwwwG","GGGGGGG"],
+  rock:["...BBBB....","..BLBBBBB..",".BLLBBbBBB.","BBLBBBBbbBB","BBBBbBBBBBB","BBBBBBBBLBB",".BbbBBBBLB.",".BBBBBbBBB.","..BBBBBBB..","....BBBB..."],
+  trophy:["YYYYYYYYY","YWYYYYYYY","Y.YYYYY.Y","Y.YYYYY.Y","..YYYYY..","...YYY...","....Y....","...YYY...","..YYYYY.."],
+  gear:["...GGG...",".G.GGG.G.","GGGGGGGGG",".GGG.GGG.","GGG...GGG",".GGG.GGG.","GGGGGGGGG",".G.GGG.G.","...GGG..."],
+  cap:[".....W.....","...WWWWW...",".WWWWWWWWW.","WWWWWWWWWWW","..WWWWWWW.Y","...WWWWW..Y","..........Y",".........YY"],
+  book:["WWWW.WWWW","WwwW.WwwW","WwwW.WwwW","WwwW.WwwW","WwwW.WwwW","WwwW.WwwW","WwwW.WwwW","WWWWWWWWW",".WWWWWWW."],
+  home:["....W....","...WWW...","..WWWWW..",".WWWWWWW.","WWWWWWWWW",".WwwwwwW.",".WwwCwwW.",".WwwCwwW.",".WWWWWWW."],
+  play:["W....","WW...","WWW..","WWWW.","WWWWW","WWWW.","WWW..","WW...","W...."],
+  pause:["WW.WW","WW.WW","WW.WW","WW.WW","WW.WW","WW.WW","WW.WW","WW.WW","WW.WW"],
+  restart:["..WWWW.W.",".W....WW.","W....WWW.","W........","W........","W........",".W.....W.","..WWWWW.."],
+  next:["....W....","....WW...","....WWW..","WWWWWWWW.","WWWWWWWWW","WWWWWWWW.","....WWW..","....WW...","....W...."],
+  share:["....WWWWW","......WWW",".....W.WW","....W...W","WWWW.....","W..W.....","W..W.....","W..W.....","WWWW....."],
+  bullet:["..C..",".CWC.",".CWC.",".CWC.",".CWC.",".CWC.",".CWC.","..C..","..c..",".....","..c.."],
+  bolt:["...YYYY","..YYYY.",".YYYY..","YYYYYYY","...YYY.","..YYY..",".YYY...","YY.....","Y......"],
+  sound:["...W.....","..WW..C..",".WWW.C.C.","WWWW.C..C","WWWW.C..C","WWWW.C..C",".WWW.C.C.","..WW..C..","...W....."],
+};
+function pxSVG(rows, pal=PAL){
+  const h=rows.length, w=rows[0].length; let s="";
+  rows.forEach((row,y)=>{ for(let x=0;x<w;x++){ const c=pal[row[x]]; if(c) s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${c}"/>`; } });
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges" aria-hidden="true">${s}</svg>`;
+}
+const ICON = {}; for(const k in PIX) ICON[k]=pxSVG(PIX[k]);
+ICON.back = pxSVG(PIX.next.map(r=>[...r].reverse().join("")));
+ICON.boss = pxSVG(PIX.rock, {...PAL, B:"#7a2a3a", b:"#4a1520", L:"#b34a5a"});
+ICON.heartOff = pxSVG(PIX.heart, {...PAL, R:"#3b4a6b", W:"#55698a"});
+ICON.starOff = pxSVG(PIX.star, {...PAL, Y:"#3b4a6b", W:"#55698a"});
+ICON.soundOff = pxSVG(PIX.sound, {...PAL, W:"#55698a", C:"#3b4a6b"});
+document.querySelectorAll("[data-ico]").forEach(el=>{ el.innerHTML = ICON[el.dataset.ico] || ""; });
+const SPONSOR_HTML = `<a class="sponsor" href="${SPONSOR_URL}" target="_blank" rel="noopener"><div class="sp-lbl">Sponsored by</div><div class="sp-row"><img src="/sales-coach-ai-icon.png" alt="Sales Coach AI" width="52" height="52" onerror="this.outerHTML='<span class=&quot;sp-logo&quot;>Sales<br>CoachAI</span>'"><div class="sp-tag">Practice smarter.<br>Sell better.</div></div></a>`;
+document.querySelectorAll(".sponsor-slot").forEach(el=>{ el.innerHTML=SPONSOR_HTML; if(el.classList.contains("compact")) el.firstElementChild.classList.add("compact"); });
+
+// ── Audio ────────────────────────────────────────────────────────────────────
+let actx=null;
+function tone(f,ms,type="triangle",g=.05,delay=0){ if(!sound) return; actx ||= new (window.AudioContext||window.webkitAudioContext)(); const o=actx.createOscillator(),a=actx.createGain(); o.type=type; o.frequency.value=f; const t=actx.currentTime+delay; a.gain.setValueAtTime(.0001,t); a.gain.exponentialRampToValueAtTime(g,t+.01); a.gain.exponentialRampToValueAtTime(.0001,t+ms/1000); o.connect(a).connect(actx.destination); o.start(t); o.stop(t+ms/1000+.02); }
+const sfx = { shoot(){ tone(900,50,"square",.02); }, rock(){ tone(300,120,"sawtooth",.04); tone(180,160,"square",.03,.05); }, hit(){ tone(140,300,"sawtooth",.06); }, wrong(){ tone(200,160,"sawtooth",.03); }, reload(){ [523,659,784].forEach((f,i)=>tone(f,110,"triangle",.05,i*.06)); }, bank(){ [523,659,784,1046].forEach((f,i)=>tone(f,130,"triangle",.05,i*.07)); }, boss(){ [220,196,174].forEach((f,i)=>tone(f,260,"sawtooth",.04,i*.2)); }, empty(){ tone(120,90,"square",.03); }, over(){ tone(330,200,"sawtooth",.03); tone(220,420,"sawtooth",.03,.18); }, click(){ tone(660,60,"square",.02); } };
+function setSoundBtn(){ $("soundBtn").innerHTML = sound ? ICON.sound : ICON.soundOff; $("soundBtn").title = sound ? "Sound on" : "Sound off"; const t=$("soundToggle"); t.textContent = sound ? "On" : "Off"; t.classList.toggle("on", sound); }
+function toggleSound(){ sound=!sound; store.set(KEYS_LS.sound, sound?"on":"off"); setSoundBtn(); if(sound) tone(660,80); }
+$("soundBtn").onclick=toggleSound; $("soundToggle").onclick=toggleSound; setSoundBtn();
+
+// ── Canvas ───────────────────────────────────────────────────────────────────
+const cv=$("game"), cx=cv.getContext("2d");
+let W=0,H=0,DPR=1, stars=[], continents=[];
+const rand=(a,b)=>a+Math.random()*(b-a);
+function resize(){
+  const r=$("arena").getBoundingClientRect(); DPR=Math.min(2,devicePixelRatio||1); W=r.width; H=r.height; cv.width=Math.floor(W*DPR); cv.height=Math.floor(H*DPR); cx.setTransform(DPR,0,0,DPR,0,0);
+  const starColors=["#f4f8ff","#f4f8ff","#9df3ff","#a99bff","#ffd23f"];
+  stars=Array.from({length:140},()=>({x:Math.random()*W,y:Math.random()*H,s:Math.random()<.15?3:Math.random()<.5?2:1,v:Math.random()*16+5,a:Math.random()*6,c:starColors[Math.floor(Math.random()*starColors.length)]}));
+  continents=Array.from({length:4},(_,i)=>({x:(i+.5)/4+rand(-.08,.08), w:rand(.09,.16), h:rand(.5,.9)}));
+}
+addEventListener("resize",resize); resize();
+const coarse = () => matchMedia("(pointer:coarse)").matches;
+const shipY = () => H - 84 - (coarse() ? 130 : 0);
+const EXPLODE=["#ff9d2f","#ffd23f","#ff5a2f","#fff2b8"], SPARK=["#3ee0ff","#9df3ff"], HURT=["#ff4a5a","#ff9d2f","#f4f8ff"];
+function burst(x,y,colors,n=22,spd=140){ for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2,s=rand(.3,1)*spd; G.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:1,c:colors[Math.floor(Math.random()*colors.length)],r:Math.random()<.3?5:3}); } }
+function float(x,y,t){ G.floats.push({x,y,t,l:1}); }
+
+// ── Rocks ────────────────────────────────────────────────────────────────────
+function spawnRock(){
+  const w=G.wave, labels=ROCKS[w]; const size = Math.random()<.2?3:Math.random()<.5?2:1; // 1 small … 3 big
+  const r = size===3?52:size===2?40:30;
+  const label = labels[Math.floor(Math.random()*labels.length)];
+  const speed = (H/1000)*(size===3?36:size===2?50:64) * (1+w*.18);
+  G.rocks.push({ x:rand(r+10,W-r-10), y:-r-10, r, hp:size, maxHp:size, label, vy:speed, vx:rand(-14,14)*(1+w*.1), rot:Math.random()*6, spin:rand(-.6,.6), pts:size*60,
+    shape:Array.from({length:10},(_,i)=>({a:i/10*Math.PI*2, k:rand(.78,1.08)})),
+    craters:Array.from({length:size+1},()=>({a:Math.random()*Math.PI*2, d:rand(.25,.6), k:rand(.12,.22)})), flash:0 });
+  G.rocksTotal++;
+}
+function spawnBoss(){
+  const w=WAVES[G.wave]; G.boss={ x:W/2, y:-90, r:Math.min(96,W*.17), vy:(H/1000)*8, rot:0, spin:.15, hp:1, flash:0, label:w.name.toUpperCase()+" BOSS",
+    shape:Array.from({length:12},(_,i)=>({a:i/12*Math.PI*2, k:rand(.85,1.05)})), craters:Array.from({length:5},()=>({a:Math.random()*Math.PI*2, d:rand(.3,.65), k:rand(.1,.18)})) };
+  $("bCat").textContent="Boss · "+w.name; $("bText").textContent="“"+w.boss.t+"”"; $("bossInput").value=""; $("charCount").textContent="0"; $("bossInput").disabled=false; $("fireBtn").disabled=false; $("fireBtn").textContent="Fire rebuttal ▲";
+  $("bossbox").classList.add("on"); G.bossAttempt=0; sfx.boss(); banner("BOSS ROCK", w.name+" objection — type your rebuttal", true);
+  setTimeout(()=>$("bossInput").focus(),400);
+}
+
+// ── Loop (always running: animates the starfield behind menus too) ───────────
+let lastTs=0;
+function loop(ts){
+  const dt=Math.min(.05,(ts-(lastTs||ts))/1000); lastTs=ts;
+  const active = G.phase==="play"||G.phase==="boss";
+  if(active){
+    G.t+=dt; G.waveStat.t+=dt;
+    // ship
+    const dir=(G.keys.right?1:0)-(G.keys.left?1:0);
+    G.ship.vx += (dir*3.2 - G.ship.vx)*Math.min(1,dt*12); G.ship.x=Math.max(.05,Math.min(.95,G.ship.x+G.ship.vx*dt));
+    // bullets
+    for(const b of G.bullets){ b.y-=H*1.1*dt; }
+    G.bullets=G.bullets.filter(b=>b.y>-20);
+    if(G.phase==="play"){
+      if(G.t>=G.spawnAt && G.rocks.length<6+G.wave){ spawnRock(); G.spawnAt=G.t+Math.max(.7,1.7-G.wave*.2); }
+      for(const r of G.rocks){ r.y+=r.vy*dt; r.x+=r.vx*dt; r.rot+=r.spin*dt; if(r.x<r.r||r.x>W-r.r) r.vx*=-1; r.flash=Math.max(0,r.flash-dt*4);
+        for(const b of G.bullets){ if(!b.dead && Math.hypot(b.x-r.x,b.y-r.y)<r.r*.9){ b.dead=true; r.hp--; r.flash=1; burst(b.x,b.y,SPARK,8,90); if(r.hp<=0){ r.dead=true; G.kills++; const p=Math.round(r.pts*mult()); G.score+=p; burst(r.x,r.y,EXPLODE,30,180); sfx.rock(); float(r.x,r.y,"+"+fmt(p)); hud(); pulse("score"); } } }
+        if(!r.dead && r.y+r.r*.6>shipY()){ r.dead=true; shipHit(); }
+      }
+      G.bullets=G.bullets.filter(b=>!b.dead); G.rocks=G.rocks.filter(r=>!r.dead);
+      if(G.kills>=KILLS_PER_WAVE && G.rocks.length===0){ G.phase="boss"; G.bullets=[]; spawnBoss(); }
+      $("waveGoal").textContent = Math.min(G.kills,KILLS_PER_WAVE)+"/"+KILLS_PER_WAVE+" rocks";
+    } else if(G.boss){
+      const bz=G.boss; if(!G.grading){ bz.y+=bz.vy*dt; } bz.rot+=bz.spin*dt; bz.flash=Math.max(0,bz.flash-dt*3);
+      for(const b of G.bullets){ if(!b.dead && Math.hypot(b.x-bz.x,b.y-bz.y)<bz.r){ b.dead=true; bz.flash=.6; burst(b.x,b.y,["#6f7ca6","#9fb0c8"],6,60); } }
+      G.bullets=G.bullets.filter(b=>!b.dead);
+      if(bz.y-bz.r*.4>shipY()-40 && !G.grading){ bossLanded(); }
+    }
+  }
+  if(G.phase!=="paused"){
+    for(const p of G.parts){ p.x+=p.vx*dt; p.y+=p.vy*dt; p.vy+=120*dt; p.l-=dt*1.6; }
+    G.parts=G.parts.filter(p=>p.l>0);
+    for(const f of G.floats){ f.y-=40*dt; f.l-=dt; } G.floats=G.floats.filter(f=>f.l>0);
+  }
+  draw(dt);
+  requestAnimationFrame(loop);
+}
+
+function drawSpace(dt){
+  cx.clearRect(0,0,W,H);
+  const moving = G.phase!=="paused";
+  for(const s of stars){ if(moving){ s.y+=s.v*dt; if(s.y>H) s.y=-3; s.a+=dt*2; } cx.globalAlpha=.3+.5*Math.abs(Math.sin(s.a)); cx.fillStyle=s.c; cx.fillRect(Math.round(s.x),Math.round(s.y),s.s,s.s); }
+  cx.globalAlpha=1;
+  // planet horizon — the surface rocks must not reach
+  const top=shipY()+44, R=Math.max(W*.95,560), pcx=W/2, pcy=top+R;
+  cx.save();
+  cx.beginPath(); cx.arc(pcx,pcy,R,0,Math.PI*2);
+  const g=cx.createRadialGradient(pcx,pcy,R*.3,pcx,pcy,R); g.addColorStop(0,"#071c4a"); g.addColorStop(.86,"#0c4a8a"); g.addColorStop(.97,"#1a9ad0"); g.addColorStop(1,"#5ee6ff");
+  cx.fillStyle=g; cx.fill();
+  cx.clip();
+  cx.fillStyle="rgba(8,90,120,.55)";
+  for(const c of continents){ cx.beginPath(); cx.ellipse(c.x*W, top+18, c.w*W, 14*c.h, 0, 0, Math.PI*2); cx.fill(); }
+  cx.restore();
+  cx.beginPath(); cx.arc(pcx,pcy,R,0,Math.PI*2); cx.lineWidth=3; cx.strokeStyle="rgba(157,243,255,.85)"; cx.shadowColor="#3ee0ff"; cx.shadowBlur=26; cx.stroke(); cx.shadowBlur=0;
+}
+function drawPix(rows,s,pal=PAL){
+  const w=rows[0].length*s, h=rows.length*s, ox=-w/2, oy=-h/2;
+  rows.forEach((row,j)=>{ for(let i=0;i<row.length;i++){ const c=pal[row[i]]; if(c){ cx.fillStyle=c; cx.fillRect(ox+i*s,oy+j*s,s,s); } } });
+  return h;
+}
+function draw(dt){
+  drawSpace(dt);
+  const showGame = G.phase!=="idle" && G.phase!=="over" && G.phase!=="complete";
+  if(showGame){
+    for(const r of G.rocks) drawRock(r,false);
+    if(G.boss) drawRock(G.boss,true);
+    cx.fillStyle="#9df3ff"; cx.shadowColor="#3ee0ff"; cx.shadowBlur=14; for(const b of G.bullets){ cx.fillRect(b.x-2,b.y-12,4,16); cx.fillStyle="#ffffff"; cx.fillRect(b.x-1,b.y-10,2,8); cx.fillStyle="#9df3ff"; } cx.shadowBlur=0;
+    // ship (pixel sprite)
+    const sx=G.ship.x*W, sy=shipY(); cx.save(); cx.translate(sx,sy); cx.rotate(G.ship.vx*.12);
+    cx.shadowColor="rgba(62,224,255,.55)"; cx.shadowBlur=18;
+    const S=4, h=drawPix(PIX.ship,S);
+    cx.shadowBlur=0;
+    const thrust = G.keys.left||G.keys.right||Math.abs(G.ship.vx)>.2, fl = (thrust?3:1)+Math.floor(Math.random()*2);
+    for(let i=0;i<fl;i++){ const y=h/2+i*S; cx.fillStyle=i===0?"#ffffff":i===1?"#3ee0ff":"#7a5cff"; cx.fillRect(-S*1.5+(i>1?S*.5:0),y,S*3-(i>1?S:0),S); }
+    cx.restore();
+  }
+  for(const p of G.parts){ cx.globalAlpha=Math.max(0,p.l); cx.fillStyle=p.c; cx.fillRect(Math.round(p.x),Math.round(p.y),p.r,p.r); } cx.globalAlpha=1;
+  cx.font="700 11px 'Press Start 2P', Orbitron, monospace"; cx.textAlign="center"; cx.textBaseline="alphabetic";
+  for(const f of G.floats){ cx.globalAlpha=f.l; cx.fillStyle="#3a1204"; cx.fillText(f.t,f.x+2,f.y+2); cx.fillStyle="#ffd23f"; cx.fillText(f.t,f.x,f.y); } cx.globalAlpha=1;
+}
+function drawRock(r,boss){
+  cx.save(); cx.translate(r.x,r.y); cx.rotate(r.rot);
+  cx.beginPath(); r.shape.forEach((p,i)=>{ const x=Math.cos(p.a)*r.r*p.k, y=Math.sin(p.a)*r.r*p.k; i?cx.lineTo(x,y):cx.moveTo(x,y); }); cx.closePath();
+  const g=cx.createRadialGradient(-r.r*.35,-r.r*.35,r.r*.1,0,0,r.r*1.05);
+  if(boss){ g.addColorStop(0,"#8a3a4a"); g.addColorStop(.6,"#4a1a26"); g.addColorStop(1,"#1e0810"); } else { g.addColorStop(0,"#a07d60"); g.addColorStop(.55,"#5a4030"); g.addColorStop(1,"#2a1a12"); }
+  cx.fillStyle=g; cx.fill();
+  cx.save(); cx.clip(); cx.fillStyle=boss?"rgba(30,8,16,.6)":"rgba(28,16,10,.55)"; for(const c of r.craters){ cx.beginPath(); cx.arc(Math.cos(c.a)*r.r*c.d, Math.sin(c.a)*r.r*c.d, r.r*c.k, 0, Math.PI*2); cx.fill(); } cx.restore();
+  cx.lineWidth=boss?3:2; cx.strokeStyle = r.flash>0 ? "#ffffff" : (boss?"#ff4a5a":"#1a0f0a");
+  if(boss){ cx.shadowColor="#ff4a5a"; cx.shadowBlur=24; }
+  cx.stroke(); cx.shadowBlur=0;
+  cx.restore();
+  // label (unrotated)
+  const fs = boss?14:r.r>=50?12:r.r>=40?11:10, maxc = boss?12:r.r>=50?13:r.r>=40?12:10;
+  const lines = wrap(boss?r.label:"“"+r.label+"”", maxc);
+  cx.font=`800 ${fs}px Orbitron, sans-serif`; cx.textAlign="center"; cx.textBaseline="middle";
+  lines.forEach((ln,i)=>{ const ly=r.y+(i-(lines.length-1)/2)*(fs+3); cx.fillStyle="rgba(0,0,0,.8)"; cx.fillText(ln,r.x+1,ly+1); cx.fillStyle=boss?"#ffd6dc":"#ffffff"; cx.fillText(ln,r.x,ly); });
+  if(!boss && r.maxHp>1){ for(let i=0;i<r.maxHp;i++){ cx.fillStyle = i<r.hp? "#3ee0ff" : "rgba(255,255,255,.25)"; cx.fillRect(r.x-(r.maxHp-1)*5+i*10-3, r.y+r.r*.62-3, 6, 6); } }
+}
+function wrap(t,max){ const w=t.split(" "), out=[]; let cur=""; for(const x of w){ if((cur+" "+x).trim().length>max && cur){ out.push(cur); cur=x; } else cur=(cur+" "+x).trim(); } if(cur) out.push(cur); return out.slice(0,3); }
+
+// ── Actions ──────────────────────────────────────────────────────────────────
+function fire(){
+  if(G.phase!=="play" && G.phase!=="boss") return;
+  const now=performance.now(); if(now-G.lastShot<170) return; G.lastShot=now;
+  if(G.phase==="boss"){ G.bullets.push({x:G.ship.x*W,y:shipY()-34}); sfx.shoot(); return; } // free shots vs boss, they bounce
+  if(G.ammo<=0){ sfx.empty(); return; }
+  G.ammo--; G.bullets.push({x:G.ship.x*W,y:shipY()-34}); sfx.shoot(); renderAmmo();
+  if(G.ammo===0) setTimeout(startChallenge, 350);
+}
+function renderAmmo(){ const p=$("pips"); p.innerHTML=Array.from({length:CLIP},(_,i)=>`<i class="${i<G.ammo?"":"off"}"></i>`).join(""); p.classList.toggle("low",G.ammo<=3); $("ammoN").textContent=G.ammo; }
+function hud(){
+  $("score").textContent=fmt(G.score);
+  $("streak").textContent="Heat ×"+mult().toFixed(2).replace(/\.?0+$/,""); $("streak").classList.toggle("hot",G.streak>=3);
+  $("wave").textContent=G.wave+1; $("waveBar").style.width=Math.min(1,G.kills/KILLS_PER_WAVE)*100+"%";
+  $("lives").innerHTML=Array.from({length:LIVES},(_,i)=>`<span class="${i<G.lives?"":"lost"}">${i<G.lives?ICON.heart:ICON.heartOff}</span>`).join("");
+}
+function pulse(id){ const el=$(id); el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse"); }
+function banner(text,sub,boss){ const b=$("banner"); b.querySelector(".w").textContent=text; b.querySelector(".w").classList.toggle("boss",!!boss); $("bsub").textContent=sub||""; b.classList.remove("on"); void b.offsetWidth; b.classList.add("on"); }
+function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2400); }
+function shipHit(){
+  G.lives--; G.streak=0; G.waveStat.livesLost++; hud(); pulse("lives"); sfx.hit(); burst(G.ship.x*W,shipY(),HURT,40,220);
+  $("arena").classList.add("shake"); setTimeout(()=>$("arena").classList.remove("shake"),400);
+  if(G.lives<=0) gameOver(false);
+}
+
+// ── Reload challenge (multiple choice) ───────────────────────────────────────
+function nextQuestionIndex(waveIndex){
+  const total=WAVES[waveIndex].items.length;
+  let decks={};
+  try{ decks=JSON.parse(store.get(KEYS_LS.questionDecks)||"{}")||{}; }catch{}
+  const saved=decks[waveIndex]||{};
+  const last=Number.isInteger(saved.last)&&saved.last>=0&&saved.last<total?saved.last:null;
+  let remaining=Array.isArray(saved.remaining)?saved.remaining.slice():[];
+  const valid=saved.size===total && remaining.every(i=>Number.isInteger(i)&&i>=0&&i<total) && new Set(remaining).size===remaining.length;
+  if(!valid||!remaining.length){
+    remaining=shuffle(Array.from({length:total},(_,i)=>i));
+    if(last!==null&&total>1&&remaining[remaining.length-1]===last){
+      const swap=Math.floor(Math.random()*(remaining.length-1));
+      [remaining[swap],remaining[remaining.length-1]]=[remaining[remaining.length-1],remaining[swap]];
+    }
+  }
+  const idx=remaining.pop();
+  decks[waveIndex]={size:total,remaining,last:idx};
+  store.set(KEYS_LS.questionDecks,JSON.stringify(decks));
+  return idx;
+}
+function startChallenge(){
+  if(G.phase!=="play") return;
+  G.phase="challenge"; G.keys.left=G.keys.right=false;
+  const w=WAVES[G.wave]; const idx=nextQuestionIndex(G.wave); const item=w.items[idx]; G.current=item;
+  $("cCat").textContent=w.name; $("cText").textContent="“"+item.t+"”"; $("coach").textContent=""; $("cNext").style.display="none";
+  const opts=shuffle(item.o.map((o)=>({type:o[0],text:o[1]})));
+  $("options").innerHTML=opts.map((o,k)=>`<button class="opt" data-type="${o.type}" data-k="${k}"><span class="k">${k+1}</span><span>${o.text}</span></button>`).join("");
+  $("options").querySelectorAll(".opt").forEach(b=>b.onclick=()=>pick(b));
+  $("challenge").classList.add("on");
+  const start=performance.now(); clearInterval(G.challengeTimer);
+  G.challengeTimer=setInterval(()=>{ const p=1-(performance.now()-start)/CHALLENGE_MS; $("cTimer").style.width=Math.max(0,p*100)+"%"; $("cTimer").classList.toggle("low",p<.3); if(p<=0){ clearInterval(G.challengeTimer); resolveChallenge(null,"T"); } },80);
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function pick(btn){ if(G.phase!=="challenge") return; clearInterval(G.challengeTimer); resolveChallenge(btn, btn.dataset.type); }
+function resolveChallenge(btn,type){
+  const item=G.current; G.answered++; G.waveStat.answered++;
+  $("options").querySelectorAll(".opt").forEach(b=>{ b.disabled=true; if(b.dataset.type==="R" && type!=="R"){ b.classList.add("good"); b.insertAdjacentHTML("beforeend",`<span class="tag">The move</span>`);} });
+  if(type==="R"){
+    G.correct++; G.waveStat.correct++; G.streak++; G.bestStreak=Math.max(G.bestStreak,G.streak); const bonus=Math.round(150*mult()); G.score+=bonus;
+    G.ammo=CLIP + (G.streak>=3?2:0);
+    btn.classList.add("good"); btn.insertAdjacentHTML("beforeend",`<span class="tag">Reloaded · +${fmt(bonus)}</span>`);
+    $("coach").innerHTML=`<b>Acknowledge + ask.</b> ${item.why}`; sfx.reload(); hud(); pulse("score"); pulse("streak");
+  } else {
+    G.streak=0; G.wrongTypes[type]++; G.lives--; G.waveStat.livesLost++; G.ammo=4;
+    if(btn){ btn.classList.add("bad"); btn.insertAdjacentHTML("beforeend",`<span class="tag">${TYPE_LABEL[type]}</span>`); }
+    $("coach").innerHTML = type==="T" ? `<b>Too slow.</b> ${item.why}` : `<b>${TYPE_LABEL[type]}.</b> ${TYPE_WHY[type]} <span style="color:var(--red)">−1 life · emergency clip of 4.</span>`;
+    sfx.wrong(); hud(); pulse("lives");
+  }
+  $("cNext").style.display="inline-flex"; $("cNext").focus();
+}
+$("cNext").onclick=()=>{ $("challenge").classList.remove("on"); if(G.lives<=0) return gameOver(false); G.phase="play"; renderAmmo(); };
+
+// ── Boss ─────────────────────────────────────────────────────────────────────
+$("bossInput").addEventListener("input",()=>$("charCount").textContent=$("bossInput").value.length);
+$("bossInput").addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&e.key==="Enter") fireRebuttal(); e.stopPropagation(); });
+$("fireBtn").onclick=fireRebuttal;
+async function fireRebuttal(){
+  if(G.phase!=="boss"||G.grading) return; const text=$("bossInput").value.trim(); if(text.length<15){ toast("Say a little more than that."); return; }
+  G.grading=true; G.bossAttempt++; $("bossInput").disabled=true; $("fireBtn").disabled=true; $("fireBtn").textContent="Grading…";
+  let g; try{ g = apiKey ? await gradeWithClaude(WAVES[G.wave],text) : mockGrade(text); }catch(err){ toast("Grader error: "+(err.message||err)+" — using mock grade."); g=mockGrade(text); g.mock=true; }
+  const w=WAVES[G.wave]; let outcome;
+  G.waveStat.bossGrade=Math.max(G.waveStat.bossGrade,g.total);
+  if(g.total>=7){ outcome="win"; const pts=Math.round(g.total*150*mult()); G.score+=pts; G.streak++; G.bestStreak=Math.max(G.bestStreak,G.streak); g.pts=pts; burst(G.boss.x,G.boss.y,EXPLODE,90,240); G.boss=null; sfx.bank(); }
+  else if(g.total>=4 && G.bossAttempt===1){ outcome="knock"; const pts=Math.round(g.total*40*mult()); G.score+=pts; g.pts=pts; G.boss.y=Math.min(G.boss.y, H*.15); G.boss.vy*=1.5; sfx.wrong(); }
+  else { outcome="hit"; g.pts=0; }
+  G.bossResults.push({wave:w.name,text,grade:g,outcome}); hud(); pulse("score");
+  showReveal(w,g,outcome);
+}
+function bossLanded(){ G.grading=true; G.boss=null; $("bossbox").classList.remove("on"); shipHit(); if(G.lives>0){ toast("The boss objection landed. Next wave."); setTimeout(()=>waveComplete(false),900); } }
+function showReveal(w,g,outcome){
+  const title=outcome==="win"?"Boss rock destroyed":outcome==="knock"?"Knocked back — one more shot":"It's still coming";
+  const color=outcome==="win"?"var(--green)":outcome==="knock"?"var(--amber)":"var(--red)";
+  const rub=[["Acknowledge",g.acknowledge],["Isolate / ask",g.isolate],["Reframe to value",g.reframe],["Advance",g.advance]];
+  $("revealCard").innerHTML=`<div class="label" style="color:${color}">${title}${g.mock?" · mock grade":" · graded by Sales Coach AI"}</div>
+    <div class="grade"><span class="big" style="color:${color}">${g.total}</span><span style="color:var(--fg45);font-family:var(--ui);font-weight:700">/ 10</span>${g.pts?`<span class="pts">+${fmt(g.pts)}</span>`:""}</div>
+    <div class="rubric">${rub.map(([n,v])=>`<div class="rub">${n} <span style="float:right;color:var(--fg)">${v.toFixed(1)}/2.5</span><div class="bar"><i style="width:${v/2.5*100}%"></i></div></div>`).join("")}</div>
+    <p style="margin:0 0 6px;font-size:14px;line-height:1.5"><b>Coach:</b> ${esc(g.coaching)}</p>
+    <div class="label" style="margin-top:12px">A stronger version</div><div class="quote">${esc(g.better||w.boss.better)}</div>
+    <div class="row end" style="margin-top:14px"><button class="mbtn primary auto" id="revealNext"><span class="ico">${ICON.next}</span>${outcome==="knock"?"Take the second shot":outcome==="win"?"Next level":"Brace"}</button></div>`;
+  $("reveal").classList.add("on"); $("revealNext").focus();
+  $("revealNext").onclick=()=>{ $("reveal").classList.remove("on"); G.grading=false;
+    if(outcome==="knock"){ $("bossInput").disabled=false; $("fireBtn").disabled=false; $("fireBtn").textContent="Fire rebuttal ▲"; $("bossInput").focus(); return; }
+    if(outcome==="hit"){ $("bossInput").disabled=true; $("fireBtn").disabled=true; return; } // boss keeps falling until it lands
+    $("bossbox").classList.remove("on"); waveComplete(true); };
+}
+
+// ── Waves: start / complete / restart ────────────────────────────────────────
+function hideOverlays(){ document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("on")); }
+function hideScreens(){ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); }
+function showScreen(id){ hideScreens(); const el=$(id); el.classList.add("on"); el.scrollTop=0; }
+function setPx(id,t){ const el=$(id); el.textContent=t; el.dataset.t=t; }
+function startWave(i){
+  G.wave=i; G.kills=0; G.rocks=[]; G.bullets=[]; G.boss=null; G.grading=false; G.bossAttempt=0; G.ammo=CLIP; G.keys.left=G.keys.right=false;
+  G.waveStart={score:G.score,lives:G.lives,streak:G.streak,answered:G.answered,correct:G.correct};
+  G.waveStat={answered:0,correct:0,livesLost:0,t:0,bossGrade:0};
+  hideScreens(); hideOverlays();
+  $("hud").style.display="grid"; $("ammoBar").style.display="flex"; renderAmmo(); hud(); $("waveGoal").textContent="0/"+KILLS_PER_WAVE+" rocks";
+  G.phase="play"; G.spawnAt=G.t+1.2;
+  banner("Wave "+(i+1)+": "+WAVES[i].name, KILLS_PER_WAVE+" rocks, then the boss");
+}
+function restartWave(){
+  const ws=G.waveStart||{score:0,lives:LIVES,streak:0,answered:0,correct:0};
+  G.score=ws.score; G.lives=ws.lives; G.streak=ws.streak; G.answered=ws.answered; G.correct=ws.correct;
+  G.bossResults=G.bossResults.filter(b=>b.wave!==WAVES[G.wave].name);
+  clearInterval(G.challengeTimer); startWave(G.wave);
+}
+function waveComplete(bossWon){
+  const s=G.waveStat, w=G.wave; const stars = bossWon ? (s.livesLost===0 ? 3 : 2) : 1;
+  saveProgress(w, stars);
+  if(w>=WAVES.length-1) return gameOver(true);
+  G.phase="complete"; G.rocks=[]; G.bullets=[]; G.boss=null; G.grading=false; G.keys.left=G.keys.right=false;
+  $("hud").style.display="none"; $("ammoBar").style.display="none"; hideOverlays();
+  $("cStars").innerHTML=[0,1,2].map(i=>`<span class="${i<stars?"pop":"dim"}" style="animation-delay:${.15+i*.2}s">${i<stars?ICON.star:ICON.starOff}</span>`).join("");
+  $("cSub").textContent = `Wave ${w+1}: ${WAVES[w].name} cleared` + (bossWon ? (s.livesLost===0 ? " — flawless." : " — boss destroyed.") : " — the boss landed. Next time, answer it.");
+  $("cRocks").textContent=G.kills; $("cAcc").textContent=s.answered?Math.round(s.correct/s.answered*100)+"%":"—";
+  $("cBoss").textContent=s.bossGrade?s.bossGrade+" / 10":"Landed"; $("cTime").textContent=mmss(s.t); $("cScore").textContent=fmt(G.score);
+  if(!bossWon) sfx.click(); showScreen("s-complete"); $("nextLevelBtn").focus();
+}
+$("nextLevelBtn").onclick=()=>startWave(G.wave+1);
+$("replayLevelBtn").onclick=restartWave;
+$("completeMenuBtn").onclick=()=>toMenu();
+
+// ── Pause ────────────────────────────────────────────────────────────────────
+function pause(){ if((G.phase!=="play"&&G.phase!=="boss")||G.grading) return; G.pausedPhase=G.phase; G.phase="paused"; G.keys.left=G.keys.right=false; $("pausebox").classList.add("on"); $("resumeBtn").focus(); }
+function resume(){ if(G.phase!=="paused") return; $("pausebox").classList.remove("on"); G.phase=G.pausedPhase||"play"; G.pausedPhase=null; if(G.phase==="boss") $("bossInput").focus(); }
+function toMenu(){ G.phase="idle"; G.rocks=[]; G.bullets=[]; G.boss=null; G.grading=false; clearInterval(G.challengeTimer); $("hud").style.display="none"; $("ammoBar").style.display="none"; hideOverlays(); showScreen("s-title"); $("startBtn").focus(); }
+$("pauseBtn").onclick=pause; $("resumeBtn").onclick=resume;
+$("restartBtn").onclick=()=>{ $("pausebox").classList.remove("on"); restartWave(); };
+$("pauseHowBtn").onclick=()=>openHowTo("pause");
+$("pauseMenuBtn").onclick=toMenu;
+
+// ── Grading ──────────────────────────────────────────────────────────────────
+function mockGrade(text){
+  const t=text.toLowerCase(); let ack=0,iso=0,ref=0,adv=0;
+  if(/\b(fair|understand|makes sense|i hear|appreciate|that's real|thank)/.test(t)) ack+=1.6; if(/\b(sorry|get it|totally|of course)/.test(t)) ack+=.9;
+  if(/\?/.test(t)) iso+=1.4; if(/\b(what|which|who|how|is it that|if .* would)/.test(t)) iso+=1.1;
+  if(/\b(cost|save|hours|revenue|risk|result|outcome|value|worth|impact|\d)/.test(t)) ref+=1.5; if(/\b(instead|rather than|scope|structure|option)/.test(t)) ref+=1;
+  if(/\b(next step|book|schedule|let's|propose|by (monday|friday|next)|this week|30-day|pilot|meet|call you|one-pager)/.test(t)) adv+=1.6; if(/\b(would that|does that|can we|are you open)/.test(t)) adv+=.9;
+  if(/\b(discount|knock .* off|match|free|cheaper)/.test(t) && !/\bif\b/.test(t)) ref-=1; if(/\b(you're wrong|actually|but our|honestly we're better)/.test(t)) ack-=1;
+  if(text.length<60){ ack*=.6; ref*=.6; }
+  const c=(v)=>Math.max(0,Math.min(2.5,v)); ack=c(ack); iso=c(iso); ref=c(ref); adv=c(adv);
+  const total=Math.max(1,Math.min(10,Math.round(ack+iso+ref+adv)));
+  const weakest=[["acknowledge",ack],["isolate",iso],["reframe",ref],["advance",adv]].sort((a,b)=>a[1]-b[1])[0][0];
+  const tips={acknowledge:"Start by showing you heard it — one sentence, no 'but'.",isolate:"Ask a question before you answer. Find out what's really behind it.",reframe:"Tie it back to a result or a cost, not a feature.",advance:"End with a next step you can put on a calendar."};
+  return { acknowledge:ack, isolate:iso, reframe:ref, advance:adv, total, coaching:(total>=7?"Strong shape. ":"")+tips[weakest], better:null, mock:true };
+}
+async function gradeWithClaude(w,text){
+  const system=`You are Sales Coach AI, grading a salesperson's spoken rebuttal to a buyer objection in a training game. Grade ONLY the technique, not grammar.
+Rubric, each 0 to 2.5:
+- acknowledge: shows they heard the objection without arguing, caving, or a fast "but".
+- isolate: asks a question that isolates the real concern or uncovers what's behind it before answering.
+- reframe: connects the answer to the buyer's outcome, cost, or risk instead of features or discounts.
+- advance: proposes a concrete next step or asks for a commitment.
+Penalize: instant discounts, arguing, dodging, generic pitching. Reward: specificity, calm, questions.
+Respond with ONLY a JSON object, no prose, no markdown:
+{"acknowledge":n,"isolate":n,"reframe":n,"advance":n,"total":1-10 integer (sum, rounded),"coaching":"one blunt sentence, max 25 words, addressed to the rep as 'you'","better":"a stronger 2-3 sentence rebuttal in spoken language"}`;
+  const user=`OBJECTION (${w.name} stage): "${w.boss.t}"\nWhat good looks like here: ${w.boss.focus}\n\nREP'S REBUTTAL: "${text}"`;
+  const res=await fetch("https://api.anthropic.com/v1/messages",{ method:"POST", headers:{ "content-type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true" }, body:JSON.stringify({ model:MODEL, max_tokens:600, output_config:{effort:"low"}, system, messages:[{role:"user",content:user}] }) });
+  if(!res.ok){ let m=res.status+" "+res.statusText; try{ const j=await res.json(); m=j.error?.message||m; }catch{} throw new Error(m); }
+  const data=await res.json(); if(data.stop_reason==="refusal") throw new Error("grader declined");
+  const raw=(data.content||[]).filter(b=>b.type==="text").map(b=>b.text).join(""); const m=raw.match(/\{[\s\S]*\}/); if(!m) throw new Error("no JSON in grade");
+  const j=JSON.parse(m[0]); const c=(v)=>Math.max(0,Math.min(2.5,Number(v)||0));
+  const g={ acknowledge:c(j.acknowledge), isolate:c(j.isolate), reframe:c(j.reframe), advance:c(j.advance), coaching:String(j.coaching||"").slice(0,220), better:String(j.better||"").slice(0,600), mock:false };
+  g.total=Math.max(1,Math.min(10,Math.round(Number(j.total)||(g.acknowledge+g.isolate+g.reframe+g.advance)))); return g;
+}
+function esc(s){ return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c])); }
+
+// ── Start / over ─────────────────────────────────────────────────────────────
+function start(fromWave=0, training=false){
+  leaderReturnPhase=null; reset(); G.training=training; G.startWave=fromWave; apiKey=$("apiKey").value.trim(); store.set(KEYS_LS.key,apiKey);
+  resize(); startWave(fromWave);
+}
+function gameOver(cleared){
+  G.phase="over"; G.rocks=[]; G.bullets=[]; G.boss=null; G.grading=false; clearInterval(G.challengeTimer); sfx.over(); $("hud").style.display="none"; $("ammoBar").style.display="none"; hideOverlays();
+  const best=Number(store.get(KEYS_LS.best)||0); const nb=!G.training && G.score>best; if(nb) store.set(KEYS_LS.best,String(G.score));
+  const finalWave=Math.min(G.wave,WAVES.length-1), finalWaveName=WAVES[finalWave].name;
+  setPx("resTitle", cleared?"Mission complete!":"Game over"); $("resTitle").classList.toggle("t1",cleared); $("resTitle").classList.toggle("t3",!cleared);
+  $("resKicker").textContent=G.training?"Training run":cleared?"Pipeline defended":"Final score"; $("resScore").textContent=fmt(G.score); $("resBest").textContent=nb?"★ New personal best":"";
+  $("resSummary").textContent=cleared?"You cleared all five objection waves and defended the pipeline.":`Run ended in Wave ${finalWave+1}: ${finalWaveName}. Review your coaching profile, then take another run.`;
+  $("rRocks").textContent=cleared?WAVES.length*KILLS_PER_WAVE:G.kills+((G.wave-G.startWave)*KILLS_PER_WAVE); $("rAcc").textContent=G.answered?Math.round(G.correct/G.answered*100)+"%":"—";
+  const bossCount=new Set(G.bossResults.map(b=>b.wave)).size, wins=new Set(G.bossResults.filter(b=>b.outcome==="win").map(b=>b.wave)).size; $("rBoss").textContent=bossCount?wins+" / "+bossCount:"Not reached"; const top=Math.max(0,...G.bossResults.map(b=>b.grade.total)); $("rTop").textContent=top?top+" / 10":"Not attempted";
+  const wt=G.wrongTypes, wrong=wt.A+wt.C+wt.D+wt.T, acc=G.answered?G.correct/G.answered:0; let p;
+  if(G.answered>=3 && acc>=.85) p=["The Closer","When the clip ran dry you reached for a question, not a pitch. That's the reflex. Keep it under real pressure."];
+  else if(wrong===0) p=["The Closer","No bad reloads. Survive longer and see if it holds when the rocks get faster."];
+  else { const top=Object.entries(wt).sort((a,b)=>b[1]-a[1])[0][0]; p= top==="A"?["The Arguer","You defended. Buyers don't lose arguments, they stop taking your calls. Acknowledge, then ask."]: top==="C"?["The Caver","You gave ground before you knew what the objection was. Every discount answered a question nobody asked."]: top==="D"?["The Dodger","You changed the subject. The objection didn't move. Face it with a question."]:["The Freezer","The clock beat you on reloads. Silence after a question is fine. Silence after an objection is not."]; }
+  $("profile").innerHTML=`<div class="profile-heading"><div class="label" style="color:var(--cyan-h)">Coaching profile</div><div class="display">${p[0]}</div></div><div class="profile-copy">${p[1]}</div>`;
+  $("bossLog").innerHTML=G.bossResults.length?`<div class="label">Your boss rebuttals</div>`+G.bossResults.map(b=>`<div class="box"><div class="row between"><b class="t" style="margin:0">${b.wave} boss</b><span style="font-family:var(--px);font-size:12px;color:${b.outcome==="win"?"var(--green)":b.outcome==="knock"?"var(--amber)":"var(--red)"}">${b.grade.total}/10</span></div><p>“${esc(b.text)}”</p><p style="font-size:12px;color:var(--fg70)"><b>Coach:</b> ${esc(b.grade.coaching)}</p></div>`).join(""):"";
+  $("savePanel").style.display=G.training?"none":"";
+  $("nameInput").value=store.get(KEYS_LS.name)||""; $("nameRow").style.display="grid"; renderBoard(null); showScreen("s-results");
+  refreshBest();
+}
+function refreshBest(){ const b=Number(store.get(KEYS_LS.best)||0); if(b){ $("bestLbl").style.display="inline-block"; $("bestVal").textContent=fmt(b); } }
+
+// ── Level progress (training mode unlocks + stars) ───────────────────────────
+function loadProgress(){
+  try{ const p=JSON.parse(store.get(KEYS_LS.progress)||"{}")||{}; return { unlocked:Math.min(WAVES.length,Math.max(1,Number(p.unlocked)||1)), stars:(p.stars&&typeof p.stars==="object")?p.stars:{} }; }
+  catch{ return {unlocked:1,stars:{}}; }
+}
+function saveProgress(waveIdx, stars){
+  const p=loadProgress(); p.unlocked=Math.max(p.unlocked, Math.min(WAVES.length, waveIdx+2)); p.stars[waveIdx]=Math.max(Number(p.stars[waveIdx])||0, stars);
+  store.set(KEYS_LS.progress, JSON.stringify(p));
+}
+function renderLevels(){
+  const p=loadProgress();
+  $("levelList").innerHTML=WAVES.map((w,i)=>{
+    const unlocked=i<p.unlocked, st=Math.min(3,Number(p.stars[i])||0), isNext=unlocked&&i===p.unlocked-1;
+    const right = unlocked ? [0,1,2].map(k=>k<st?ICON.star:ICON.starOff).join("") : ICON.lock;
+    return `<button class="lvl ${unlocked?"unlocked":"locked"}${isNext?" next":""}" data-i="${i}" ${unlocked?"":"disabled"}><span class="lvl-n">${i+1}</span><span class="lvl-txt"><b>${w.name}</b><small>${LEVEL_SUB[i]||""}</small></span><span class="lvl-right">${right}</span></button>`;
+  }).join("");
+  $("levelList").querySelectorAll(".lvl.unlocked").forEach(b=>b.onclick=()=>start(+b.dataset.i,true));
+}
+
+// ── Menu navigation ──────────────────────────────────────────────────────────
+let howReturn=null;
+function openHowTo(from){ howReturn=from; if(from==="pause"){ $("s-howto").classList.add("on"); $("s-howto").scrollTop=0; } else showScreen("s-howto"); }
+function goBack(fromId){
+  if(fromId==="s-howto" && howReturn==="pause"){ $("s-howto").classList.remove("on"); howReturn=null; $("resumeBtn").focus(); return; }
+  showScreen("s-title");
+}
+document.querySelectorAll("[data-back]").forEach(b=>b.onclick=()=>goBack(b.closest(".screen").id));
+$("startBtn").onclick=()=>start(0,false);
+$("trainBtn").onclick=()=>{ renderLevels(); showScreen("s-levels"); };
+$("howBtn").onclick=()=>openHowTo("s-title");
+$("settingsBtn").onclick=()=>showScreen("s-settings");
+$("resetProgressBtn").onclick=()=>{ store.set(KEYS_LS.progress,"{}"); toast("Level progress reset."); };
+$("againBtn").onclick=()=>start(G.startWave||0,G.training);
+$("resMenuBtn").onclick=toMenu;
+
+// ── Leaderboard ──────────────────────────────────────────────────────────────
+function loadBoard(){ try{ return JSON.parse(store.get(KEYS_LS.board)||"[]"); }catch{ return []; } }
+function monthKey(ts=Date.now()){ const d=new Date(ts); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); }
+function monthlyScores(){ const key=monthKey(), board=loadBoard(); return (Array.isArray(board)?board:[]).filter(r=>Number.isFinite(Number(r.score))&&Number.isFinite(Number(r.at))&&monthKey(Number(r.at))===key).sort((a,b)=>b.score-a.score).slice(0,10); }
+function updateMonthlyLeaderboard(){
+  const now=new Date(), scores=monthlyScores(), shortMonth=new Intl.DateTimeFormat("en-US",{month:"short"}).format(now).toUpperCase();
+  $("monthTopLabel").textContent=shortMonth+" top"; $("monthTop").textContent=scores.length?fmt(scores[0].score):"—";
+  $("leaderMonth").textContent=new Intl.DateTimeFormat("en-US",{month:"long",year:"numeric"}).format(now);
+  $("monthChampion").innerHTML=scores.length?`<span class="crown">${ICON.trophy}</span><div><div class="champ-name">${esc(scores[0].name)}</div><div class="champ-meta">Current monthly leader</div></div><div class="champ-score">${fmt(scores[0].score)}</div>`:`<span class="crown">${pxSVG(PIX.trophy,{...PAL,Y:"#3b4a6b",W:"#55698a"})}</span><div><div class="champ-name">No scores yet</div><div class="champ-meta">Be the first defender this month</div></div><div class="champ-score">—</div>`;
+  $("monthBoard").innerHTML=scores.length?scores.map((r,i)=>`<li><span class="r">#${i+1}</span><span>${esc(r.name)}</span><span class="s">${fmt(r.score)}</span></li>`).join(""):`<li style="color:var(--fg45)">No saved runs this month.</li>`;
+}
+function renderBoard(mine){ const b=monthlyScores(); $("board").innerHTML=b.length?b.map((r,i)=>`<li class="${mine&&r.name===mine.name&&r.score===mine.score?"me":""}"><span class="r">#${i+1}</span><span>${esc(r.name)}</span><span class="s">${fmt(r.score)}</span></li>`).join(""):`<li style="color:var(--fg45)">No saved runs yet this month.</li>`; }
+let leaderReturnPhase=null;
+function openLeaderboard(){
+  if($("leaderOverlay").classList.contains("on")){ closeLeaderboard(); return; }
+  if(G.phase==="challenge"||$("reveal").classList.contains("on")||G.grading){ toast("Finish the current coaching challenge first."); return; }
+  leaderReturnPhase=G.phase==="play"||G.phase==="boss"?G.phase:null; if(leaderReturnPhase) G.phase="leaderboard";
+  updateMonthlyLeaderboard(); $("leaderOverlay").classList.add("on"); $("leaderClose").focus();
+}
+function closeLeaderboard(){ $("leaderOverlay").classList.remove("on"); if(leaderReturnPhase){ G.phase=leaderReturnPhase; leaderReturnPhase=null; } $("leaderBtn").focus(); }
+$("leaderBtn").onclick=openLeaderboard; $("scoresBtn").onclick=openLeaderboard; $("leaderClose").onclick=closeLeaderboard; $("leaderOverlay").onclick=e=>{ if(e.target===$("leaderOverlay")) closeLeaderboard(); };
+$("saveBtn").onclick=()=>{ const name=$("nameInput").value.trim().slice(0,20); if(name.length<2){ toast("Give us a name, 2+ characters."); return; } const b=loadBoard(); b.push({name,score:G.score,at:Date.now()}); store.set(KEYS_LS.board,JSON.stringify(b)); store.set(KEYS_LS.name,name); $("nameRow").style.display="none"; renderBoard({name,score:G.score}); updateMonthlyLeaderboard(); toast("Saved to this month's leaderboard."); };
+$("shareBtn").onclick=async()=>{ const t=`I scored ${fmt(G.score)} in Objection Defenders by Eric Gravely. Think you can handle a buyer better than me?`; try{ if(navigator.share) await navigator.share({text:t}); else { await navigator.clipboard.writeText(t); toast("Copied. Paste it anywhere."); } }catch{} };
+
+// ── Input ────────────────────────────────────────────────────────────────────
+addEventListener("keydown",e=>{
+  if($("leaderOverlay").classList.contains("on")){ if(e.key==="Escape") closeLeaderboard(); e.preventDefault(); return; }
+  const tag=e.target.tagName; if(tag==="TEXTAREA"||tag==="INPUT") return;
+  if(e.key==="Escape"||e.key==="p"||e.key==="P"){
+    if(G.phase==="paused"){ e.preventDefault(); return resume(); }
+    if(G.phase==="play"||G.phase==="boss"){ e.preventDefault(); return pause(); }
+    if(e.key==="Escape"){ for(const id of ["s-howto","s-levels","s-settings"]) if($(id).classList.contains("on")) return goBack(id); }
+  }
+  if(G.phase==="paused") return;
+  if(e.key==="ArrowLeft"||e.key==="a"||e.key==="A"){ G.keys.left=true; e.preventDefault(); }
+  if(e.key==="ArrowRight"||e.key==="d"||e.key==="D"){ G.keys.right=true; e.preventDefault(); }
+  if(e.key===" "||e.key==="ArrowUp"){ e.preventDefault(); fire(); }
+  if(G.phase==="challenge" && /^[1-4]$/.test(e.key)){ const b=$("options").querySelector(`.opt[data-k="${+e.key-1}"]`); if(b&&!b.disabled) b.click(); }
+  if(e.key==="Enter"){ if($("s-title").classList.contains("on")) start(0,false); else if($("s-complete").classList.contains("on")) $("nextLevelBtn").click(); else if($("reveal").classList.contains("on")) $("revealNext")?.click(); else if($("challenge").classList.contains("on") && $("cNext").style.display!=="none") $("cNext").click(); }
+});
+addEventListener("keyup",e=>{ if(e.key==="ArrowLeft"||e.key==="a"||e.key==="A") G.keys.left=false; if(e.key==="ArrowRight"||e.key==="d"||e.key==="D") G.keys.right=false; });
+// touch: drag anywhere on the arena to steer, tap FIRE / buttons
+let dragging=false;
+const steerable = () => G.phase==="play"||G.phase==="boss";
+$("arena").addEventListener("pointerdown",e=>{ if(!steerable()||e.target.closest("button,textarea,input,.overlay,.screen")) return; dragging=true; G.ship.x=Math.max(.05,Math.min(.95,(e.clientX-$("arena").getBoundingClientRect().left)/W)); });
+addEventListener("pointermove",e=>{ if(!dragging||!steerable()) return; G.ship.x=Math.max(.05,Math.min(.95,(e.clientX-$("arena").getBoundingClientRect().left)/W)); });
+addEventListener("pointerup",()=>{ dragging=false; });
+const hold=(id,key)=>{ const el=$(id); el.addEventListener("pointerdown",e=>{ e.preventDefault(); G.keys[key]=true; }); ["pointerup","pointerleave","pointercancel"].forEach(ev=>el.addEventListener(ev,()=>{ G.keys[key]=false; })); };
+hold("tLeft","left"); hold("tRight","right"); $("tFire").addEventListener("pointerdown",e=>{ e.preventDefault(); fire(); });
+$("apiKey").addEventListener("input",()=>{ $("graderMode").textContent=$("apiKey").value.trim()?"Live Sales Coach AI grading ("+MODEL+")":"Mock mode (no key) — add an API key for live Sales Coach AI grading."; }); $("apiKey").dispatchEvent(new Event("input"));
+refreshBest();
+updateMonthlyLeaderboard(); reset(); requestAnimationFrame(loop);
+window.OD = G; // debug handle for testing
+</script>
+</body>
+</html>
