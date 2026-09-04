@@ -8,6 +8,7 @@ source .cursor/lib.sh
 
 # Make sure the database is reachable before starting (in case the terminal
 # launches before start.sh finishes on a fresh boot).
+ensure_postgres_installed
 start_postgres
 ensure_db
 

@@ -9,7 +9,8 @@ source .cursor/lib.sh
 echo "[install] Installing npm dependencies..."
 npm ci
 
-echo "[install] Ensuring Postgres is running..."
+echo "[install] Ensuring Postgres is installed and running..."
+ensure_postgres_installed
 start_postgres
 ensure_db
 

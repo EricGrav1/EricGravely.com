@@ -14,6 +14,17 @@ export DB_PASS="${DB_PASS:-apppass}"
 # managed database provided via Secrets) but default to the local instance.
 export DATABASE_URL="${DATABASE_URL:-postgres://${DB_USER}:${DB_PASS}@${PGHOST}:${PGPORT}/${DB_NAME}}"
 
+ensure_postgres_installed() {
+  # Install PostgreSQL on the default base image when it is not already present
+  # (e.g. baked into a build/snapshot). Safe to call repeatedly.
+  if command -v pg_ctlcluster >/dev/null 2>&1; then
+    return 0
+  fi
+  echo "[env] Installing PostgreSQL..."
+  sudo apt-get update -qq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq postgresql postgresql-contrib
+}
+
 start_postgres() {
   # Idempotent: pg_ctlcluster errors if already running, so ignore that and
   # rely on pg_isready to confirm the server is actually accepting connections.

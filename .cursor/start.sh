@@ -6,6 +6,7 @@ cd "$(dirname "$0")/.."
 # shellcheck source=/dev/null
 source .cursor/lib.sh
 
+ensure_postgres_installed
 start_postgres
 ensure_db
 
