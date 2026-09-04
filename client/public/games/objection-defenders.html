@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Objection Defenders</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Russo+One&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#02040d; --bg2:#06101e; --panel:rgba(7,20,38,.88); --fg:#eafcff;
@@ -174,6 +174,116 @@
   .toast.show{opacity:1;transform:translateX(-50%)}
   @media (max-width:640px){#app{padding:5px}#topbar{padding:10px 9px}#topbar .brand{font-size:10px;gap:7px}#topbar .brand .label,#bestLbl{display:none!important}.month-leader-btn{min-width:84px;padding:4px 7px;gap:5px}.month-leader-btn span{font-size:7px}.month-leader-btn strong{font-size:11px}.grid3{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.tile .v{font-size:13px}.label{font-size:8px;letter-spacing:.1em}.rubric{grid-template-columns:1fr}.opt{font-size:13px;padding:10px}.card{padding:16px}.scroll{padding:20px 16px 26px}.results-profile{grid-template-columns:1fr;gap:8px}.result-actions .btn{flex:1}#nameRow{grid-template-columns:1fr}#nameRow .btn{width:100%}}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+  /* Arcade cabinet visual system */
+  body{background:#010713;min-height:100vh}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;background:
+    radial-gradient(circle at 16% 18%,rgba(30,99,255,.22),transparent 25%),
+    radial-gradient(circle at 82% 8%,rgba(137,40,255,.2),transparent 24%),
+    radial-gradient(circle at 52% 78%,rgba(0,220,255,.09),transparent 28%),
+    linear-gradient(180deg,#020918,#01040d 72%);z-index:-2}
+  #app{width:min(100%,1040px);padding:10px}
+  #shell{min-height:calc(100vh - 20px);border-color:rgba(72,174,255,.66);border-radius:12px;background:#020817;box-shadow:0 24px 90px rgba(0,0,0,.78),0 0 34px rgba(18,161,255,.14),inset 0 0 0 1px rgba(98,235,255,.05)}
+  #shell::before{height:2px;background:linear-gradient(90deg,transparent,#39bfff 20%,#21f6e8 50%,#8b6cff 80%,transparent)}
+  #shell::after{opacity:.1;background:repeating-linear-gradient(0deg,transparent 0 3px,rgba(112,214,255,.08) 3px 4px)}
+  #topbar{min-height:58px;padding:10px 14px;background:linear-gradient(180deg,rgba(3,15,36,.97),rgba(2,8,23,.91));border-bottom-color:rgba(72,174,255,.35)}
+  #topbar .brand{font-family:"Russo One",Orbitron,sans-serif;font-size:14px;letter-spacing:.06em;color:#f2fbff;text-shadow:0 0 14px rgba(66,209,255,.28)}
+  #topbar .brand .dot{border-radius:2px;background:#2cf7e6;box-shadow:0 0 8px #2cf7e6,0 0 22px #168cff}
+  .iconbtn,.month-leader-btn{border-color:rgba(74,166,255,.5);background:linear-gradient(180deg,rgba(9,34,67,.92),rgba(3,14,36,.92));box-shadow:inset 0 0 14px rgba(40,130,255,.08)}
+  .iconbtn:hover,.month-leader-btn:hover{border-color:#2cf7e6;box-shadow:0 0 18px rgba(44,247,230,.18),inset 0 0 14px rgba(44,247,230,.08)}
+  #pauseBtn{display:none}
+  body.is-playing #pauseBtn{display:grid}
+
+  #arena{min-height:660px;background:
+    radial-gradient(circle at 24% 18%,rgba(31,76,190,.22),transparent 22%),
+    radial-gradient(circle at 80% 30%,rgba(127,45,208,.18),transparent 24%),
+    radial-gradient(ellipse at 50% 112%,rgba(7,101,184,.34),transparent 42%),
+    linear-gradient(180deg,#02091a 0%,#010611 76%,#03132b 100%)}
+  #arena::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.62;background-image:
+    radial-gradient(circle,rgba(255,255,255,.95) 0 1px,transparent 1.5px),
+    radial-gradient(circle,rgba(69,200,255,.8) 0 1px,transparent 1.5px),
+    radial-gradient(circle,rgba(151,102,255,.7) 0 1px,transparent 1.5px);background-size:73px 83px,127px 137px,191px 173px;background-position:0 0,32px 48px,91px 17px}
+  canvas#game{z-index:1}
+  .display,.card .q,.score,.grade .big,.result-panel-title,.leaderboard-modal-title{font-family:"Russo One",Orbitron,sans-serif}
+
+  #s-title{align-items:center;justify-content:center;padding:34px 22px;background:
+    radial-gradient(circle at 50% 5%,rgba(21,98,220,.18),transparent 30%),
+    linear-gradient(180deg,rgba(1,8,25,.18),rgba(1,7,20,.62));overflow:auto}
+  .menu-hero{position:relative;width:min(100%,560px);margin:auto;text-align:center;padding:12px 0 24px}
+  .menu-ship{width:92px;height:auto;margin:0 auto -6px;filter:drop-shadow(0 0 12px rgba(40,231,255,.72)) drop-shadow(0 6px 10px rgba(0,0,0,.65));animation:shipFloat 3.2s ease-in-out infinite}
+  @keyframes shipFloat{50%{transform:translateY(-7px)}}
+  .arcade-logo{position:relative;margin:0 auto 8px;font-family:"Russo One",Orbitron,sans-serif;font-style:italic;text-transform:uppercase;line-height:.78;transform:skewY(-2deg);filter:brightness(1.25) saturate(1.18) drop-shadow(0 12px 10px rgba(0,0,0,.7))}
+  .arcade-logo span{display:block;-webkit-text-stroke:2px #07122d;paint-order:stroke fill}
+  .arcade-logo .logo-top{font-size:clamp(44px,9vw,82px);letter-spacing:-.035em;color:#ffae24;background:linear-gradient(180deg,#fff064 0%,#ffb01d 40%,#ff4b16 72%,#9f0b1d 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 4px 0 #770518,0 8px 0 #280619,0 0 22px rgba(255,85,28,.45)}
+  .arcade-logo .logo-bottom{font-size:clamp(39px,8vw,72px);letter-spacing:-.04em;color:#62f5ff;background:linear-gradient(180deg,#f2ffff 0%,#65efff 38%,#168cff 68%,#1532a5 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 4px 0 #0b3299,0 8px 0 #071a58,0 0 24px rgba(40,202,255,.58)}
+  .menu-tagline{margin:18px auto 22px;font-family:Orbitron,sans-serif;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#d9f6ff}
+  .menu-actions{display:grid;gap:9px;width:min(100%,390px);margin:0 auto}
+  .menu-btn{min-height:48px;display:flex;align-items:center;justify-content:center;gap:12px;border:1px solid #298aff;border-radius:6px;background:linear-gradient(180deg,rgba(12,41,84,.94),rgba(3,17,48,.96));color:#e9f6ff;font-family:"Russo One",Orbitron,sans-serif;font-size:14px;letter-spacing:.08em;text-transform:uppercase;box-shadow:inset 0 0 18px rgba(32,105,255,.08);transition:transform .15s,border-color .15s,box-shadow .15s,filter .15s}
+  .menu-btn:hover{transform:translateY(-1px);border-color:#6bc8ff;box-shadow:0 0 20px rgba(39,137,255,.2),inset 0 0 20px rgba(47,150,255,.1)}
+  .menu-btn.primary{min-height:58px;border:2px solid #2cf7e6;background:linear-gradient(180deg,rgba(17,133,132,.88),rgba(3,58,75,.96));color:#eaffff;font-size:20px;text-shadow:0 0 10px rgba(224,255,255,.5);box-shadow:0 0 8px #2cf7e6,0 0 28px rgba(44,247,230,.38),inset 0 0 22px rgba(44,247,230,.2)}
+  .menu-btn.primary:hover{border-color:#a5fff8;box-shadow:0 0 12px #2cf7e6,0 0 38px rgba(44,247,230,.5),inset 0 0 25px rgba(44,247,230,.26)}
+  .menu-btn .menu-icon{font-size:18px;line-height:1;color:#dffaff}
+  .sponsor-lockup{display:flex;align-items:center;justify-content:center;gap:12px;margin:20px auto 0;padding-top:16px;border-top:1px solid rgba(71,164,255,.25);color:#43fff2;text-align:left}
+  .sponsor-lockup img{width:50px;height:50px;border-radius:11px;object-fit:cover;box-shadow:0 0 18px rgba(44,247,230,.24)}
+  .sponsor-lockup small{display:block;margin-bottom:2px;font-family:Orbitron,sans-serif;font-size:7px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:rgba(229,247,255,.55)}
+  .sponsor-lockup strong{display:block;font-family:Orbitron,sans-serif;font-size:9px;line-height:1.35;letter-spacing:.1em;text-transform:uppercase;color:#42f7ea}
+  .menu-exit{display:inline-block;margin-top:15px;color:rgba(218,241,255,.48);font-size:11px;text-decoration:none}
+  .menu-exit:hover{color:#fff}
+
+  #hud{grid-template-columns:auto minmax(90px,1fr) auto auto;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(180deg,rgba(1,8,24,.86),rgba(1,8,24,.2))}
+  #hud .tile{padding:0;background:none;border:0;clip-path:none;box-shadow:none;text-align:left;backdrop-filter:none}
+  #hud .tile::after{display:none}
+  #hud .tile .label{display:inline;color:#93dfff}
+  #hud .tile .v{display:inline;margin-left:5px;font-family:"Russo One",Orbitron,sans-serif;font-size:16px;color:#f4fbff}
+  #tScore{text-align:right!important}
+  #tScore .v{font-size:20px!important}
+  #tLives .v{color:#ff426a;font-size:18px!important;letter-spacing:.08em;text-shadow:0 0 12px rgba(255,66,106,.55)}
+  #tStreak{position:absolute;left:14px;top:43px;padding:4px 8px!important;border:1px solid rgba(59,210,255,.24)!important;border-radius:3px;background:rgba(2,17,43,.7)!important}
+  .wave-progress{height:9px;border:1px solid rgba(54,141,255,.7);border-radius:20px;background:rgba(1,8,26,.86);overflow:hidden;box-shadow:inset 0 0 10px rgba(0,0,0,.8)}
+  .wave-progress i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#1ce6f2,#2cf7e6);box-shadow:0 0 12px rgba(44,247,230,.78);transition:width .25s ease}
+  #ammoBar{left:50%;right:auto;bottom:12px;transform:translateX(-50%);width:min(calc(100% - 28px),520px);padding:9px 12px;border-color:rgba(55,145,255,.45);border-radius:7px;background:rgba(2,12,34,.82);box-shadow:0 0 22px rgba(12,72,164,.16)}
+  #pips i{background:linear-gradient(90deg,#146eff,#2cf7e6);box-shadow:0 0 9px rgba(44,247,230,.65)}
+
+  .overlay{background:rgba(0,5,17,.78);backdrop-filter:blur(7px) saturate(1.2)}
+  .card{border:1px solid #2b8fff;border-radius:8px;background:linear-gradient(180deg,rgba(4,21,51,.98),rgba(2,10,29,.99));clip-path:polygon(12px 0,calc(100% - 12px) 0,100% 12px,100% calc(100% - 12px),calc(100% - 12px) 100%,12px 100%,0 calc(100% - 12px),0 12px);box-shadow:0 22px 80px rgba(0,0,0,.72),0 0 32px rgba(27,126,255,.2),inset 0 0 30px rgba(21,86,181,.08)}
+  .card .cat{border-color:#2cf7e6;background:rgba(44,247,230,.1);color:#7cfff6}
+  .opt{border-color:rgba(51,136,255,.48);border-radius:5px;background:linear-gradient(90deg,rgba(8,37,76,.96),rgba(3,18,50,.96))}
+  .opt:hover:not(:disabled){border-color:#2cf7e6;box-shadow:0 0 18px rgba(44,247,230,.17)}
+  .opt .k{border-color:rgba(44,247,230,.4);background:rgba(44,247,230,.08);color:#86fff7}
+  .btn{border-radius:5px;clip-path:none;font-family:"Russo One",Orbitron,sans-serif;text-transform:uppercase;letter-spacing:.07em}
+  .btn-gold{border:1px solid #2cf7e6;background:linear-gradient(180deg,#159c9c,#075269);color:#efffff;box-shadow:0 0 18px rgba(44,247,230,.28)}
+  .btn-ghost{border:1px solid #2b8fff;background:linear-gradient(180deg,rgba(11,41,82,.96),rgba(4,18,49,.96));color:#e9f6ff}
+  .modal-menu{width:min(100%,510px);padding:26px}
+  .modal-menu h2{margin:4px 0 22px;font-family:"Russo One",Orbitron,sans-serif;font-size:clamp(26px,5vw,38px);text-align:center;text-transform:uppercase;letter-spacing:.05em;color:#eefaff;text-shadow:0 0 18px rgba(73,183,255,.34)}
+  .modal-actions{display:grid;gap:10px;width:min(100%,360px);margin:0 auto}
+  .modal-close{position:absolute;right:16px;top:16px}
+  .how-list{display:grid;gap:8px;margin-top:8px}
+  .how-row{display:grid;grid-template-columns:52px 1fr;gap:13px;align-items:center;padding:11px 13px;border:1px solid rgba(50,133,245,.4);border-radius:7px;background:rgba(5,26,61,.66)}
+  .how-icon{width:48px;height:48px;display:grid;place-items:center;border-radius:7px;border:1px solid rgba(44,247,230,.35);background:rgba(4,27,61,.9);font-size:25px;box-shadow:inset 0 0 14px rgba(44,247,230,.08)}
+  .how-row b{display:block;margin-bottom:2px;font-family:Orbitron,sans-serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#f0faff}
+  .how-row span{font-size:12px;line-height:1.35;color:var(--fg55)}
+  .setting-row{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:14px;border-top:1px solid rgba(57,139,245,.28)}
+  .setting-row:first-of-type{border-top:0}
+  .setting-row b{font-family:Orbitron,sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+  .setting-row p{margin:4px 0 0;font-size:11px;color:var(--fg45)}
+  .settings-key{margin-top:10px}
+  .settings-key summary{padding:10px 0;color:#bdefff;font-family:Orbitron,sans-serif;font-size:9px;text-transform:uppercase}
+
+  #s-results{background:radial-gradient(circle at 50% 4%,rgba(33,107,226,.2),transparent 30%),linear-gradient(180deg,#02091c,#010714 74%)}
+  .results-hero{border-color:#2b8fff;border-radius:8px;background:linear-gradient(180deg,rgba(8,36,76,.93),rgba(3,17,47,.92));clip-path:none}
+  .results-hero .score{color:#ffcf3b;text-shadow:0 0 24px rgba(255,177,37,.42)}
+  #s-results .stat,.result-panel{border-color:rgba(47,137,255,.42);border-radius:6px;background:rgba(4,22,53,.78);clip-path:none}
+
+  @media (max-width:640px){
+    #app{padding:4px}#shell{min-height:calc(100vh - 8px);border-radius:8px}#arena{min-height:610px}
+    #topbar{min-height:54px}#topbar .brand{font-size:9px;white-space:nowrap}.month-leader-btn{min-width:76px}body.is-playing #topbar .brand .label,body.is-playing #soundBtn{display:none!important}
+    #s-title{justify-content:flex-start;padding:28px 16px}.menu-hero{margin:0 auto}.menu-ship{width:72px}.menu-actions{max-width:330px}.menu-btn{min-height:46px;font-size:12px}.menu-btn.primary{min-height:54px;font-size:17px}
+    .sponsor-lockup{margin-top:15px;padding-top:13px}.sponsor-lockup img{width:44px;height:44px}
+    #hud{grid-template-columns:auto minmax(54px,1fr) auto;gap:7px;padding:10px 8px}#tLives{grid-column:3;grid-row:2;text-align:right!important}#tScore{grid-column:3;grid-row:1}.wave-progress{height:7px}#hud .tile .label{font-size:7px}#hud .tile .v{font-size:12px}#tScore .v{font-size:15px!important}#tLives .v{font-size:14px!important}#tStreak{left:8px;top:40px}
+    body.is-playing #touchpad{display:flex}body.is-playing #ammoBar{bottom:108px}
+    .modal-menu{padding:22px 15px}.modal-menu h2{font-size:25px}.how-row{grid-template-columns:44px 1fr;padding:9px}.how-icon{width:40px;height:40px;font-size:21px}
+  }
+  @media (pointer:coarse){#touchpad{display:none}body.is-playing #touchpad{display:flex}body.is-playing #ammoBar{bottom:118px}}
 </style>
 </head>
 <body>
@@ -183,6 +293,7 @@
       <div class="brand"><span class="dot"></span> Objection Defenders <span class="label" style="margin-left:6px">Sales Coach AI</span></div>
       <div class="row" style="gap:8px">
         <span id="bestLbl" class="hint" style="display:none">Best <b id="bestVal" style="color:var(--fg)"></b></span>
+        <button class="iconbtn" id="pauseBtn" type="button" title="Pause" aria-label="Pause game">Ⅱ</button>
         <button class="month-leader-btn" id="leaderBtn" type="button" aria-label="Open this month's leaderboard"><span id="monthTopLabel">Month top</span><strong id="monthTop">—</strong></button>
         <button class="iconbtn" id="soundBtn" title="Sound">🔇</button>
       </div>
@@ -192,35 +303,33 @@
 
       <!-- TITLE -->
       <section class="screen on scroll" id="s-title">
-        <div class="hero">
-          <div class="label" style="color:var(--gold)">Steer · Shoot · Reload with the right answer</div>
-          <h1 class="display">Objection <span class="u">Defenders</span></h1>
-          <p class="lead">Objections are falling from the sky. Fly the ship, blast them out of the air, and keep your team's pipeline alive. Your gun runs on <b style="color:var(--fg)">good answers</b>: when the ammo runs dry, a buyer objection appears and only the right response reloads you.</p>
+        <div class="menu-hero">
+          <svg class="menu-ship" viewBox="0 0 120 90" aria-hidden="true">
+            <defs><linearGradient id="menuHull" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4ffff"/><stop offset=".45" stop-color="#55cfff"/><stop offset="1" stop-color="#1750c9"/></linearGradient><linearGradient id="menuFlame" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff"/><stop offset=".35" stop-color="#2cf7e6"/><stop offset="1" stop-color="#1971ff" stop-opacity="0"/></linearGradient></defs>
+            <path d="M60 4 74 35 102 55 91 69 69 62 60 78 51 62 29 69 18 55 46 35Z" fill="url(#menuHull)" stroke="#bffcff" stroke-width="2"/>
+            <path d="M46 37 30 45 19 35 35 30Z" fill="#ff493d" stroke="#ffe2d7"/><path d="M74 37 90 45 101 35 85 30Z" fill="#ff493d" stroke="#ffe2d7"/>
+            <path d="m60 14 7 27-7 11-7-11Z" fill="#07183d" stroke="#71efff"/><path d="M51 65 57 65 54 89Z" fill="url(#menuFlame)"/><path d="M63 65 69 65 66 89Z" fill="url(#menuFlame)"/>
+          </svg>
+          <h1 class="arcade-logo" aria-label="Objection Defenders"><span class="logo-top">Objection</span><span class="logo-bottom">Defenders</span></h1>
+          <p class="menu-tagline">Blast objections. Build skills. Close more deals.</p>
+          <div class="menu-actions">
+            <button class="menu-btn primary" id="startBtn"><span class="menu-icon">▶</span> Play</button>
+            <button class="menu-btn" id="trainingBtn"><span class="menu-icon">▣</span> How to play</button>
+            <button class="menu-btn" id="leaderMenuBtn"><span class="menu-icon">◆</span> High scores</button>
+            <button class="menu-btn" id="settingsBtn"><span class="menu-icon">⚙</span> Settings</button>
+          </div>
+          <div class="sponsor-lockup"><img src="/sales-coach-ai-icon.png" alt=""><div><small>Sponsored by Sales Coach AI</small><strong>Practice smarter.<br>Sell better.</strong></div></div>
+          <a href="/games" class="menu-exit">← Back to all games</a>
         </div>
-        <div class="grid3">
-          <div class="box"><div class="t">Fly &amp; fire</div><p>← → to steer, Space to shoot. On a phone, drag to move and tap FIRE. Big rocks take three hits and pay the most.</p></div>
-          <div class="box"><div class="t">Reload = a real objection</div><p>Ten shots per clip. Empty clip: a buyer line appears with four responses. The one that acknowledges and asks refills you. Argue, cave, or dodge and you lose a life.</p></div>
-          <div class="box"><div class="t">Boss rocks</div><p>Clear a wave and a boss rock descends carrying a stacked objection. Bullets bounce off it. Only your own words work: type the rebuttal, Sales Coach AI grades it.</p></div>
-        </div>
-        <div class="callout"><b style="color:var(--fg)">Five waves:</b> Price, Timing, Trust, Competition, Authority. Three lives. A rock that reaches your ship costs one. Heat multiplier climbs with every right answer.</div>
-        <div class="row" style="justify-content:center;margin-top:20px">
-          <button class="btn btn-gold" id="startBtn" style="padding:14px 34px;font-size:16px">Launch →</button>
-          <span class="hint">Enter to launch</span>
-          <a href="/games" class="hint" style="color:var(--fg70);text-decoration:none">← All games</a>
-        </div>
-        <details>
-          <summary id="graderMode">Boss grading: mock mode (no key) — add an API key for live Sales Coach AI grading</summary>
-          <input id="apiKey" type="password" autocomplete="off" placeholder="Anthropic API key (stays in this browser only)">
-          <p class="hint" style="margin:8px 0 0">Prototype only. In production the key lives on the server and the browser calls your own /api/grade endpoint.</p>
-        </details>
       </section>
 
       <!-- PLAY HUD -->
       <div id="hud" style="display:none">
+        <div class="tile" id="tWave"><div class="label">Level</div><div class="v" id="wave">1/5</div></div>
+        <div class="wave-progress"><i id="waveProgress"></i></div>
         <div class="tile" id="tScore"><div class="label">Score</div><div class="v gold" id="score">0</div></div>
+        <div class="tile" id="tLives"><div class="v" id="lives">●●●</div></div>
         <div class="tile" id="tStreak"><div class="label">Heat</div><div class="v" id="streak">×1.0</div></div>
-        <div class="tile" id="tWave"><div class="label">Wave</div><div class="v" id="wave">1/5</div></div>
-        <div class="tile" id="tLives"><div class="label">Lives</div><div class="v" id="lives">●●●</div></div>
       </div>
       <div id="ammoBar" style="display:none"><span class="label">Ammo</span><div id="pips"></div><span id="waveGoal">0/10</span></div>
       <div id="touchpad"><button id="tLeft" aria-label="Move left">◀</button><button class="fire" id="tFire">FIRE</button><button id="tRight" aria-label="Move right">▶</button></div>
@@ -255,6 +364,43 @@
         <div class="month-champion" id="monthChampion"></div>
         <ol class="board" id="monthBoard"></ol>
         <p class="hint" style="margin:10px 0 0">Monthly scores saved on this browser.</p>
+      </div></div>
+
+      <!-- PAUSE MENU -->
+      <div class="overlay" id="pauseOverlay"><div class="card modal-menu" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+        <h2 id="pauseTitle">Game paused</h2>
+        <div class="modal-actions">
+          <button class="menu-btn primary" id="resumeBtn"><span class="menu-icon">▶</span> Resume</button>
+          <button class="menu-btn" id="restartWaveBtn"><span class="menu-icon">↻</span> Restart level</button>
+          <button class="menu-btn" id="pauseHelpBtn"><span class="menu-icon">▣</span> How to play</button>
+          <button class="menu-btn" id="mainMenuBtn"><span class="menu-icon">⌂</span> Main menu</button>
+        </div>
+        <div class="sponsor-lockup"><img src="/sales-coach-ai-icon.png" alt=""><div><small>Sponsored by Sales Coach AI</small><strong>Practice smarter. Sell better.</strong></div></div>
+      </div></div>
+
+      <!-- HOW TO PLAY -->
+      <div class="overlay" id="helpOverlay"><div class="card modal-menu" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+        <button class="iconbtn modal-close" id="helpClose" type="button" aria-label="Close how to play">✕</button>
+        <h2 id="helpTitle">How to play</h2>
+        <div class="how-list">
+          <div class="how-row"><div class="how-icon">↔</div><div><b>Move</b><span>Drag your ship or use the arrow keys.</span></div></div>
+          <div class="how-row"><div class="how-icon">▲</div><div><b>Shoot</b><span>Tap FIRE or press the spacebar.</span></div></div>
+          <div class="how-row"><div class="how-icon">☄</div><div><b>Destroy objections</b><span>Blast the rocks before they reach your ship.</span></div></div>
+          <div class="how-row"><div class="how-icon">?</div><div><b>Reload with skill</b><span>Answer buyer objections to refill your ammo.</span></div></div>
+          <div class="how-row"><div class="how-icon">♥</div><div><b>Protect the pipeline</b><span>You have three lives. Keep them all.</span></div></div>
+        </div>
+      </div></div>
+
+      <!-- SETTINGS -->
+      <div class="overlay" id="settingsOverlay"><div class="card modal-menu" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <button class="iconbtn modal-close" id="settingsClose" type="button" aria-label="Close settings">✕</button>
+        <h2 id="settingsTitle">Settings</h2>
+        <div class="setting-row"><div><b>Game sound</b><p>Shots, impacts, reloads, and score cues.</p></div><button class="btn btn-ghost" id="settingsSoundBtn">Sound off</button></div>
+        <details class="settings-key">
+          <summary id="graderMode">Boss grading: mock mode</summary>
+          <input id="apiKey" type="password" autocomplete="off" placeholder="Anthropic API key (stays in this browser only)">
+          <p class="hint" style="margin:8px 0 0">Prototype only. On the live site, AI grading should be routed through a protected server endpoint.</p>
+        </details>
       </div></div>
 
       <!-- RESULTS -->
@@ -803,6 +949,7 @@ $("apiKey").value = apiKey;
 function reset(){
   Object.assign(G, {
     phase:"idle", wave:0, score:0, streak:0, bestStreak:0, lives:LIVES, ammo:CLIP, kills:0, rocksTotal:0,
+    waveStartScore:0, waveStartLives:LIVES,
     answered:0, correct:0, wrongTypes:{A:0,C:0,D:0,T:0}, bossResults:[],
     ship:{x:.5, vx:0}, bullets:[], rocks:[], parts:[], boss:null, spawnAt:0, lastShot:0, t:0, last:0,
     keys:{left:false,right:false}, challengeTimer:null, bossAttempt:0, grading:false,
@@ -815,15 +962,15 @@ const fmt = (n) => Math.round(n).toLocaleString("en-US");
 let actx=null;
 function tone(f,ms,type="triangle",g=.05,delay=0){ if(!sound) return; actx ||= new (window.AudioContext||window.webkitAudioContext)(); const o=actx.createOscillator(),a=actx.createGain(); o.type=type; o.frequency.value=f; const t=actx.currentTime+delay; a.gain.setValueAtTime(.0001,t); a.gain.exponentialRampToValueAtTime(g,t+.01); a.gain.exponentialRampToValueAtTime(.0001,t+ms/1000); o.connect(a).connect(actx.destination); o.start(t); o.stop(t+ms/1000+.02); }
 const sfx = { shoot(){ tone(900,50,"square",.02); }, rock(){ tone(300,120,"sawtooth",.04); tone(180,160,"square",.03,.05); }, hit(){ tone(140,300,"sawtooth",.06); }, wrong(){ tone(200,160,"sawtooth",.03); }, reload(){ [523,659,784].forEach((f,i)=>tone(f,110,"triangle",.05,i*.06)); }, bank(){ [523,659,784,1046].forEach((f,i)=>tone(f,130,"triangle",.05,i*.07)); }, boss(){ [220,196,174].forEach((f,i)=>tone(f,260,"sawtooth",.04,i*.2)); }, empty(){ tone(120,90,"square",.03); }, over(){ tone(330,200,"sawtooth",.03); tone(220,420,"sawtooth",.03,.18); } };
-function setSoundBtn(){ $("soundBtn").textContent = sound ? "🔊" : "🔇"; }
+function setSoundBtn(){ $("soundBtn").textContent = sound ? "🔊" : "🔇"; if($("settingsSoundBtn")) $("settingsSoundBtn").textContent=sound?"Sound on":"Sound off"; }
 $("soundBtn").onclick=()=>{ sound=!sound; store.set(KEYS_LS.sound, sound?"on":"off"); setSoundBtn(); if(sound) tone(660,80); }; setSoundBtn();
 
 // ── Canvas ───────────────────────────────────────────────────────────────────
 const cv=$("game"), cx=cv.getContext("2d");
 let W=0,H=0,DPR=1, stars=[];
-function resize(){ const r=$("arena").getBoundingClientRect(); DPR=Math.min(2,devicePixelRatio||1); W=r.width; H=r.height; cv.width=Math.floor(W*DPR); cv.height=Math.floor(H*DPR); cx.setTransform(DPR,0,0,DPR,0,0); const starColors=["#eafcff","#62eaff","#8b8cff","#ff7ee4"]; stars=Array.from({length:120},()=>({x:Math.random()*W,y:Math.random()*H,s:Math.random()*1.6+.35,v:Math.random()*15+6,a:Math.random()*6,c:starColors[Math.floor(Math.random()*starColors.length)]})); }
+function resize(){ const r=$("arena").getBoundingClientRect(); DPR=Math.min(2,devicePixelRatio||1); W=r.width; H=r.height; cv.width=Math.floor(W*DPR); cv.height=Math.floor(H*DPR); cx.setTransform(DPR,0,0,DPR,0,0); const starColors=["#ffffff","#62eaff","#8b8cff","#ff9f62"]; stars=Array.from({length:150},()=>({x:Math.random()*W,y:Math.random()*H,s:Math.random()*1.7+.3,v:Math.random()*14+5,a:Math.random()*6,c:starColors[Math.floor(Math.random()*starColors.length)]})); }
 addEventListener("resize",resize); resize();
-const shipY = () => H - 74 - (matchMedia("(pointer:coarse)").matches ? 84 : 0);
+const shipY = () => H - 74 - ((matchMedia("(pointer:coarse)").matches||innerWidth<=640) ? 84 : 0);
 const rand=(a,b)=>a+Math.random()*(b-a);
 function burst(x,y,color,n=22,spd=140){ for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2,s=rand(.3,1)*spd; G.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:1,c:color,r:rand(1.5,4)}); } }
 
@@ -833,11 +980,11 @@ function spawnRock(){
   const r = size===3?46:size===2?36:28;
   const label = labels[Math.floor(Math.random()*labels.length)];
   const speed = (H/1000)*(size===3?38:size===2?52:66) * (1+w*.18);
-  G.rocks.push({ x:rand(r+10,W-r-10), y:-r-10, r, hp:size, maxHp:size, label, vy:speed, vx:rand(-14,14)*(1+w*.1), rot:Math.random()*6, spin:rand(-.6,.6), pts:size*60, shape:Array.from({length:9},(_,i)=>({a:i/9*Math.PI*2, k:rand(.78,1.08)})), flash:0 });
+  G.rocks.push({ x:rand(r+10,W-r-10), y:-r-10, r, hp:size, maxHp:size, label, vy:speed, vx:rand(-14,14)*(1+w*.1), rot:Math.random()*6, spin:rand(-.6,.6), pts:size*60, shape:Array.from({length:11},(_,i)=>({a:i/11*Math.PI*2, k:rand(.78,1.08)})), craters:Array.from({length:4},()=>({a:rand(0,Math.PI*2),k:rand(.18,.55),s:rand(.09,.2)})), flash:0 });
   G.rocksTotal++;
 }
 function spawnBoss(){
-  const w=WAVES[G.wave]; G.boss={ x:W/2, y:-80, r:Math.min(90,W*.16), vy:(H/1000)*8, rot:0, spin:.15, hp:1, flash:0, label:"BOSS", shape:Array.from({length:12},(_,i)=>({a:i/12*Math.PI*2, k:rand(.85,1.05)})) };
+  const w=WAVES[G.wave]; G.boss={ x:W/2, y:-80, r:Math.min(90,W*.16), vy:(H/1000)*8, rot:0, spin:.15, hp:1, flash:0, label:"BOSS", shape:Array.from({length:14},(_,i)=>({a:i/14*Math.PI*2, k:rand(.84,1.06)})), craters:Array.from({length:6},()=>({a:rand(0,Math.PI*2),k:rand(.18,.58),s:rand(.08,.2)})) };
   $("bCat").textContent="Boss · "+w.name; $("bText").textContent="“"+w.boss.t+"”"; $("bossInput").value=""; $("charCount").textContent="0"; $("bossInput").disabled=false; $("fireBtn").disabled=false; $("fireBtn").textContent="Fire rebuttal ▲";
   $("bossbox").classList.add("on"); G.bossAttempt=0; sfx.boss(); banner("BOSS ROCK", w.name+" objection — type your rebuttal", true);
   setTimeout(()=>$("bossInput").focus(),400);
@@ -884,18 +1031,23 @@ function draw(dt){
   cx.clearRect(0,0,W,H);
   for(const s of stars){ s.y+=s.v*dt; if(s.y>H) s.y=0; s.a+=dt*2; cx.globalAlpha=.25+.45*Math.sin(s.a); cx.fillStyle=s.c; cx.fillRect(s.x,s.y,s.s,s.s); }
   cx.globalAlpha=1;
+  // blue planet horizon anchors the playfield without covering the action
+  const pr=Math.max(W,H)*.82, py=H+pr*.82; const pg=cx.createRadialGradient(W*.42,py-pr*.55,pr*.08,W/2,py,pr);
+  pg.addColorStop(0,"#167ed0"); pg.addColorStop(.42,"#0b3e86"); pg.addColorStop(.76,"#061d4a"); pg.addColorStop(1,"#020918");
+  cx.save(); cx.globalAlpha=.72; cx.fillStyle=pg; cx.shadowColor="#1ea8ff"; cx.shadowBlur=24; cx.beginPath(); cx.arc(W/2,py,pr,0,Math.PI*2); cx.fill(); cx.lineWidth=3; cx.strokeStyle="rgba(72,213,255,.75)"; cx.stroke(); cx.restore();
   // danger line
-  cx.setLineDash([5,8]); cx.strokeStyle="rgba(255,73,108,.48)"; cx.shadowColor="#ff496c"; cx.shadowBlur=6; cx.beginPath(); cx.moveTo(W*.06,shipY()-6); cx.lineTo(W*.94,shipY()-6); cx.stroke(); cx.setLineDash([]); cx.shadowBlur=0;
+  cx.setLineDash([5,8]); cx.strokeStyle="rgba(255,73,108,.34)"; cx.shadowColor="#ff496c"; cx.shadowBlur=6; cx.beginPath(); cx.moveTo(W*.06,shipY()-6); cx.lineTo(W*.94,shipY()-6); cx.stroke(); cx.setLineDash([]); cx.shadowBlur=0;
   // rocks
   for(const r of G.rocks) drawRock(r, WAVES[G.wave].color);
   if(G.boss) drawRock(G.boss, "#ff496c", true);
   // bullets
-  cx.fillStyle="#8cffff"; cx.shadowColor="#2de2e6"; cx.shadowBlur=14; for(const b of G.bullets){ cx.fillRect(b.x-2,b.y-12,4,17); } cx.shadowBlur=0;
+  cx.fillStyle="#70faff"; cx.shadowColor="#19b8ff"; cx.shadowBlur=18; for(const b of G.bullets){ const beam=cx.createLinearGradient(b.x,b.y-17,b.x,b.y+6); beam.addColorStop(0,"rgba(255,255,255,0)"); beam.addColorStop(.32,"#ffffff"); beam.addColorStop(1,"#1c7dff"); cx.fillStyle=beam; cx.fillRect(b.x-2.5,b.y-17,5,24); } cx.shadowBlur=0;
   // ship
   const sx=G.ship.x*W, sy=shipY(); cx.save(); cx.translate(sx,sy); cx.rotate(G.ship.vx*.12);
-  cx.shadowColor="rgba(45,226,230,.72)"; cx.shadowBlur=22; const hull=cx.createLinearGradient(-28,-12,28,18); hull.addColorStop(0,"#6f72ff"); hull.addColorStop(.52,"#2de2e6"); hull.addColorStop(1,"#c0ffff"); cx.fillStyle=hull; cx.beginPath(); cx.moveTo(0,-24); cx.lineTo(12,1); cx.lineTo(28,11); cx.lineTo(24,19); cx.lineTo(-24,19); cx.lineTo(-28,11); cx.lineTo(-12,1); cx.closePath(); cx.fill();
-  cx.shadowBlur=0; cx.fillStyle="#061221"; cx.beginPath(); cx.moveTo(0,-12); cx.lineTo(7,4); cx.lineTo(-7,4); cx.closePath(); cx.fill(); cx.fillStyle="#8b6cff"; cx.fillRect(-21,17,42,4);
-  if(G.keys.left||G.keys.right||Math.abs(G.ship.vx)>.2){ const flame=cx.createLinearGradient(0,21,0,48); flame.addColorStop(0,"#eaffff"); flame.addColorStop(.35,"#2de2e6"); flame.addColorStop(1,"rgba(255,79,216,0)"); cx.fillStyle=flame; cx.beginPath(); cx.moveTo(-8,21); cx.lineTo(8,21); cx.lineTo(0,21+rand(13,28)); cx.closePath(); cx.fill(); }
+  cx.shadowColor="rgba(45,226,255,.82)"; cx.shadowBlur=22; const hull=cx.createLinearGradient(-30,-18,30,20); hull.addColorStop(0,"#1964dd"); hull.addColorStop(.42,"#f0ffff"); hull.addColorStop(.68,"#73dcff"); hull.addColorStop(1,"#184ab9"); cx.fillStyle=hull; cx.beginPath(); cx.moveTo(0,-31); cx.lineTo(10,-3); cx.lineTo(31,12); cx.lineTo(25,22); cx.lineTo(9,16); cx.lineTo(0,24); cx.lineTo(-9,16); cx.lineTo(-25,22); cx.lineTo(-31,12); cx.lineTo(-10,-3); cx.closePath(); cx.fill(); cx.lineWidth=1.5; cx.strokeStyle="#d9ffff"; cx.stroke();
+  cx.shadowBlur=0; cx.fillStyle="#07183e"; cx.beginPath(); cx.moveTo(0,-20); cx.lineTo(7,2); cx.lineTo(0,9); cx.lineTo(-7,2); cx.closePath(); cx.fill(); cx.strokeStyle="#52e8ff"; cx.stroke();
+  cx.fillStyle="#ff493d"; cx.beginPath(); cx.moveTo(-11,3); cx.lineTo(-31,12); cx.lineTo(-25,22); cx.lineTo(-8,14); cx.closePath(); cx.fill(); cx.beginPath(); cx.moveTo(11,3); cx.lineTo(31,12); cx.lineTo(25,22); cx.lineTo(8,14); cx.closePath(); cx.fill();
+  const flame=cx.createLinearGradient(0,19,0,52); flame.addColorStop(0,"#ffffff"); flame.addColorStop(.24,"#2cf7e6"); flame.addColorStop(.62,"#1971ff"); flame.addColorStop(1,"rgba(25,113,255,0)"); cx.fillStyle=flame; [-7,7].forEach(x=>{ cx.beginPath(); cx.moveTo(x-4,19); cx.lineTo(x+4,19); cx.lineTo(x,42+Math.sin(G.t*18+x)*6); cx.closePath(); cx.fill(); });
   cx.restore();
   // particles + floats
   for(const p of G.parts){ cx.globalAlpha=Math.max(0,p.l); cx.fillStyle=p.c; cx.fillRect(p.x,p.y,p.r,p.r); } cx.globalAlpha=1;
@@ -904,12 +1056,13 @@ function draw(dt){
 function drawRock(r,color,boss=false){
   cx.save(); cx.translate(r.x,r.y); cx.rotate(r.rot);
   cx.beginPath(); r.shape.forEach((p,i)=>{ const x=Math.cos(p.a)*r.r*p.k, y=Math.sin(p.a)*r.r*p.k; i?cx.lineTo(x,y):cx.moveTo(x,y); }); cx.closePath();
-  const g=cx.createRadialGradient(-r.r*.3,-r.r*.3,r.r*.1,0,0,r.r); g.addColorStop(0,boss?"#572044":"#203754"); g.addColorStop(1,boss?"#17091c":"#080d1b");
-  cx.fillStyle=g; cx.fill(); cx.lineWidth=2; cx.strokeStyle = r.flash>0 ? "#fff" : color; cx.globalAlpha = r.flash>0? 1 : .85; cx.stroke(); cx.globalAlpha=1;
+  const g=cx.createRadialGradient(-r.r*.38,-r.r*.4,r.r*.08,0,0,r.r); g.addColorStop(0,boss?"#c46b74":"#b99da0"); g.addColorStop(.46,boss?"#764052":"#77646f"); g.addColorStop(1,boss?"#32142b":"#342c3c");
+  cx.shadowColor=boss?"rgba(255,69,103,.72)":"rgba(255,103,46,.5)"; cx.shadowBlur=boss?20:12; cx.fillStyle=g; cx.fill(); cx.lineWidth=2.5; cx.strokeStyle = r.flash>0 ? "#fff" : boss?"#ff496c":"#ff793d"; cx.globalAlpha = r.flash>0? 1 : .9; cx.stroke(); cx.globalAlpha=1; cx.shadowBlur=0;
+  for(const crater of (r.craters||[])){ const x=Math.cos(crater.a)*r.r*crater.k, y=Math.sin(crater.a)*r.r*crater.k, rr=r.r*crater.s; const cg=cx.createRadialGradient(x-rr*.3,y-rr*.3,1,x,y,rr); cg.addColorStop(0,"rgba(20,15,29,.62)"); cg.addColorStop(.7,"rgba(51,40,55,.42)"); cg.addColorStop(1,"rgba(226,172,153,.22)"); cx.fillStyle=cg; cx.beginPath(); cx.arc(x,y,rr,0,Math.PI*2); cx.fill(); }
   cx.restore();
   // label (unrotated)
   const lines = wrap(r.label,boss?10:12); cx.font=(boss?"800 14px":"700 11px")+" Orbitron, sans-serif"; cx.textAlign="center"; cx.textBaseline="middle";
-  cx.fillStyle=boss?"#ffe0ef":"#eafcff"; lines.forEach((ln,i)=>cx.fillText(ln,r.x,r.y+(i-(lines.length-1)/2)*15));
+  cx.fillStyle=boss?"#fff0f5":"#191421"; cx.shadowColor=boss?"rgba(255,73,108,.6)":"rgba(255,255,255,.34)"; cx.shadowBlur=boss?8:2; lines.forEach((ln,i)=>cx.fillText(ln,r.x,r.y+(i-(lines.length-1)/2)*15)); cx.shadowBlur=0;
   if(!boss && r.maxHp>1){ for(let i=0;i<r.maxHp;i++){ cx.fillStyle = i<r.hp? color : "rgba(255,255,255,.2)"; cx.beginPath(); cx.arc(r.x-(r.maxHp-1)*5+i*10, r.y+r.r*.62, 3, 0, Math.PI*2); cx.fill(); } }
 }
 function wrap(t,max){ const w=t.split(" "), out=[]; let cur=""; for(const x of w){ if((cur+" "+x).trim().length>max && cur){ out.push(cur); cur=x; } else cur=(cur+" "+x).trim(); } if(cur) out.push(cur); return out.slice(0,3); }
@@ -924,7 +1077,7 @@ function fire(){
   if(G.ammo===0) setTimeout(startChallenge, 350);
 }
 function renderAmmo(){ const p=$("pips"); p.innerHTML=Array.from({length:CLIP},(_,i)=>`<i class="${i<G.ammo?"":"off"}"></i>`).join(""); p.classList.toggle("low",G.ammo<=3); }
-function hud(){ $("score").textContent=fmt(G.score); $("streak").textContent="×"+mult().toFixed(2).replace(/0$/,""); $("wave").textContent=(G.wave+1)+"/"+WAVES.length; $("lives").textContent="●".repeat(G.lives)+"○".repeat(LIVES-G.lives); $("lives").classList.toggle("danger",G.lives<=1); }
+function hud(){ $("score").textContent=fmt(G.score); $("streak").textContent="×"+mult().toFixed(2).replace(/0$/,""); $("wave").textContent=G.wave+1; $("waveProgress").style.width=Math.min(100,G.kills/KILLS_PER_WAVE*100)+"%"; $("lives").textContent="♥".repeat(G.lives)+"♡".repeat(LIVES-G.lives); $("lives").classList.toggle("danger",G.lives<=1); }
 function pulse(id){ const el=$(id); el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse"); }
 function banner(text,sub,boss){ const b=$("banner"); b.querySelector(".w").textContent=text; b.querySelector(".w").classList.toggle("boss",!!boss); $("bsub").textContent=sub||""; b.classList.remove("on"); void b.offsetWidth; b.classList.add("on"); }
 function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2400); }
@@ -1022,7 +1175,7 @@ function showReveal(w,g,outcome){
 function nextWave(){
   G.wave++; G.grading=false; G.boss=null;
   if(G.wave>=WAVES.length) return gameOver(true);
-  G.kills=0; G.rocks=[]; G.bullets=[]; G.ammo=CLIP; renderAmmo(); hud(); G.phase="play"; G.spawnAt=G.t+1.2;
+  G.kills=0; G.waveStartScore=G.score; G.waveStartLives=G.lives; G.rocks=[]; G.bullets=[]; G.ammo=CLIP; renderAmmo(); hud(); G.phase="play"; G.spawnAt=G.t+1.2;
   banner("Wave "+(G.wave+1)+": "+WAVES[G.wave].name, KILLS_PER_WAVE+" rocks, then the boss");
 }
 
@@ -1066,11 +1219,12 @@ function esc(s){ return String(s).replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&
 function start(){
   leaderReturnPhase=null; reset(); apiKey=$("apiKey").value.trim(); store.set(KEYS_LS.key,apiKey);
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("on"));
+  document.body.classList.add("is-playing");
   $("hud").style.display="grid"; $("ammoBar").style.display="flex"; renderAmmo(); hud(); resize();
   G.phase="play"; G.spawnAt=.8; G.last=performance.now(); banner("Wave 1: "+WAVES[0].name, KILLS_PER_WAVE+" rocks, then the boss"); requestAnimationFrame(loop);
 }
 function gameOver(cleared){
-  G.phase="over"; G.rocks=[]; G.bullets=[]; G.parts=[]; G.floats=[]; G.boss=null; cx.clearRect(0,0,W,H); sfx.over(); $("hud").style.display="none"; $("ammoBar").style.display="none"; document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("on"));
+  G.phase="over"; G.rocks=[]; G.bullets=[]; G.parts=[]; G.floats=[]; G.boss=null; cx.clearRect(0,0,W,H); sfx.over(); document.body.classList.remove("is-playing"); $("hud").style.display="none"; $("ammoBar").style.display="none"; document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("on"));
   const best=Number(store.get(KEYS_LS.best)||0); const nb=G.score>best; if(nb) store.set(KEYS_LS.best,String(G.score));
   const finalWave=Math.min(G.wave,WAVES.length-1), finalWaveName=WAVES[finalWave].name;
   $("resKicker").textContent=cleared?"Mission complete":"Final score"; $("resScore").textContent=fmt(G.score); $("resBest").textContent=nb?"★ New personal best":"";
@@ -1110,10 +1264,45 @@ $("saveBtn").onclick=()=>{ const name=$("nameInput").value.trim().slice(0,20); i
 $("againBtn").onclick=start; $("startBtn").onclick=start;
 $("shareBtn").onclick=async()=>{ const t=`I scored ${fmt(G.score)} in Objection Defenders by Eric Gravely. Think you can handle a buyer better than me?`; try{ if(navigator.share) await navigator.share({text:t}); else { await navigator.clipboard.writeText(t); toast("Copied. Paste it anywhere."); } }catch{} };
 
+// ── Menu, help, and pause surfaces ──────────────────────────────────────────
+let pausedFrom=null, helpReturn="menu";
+function openHelp(from="menu"){ helpReturn=from; $("helpOverlay").classList.add("on"); $("helpClose").focus(); }
+function closeHelp(){ $("helpOverlay").classList.remove("on"); (helpReturn==="pause"?$("pauseHelpBtn"):$("trainingBtn")).focus(); }
+function openSettings(){ $("settingsOverlay").classList.add("on"); $("settingsClose").focus(); }
+function closeSettings(){ $("settingsOverlay").classList.remove("on"); $("settingsBtn").focus(); }
+function openPause(){
+  if(G.phase!=="play"&&G.phase!=="boss"){ toast("Finish the current coaching challenge first."); return; }
+  pausedFrom=G.phase; G.phase="paused"; G.keys.left=G.keys.right=false; $("pauseOverlay").classList.add("on"); $("resumeBtn").focus();
+}
+function closePause(){
+  if(!$("pauseOverlay").classList.contains("on")) return;
+  $("pauseOverlay").classList.remove("on"); G.phase=pausedFrom||"play"; pausedFrom=null; G.last=performance.now(); $("pauseBtn").focus();
+}
+function restartWave(){
+  clearInterval(G.challengeTimer); document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("on"));
+  G.phase="play"; G.score=G.waveStartScore; G.lives=G.waveStartLives; G.kills=0; G.streak=0; G.ammo=CLIP; G.rocks=[]; G.bullets=[]; G.parts=[]; G.floats=[]; G.boss=null; G.grading=false; G.bossAttempt=0;
+  G.bossResults=G.bossResults.filter(result=>result.wave!==WAVES[G.wave].name); G.spawnAt=G.t+.8; G.last=performance.now(); pausedFrom=null;
+  $("bossbox").classList.remove("on"); renderAmmo(); hud(); banner("Level "+(G.wave+1)+": "+WAVES[G.wave].name,"Restarted — "+KILLS_PER_WAVE+" objections to clear");
+}
+function showMainMenu(){
+  clearInterval(G.challengeTimer); reset(); pausedFrom=null; helpReturn="menu"; document.body.classList.remove("is-playing");
+  document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("on")); document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));
+  $("hud").style.display="none"; $("ammoBar").style.display="none"; cx.clearRect(0,0,W,H); $("s-title").classList.add("on"); $("s-title").scrollTop=0; updateMonthlyLeaderboard(); $("startBtn").focus();
+}
+$("pauseBtn").onclick=openPause; $("resumeBtn").onclick=closePause; $("restartWaveBtn").onclick=restartWave; $("mainMenuBtn").onclick=showMainMenu;
+$("trainingBtn").onclick=()=>openHelp("menu"); $("pauseHelpBtn").onclick=()=>openHelp("pause"); $("helpClose").onclick=closeHelp;
+$("settingsBtn").onclick=openSettings; $("settingsClose").onclick=closeSettings; $("settingsSoundBtn").onclick=()=>$("soundBtn").click();
+$("leaderMenuBtn").onclick=openLeaderboard;
+$("helpOverlay").onclick=e=>{ if(e.target===$("helpOverlay")) closeHelp(); }; $("settingsOverlay").onclick=e=>{ if(e.target===$("settingsOverlay")) closeSettings(); };
+
 // ── Input ────────────────────────────────────────────────────────────────────
 addEventListener("keydown",e=>{
+  if($("helpOverlay").classList.contains("on")){ if(e.key==="Escape") closeHelp(); e.preventDefault(); return; }
+  if($("settingsOverlay").classList.contains("on")){ if(e.key==="Escape") closeSettings(); e.preventDefault(); return; }
   if($("leaderOverlay").classList.contains("on")){ if(e.key==="Escape") closeLeaderboard(); e.preventDefault(); return; }
+  if($("pauseOverlay").classList.contains("on")){ if(e.key==="Escape"||e.key==="p"||e.key==="P") closePause(); e.preventDefault(); return; }
   const tag=e.target.tagName; if(tag==="TEXTAREA"||tag==="INPUT") return;
+  if((e.key==="Escape"||e.key==="p"||e.key==="P")&&(G.phase==="play"||G.phase==="boss")){ openPause(); e.preventDefault(); return; }
   if(e.key==="ArrowLeft"||e.key==="a"||e.key==="A"){ G.keys.left=true; e.preventDefault(); }
   if(e.key==="ArrowRight"||e.key==="d"||e.key==="D"){ G.keys.right=true; e.preventDefault(); }
   if(e.key===" "||e.key==="ArrowUp"){ e.preventDefault(); fire(); }
@@ -1128,7 +1317,7 @@ addEventListener("pointermove",e=>{ if(!dragging) return; G.ship.x=Math.max(.05,
 addEventListener("pointerup",()=>{ dragging=false; });
 const hold=(id,key)=>{ const el=$(id); el.addEventListener("pointerdown",e=>{ e.preventDefault(); G.keys[key]=true; }); ["pointerup","pointerleave","pointercancel"].forEach(ev=>el.addEventListener(ev,()=>{ G.keys[key]=false; })); };
 hold("tLeft","left"); hold("tRight","right"); $("tFire").addEventListener("pointerdown",e=>{ e.preventDefault(); fire(); });
-$("apiKey").addEventListener("input",()=>{ $("graderMode").textContent=$("apiKey").value.trim()?"Boss grading: live Sales Coach AI ("+MODEL+")":"Boss grading: mock mode (no key) — add an API key for live Sales Coach AI grading"; }); $("apiKey").dispatchEvent(new Event("input"));
+$("apiKey").addEventListener("input",()=>{ $("graderMode").textContent=$("apiKey").value.trim()?"Boss grading: live Sales Coach AI ("+MODEL+")":"Boss grading: mock mode"; }); $("apiKey").dispatchEvent(new Event("input"));
 (function(){ const b=Number(store.get(KEYS_LS.best)||0); if(b){ $("bestLbl").style.display="inline"; $("bestVal").textContent=fmt(b); } })();
 updateMonthlyLeaderboard(); reset(); window.OD = G; // debug handle for testing
 </script>
