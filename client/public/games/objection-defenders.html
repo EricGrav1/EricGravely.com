@@ -1096,7 +1096,7 @@ function resize(){
 }
 addEventListener("resize",resize); resize();
 const coarse = () => matchMedia("(pointer:coarse)").matches;
-const shipY = () => H - 84 - (coarse() ? 120 : 0);
+const shipY = () => H - 84 - (coarse() ? 130 : 0);
 const EXPLODE=["#ff9d2f","#ffd23f","#ff5a2f","#fff2b8"], SPARK=["#3ee0ff","#9df3ff"], HURT=["#ff4a5a","#ff9d2f","#f4f8ff"];
 function burst(x,y,colors,n=22,spd=140){ for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2,s=rand(.3,1)*spd; G.parts.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,l:1,c:colors[Math.floor(Math.random()*colors.length)],r:Math.random()<.3?5:3}); } }
 function float(x,y,t){ G.floats.push({x,y,t,l:1}); }
@@ -1526,7 +1526,7 @@ hold("tLeft","left"); hold("tRight","right"); $("tFire").addEventListener("point
 $("apiKey").addEventListener("input",()=>{ $("graderMode").textContent=$("apiKey").value.trim()?"Live Sales Coach AI grading ("+MODEL+")":"Mock mode (no key) — add an API key for live Sales Coach AI grading."; }); $("apiKey").dispatchEvent(new Event("input"));
 refreshBest();
 updateMonthlyLeaderboard(); reset(); requestAnimationFrame(loop);
-window.OD = G; window.ODdbg = { start, startWave, startChallenge, spawnBoss, waveComplete, gameOver, pause }; // debug handles for testing
+window.OD = G; // debug handle for testing
 </script>
 </body>
 </html>
