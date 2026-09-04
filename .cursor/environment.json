@@ -1,0 +1,18 @@
+{
+  "name": "Eric Gravely Brand Site",
+  "install": "bash .cursor/install.sh",
+  "start": "bash .cursor/start.sh",
+  "terminals": [
+    {
+      "name": "dev-server",
+      "command": "bash .cursor/dev-server.sh",
+      "description": "Express + Vite dev server serving the site and API on http://localhost:5000"
+    }
+  ],
+  "ports": [
+    {
+      "name": "web",
+      "port": 5000
+    }
+  ]
+}
