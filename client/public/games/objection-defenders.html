@@ -331,7 +331,7 @@
         <div class="tile" id="tLives"><div class="v" id="lives">●●●</div></div>
         <div class="tile" id="tStreak"><div class="label">Heat</div><div class="v" id="streak">×1.0</div></div>
       </div>
-      <div id="ammoBar" style="display:none"><span class="label">Ammo</span><div id="pips"></div><span id="waveGoal">0/10</span></div>
+      <div id="ammoBar" style="display:none"><span class="label">Ammo <strong id="ammoCount">10</strong></span><div id="pips"></div><span id="waveGoal">0/10</span></div>
       <div id="touchpad"><button id="tLeft" aria-label="Move left">◀</button><button class="fire" id="tFire">FIRE</button><button id="tRight" aria-label="Move right">▶</button></div>
 
       <!-- RELOAD CHALLENGE -->
@@ -387,7 +387,8 @@
           <div class="how-row"><div class="how-icon">▲</div><div><b>Shoot</b><span>Tap FIRE or press the spacebar.</span></div></div>
           <div class="how-row"><div class="how-icon">☄</div><div><b>Destroy objections</b><span>Blast the rocks before they reach your ship.</span></div></div>
           <div class="how-row"><div class="how-icon">?</div><div><b>Reload with skill</b><span>Answer buyer objections to refill your ammo.</span></div></div>
-          <div class="how-row"><div class="how-icon">♥</div><div><b>Protect the pipeline</b><span>You have three lives. Keep them all.</span></div></div>
+          <div class="how-row"><div class="how-icon">⚡</div><div><b>Catch your rewards</b><span>Each correct answer drops a pickup when you return: +5 ammo, then +1 life, alternating. Steer into it to collect!</span></div></div>
+          <div class="how-row"><div class="how-icon">♥</div><div><b>Protect the pipeline</b><span>Start with three lives. Store up to five lives and 25 shots. At full lives, heart pickups give +5 ammo.</span></div></div>
         </div>
       </div></div>
 
@@ -939,19 +940,23 @@ const TYPE_LABEL = { A:"That's arguing", C:"That's caving", D:"That's dodging" }
 const TYPE_WHY = { A:"You defended instead of understanding. The buyer digs in.", C:"You gave something away before you knew what the objection was.", D:"You changed the subject. The objection is still there, and now they know you avoid it." };
 
 const CLIP = 10, LIVES = 3, KILLS_PER_WAVE = 10, CHALLENGE_MS = 14000;
+const MAX_AMMO = 25, MAX_LIVES = 5, AMMO_PICKUP = 5;
 
 // ── State ────────────────────────────────────────────────────────────────────
 const $ = (id) => document.getElementById(id);
 const G = {};
+let loopFrame=null, reloadDelay=null;
 let sound = store.get(KEYS_LS.sound) === "on";
 let apiKey = store.get(KEYS_LS.key) || "";
 $("apiKey").value = apiKey;
 function reset(){
+  cancelAnimationFrame(loopFrame); loopFrame=null;
+  clearTimeout(reloadDelay); reloadDelay=null; clearInterval(G.challengeTimer);
   Object.assign(G, {
     phase:"idle", wave:0, score:0, streak:0, bestStreak:0, lives:LIVES, ammo:CLIP, kills:0, rocksTotal:0,
     waveStartScore:0, waveStartLives:LIVES,
     answered:0, correct:0, wrongTypes:{A:0,C:0,D:0,T:0}, bossResults:[],
-    ship:{x:.5, vx:0}, bullets:[], rocks:[], parts:[], boss:null, spawnAt:0, lastShot:0, t:0, last:0,
+    ship:{x:.5, vx:0}, bullets:[], rocks:[], parts:[], floats:[], pickups:[], pendingPickup:null, challengeResolved:false, boss:null, spawnAt:0, lastShot:0, t:0, last:0,
     keys:{left:false,right:false}, challengeTimer:null, bossAttempt:0, grading:false,
   });
 }
@@ -990,23 +995,79 @@ function spawnBoss(){
   setTimeout(()=>$("bossInput").focus(),400);
 }
 
+// Pickups use normalized positions so they survive viewport changes.
+function dropEarnedPickup(){
+  if(!G.pendingPickup) return;
+  const kind=G.pendingPickup; G.pendingPickup=null;
+  G.pickups.push({kind,x:rand(.18,.82),y:.14,age:0});
+  toast(kind==="life"?"♥ Extra life incoming — catch it with your ship!":"⚡ +5 ammo incoming — catch it with your ship!");
+}
+function collectPickup(p){
+  if(p.collected) return;
+  p.collected=true;
+  let message;
+  if(p.kind==="life" && G.lives<MAX_LIVES){
+    G.lives++; message="+1 LIFE"; hud(); pulse("tLives");
+  } else {
+    const added=Math.min(AMMO_PICKUP,MAX_AMMO-G.ammo);
+    G.ammo+=added; renderAmmo();
+    message=added ? "+"+added+" AMMO" : "AMMO FULL";
+    if(p.kind==="life") message="LIVES FULL · "+message;
+  }
+  burst(p.x*W,p.y*H,p.kind==="life"?"#ff6492":"#ffe35c",24,110);
+  float(G.ship.x*W,shipY()-45,message); sfx.bank(); toast(message);
+}
+function updatePickups(dt){
+  // Freeze during questions, pause, leaderboards, and boss typing.
+  if(G.phase!=="play") return;
+  for(const p of G.pickups){
+    const before=p.y*H;
+    p.age+=dt; p.y+=dt*.12;
+    const after=p.y*H;
+    if(Math.abs(p.x*W-G.ship.x*W)<44 && before<=shipY()+26 && after>=shipY()-32) collectPickup(p);
+  }
+  G.pickups=G.pickups.filter(p=>!p.collected && p.y*H<shipY()+60);
+}
+function drawPickups(){
+  for(const p of G.pickups){
+    const x=p.x*W,y=p.y*H,color=p.kind==="life"?"#ff6492":"#ffe35c";
+    cx.save(); cx.translate(x,y); cx.shadowColor=color; cx.shadowBlur=16+Math.sin(p.age*5)*4;
+    cx.fillStyle="#071a35"; cx.strokeStyle=color; cx.lineWidth=2;
+    cx.beginPath(); cx.moveTo(-15,-22); cx.lineTo(15,-22); cx.lineTo(22,-15); cx.lineTo(22,15); cx.lineTo(15,22); cx.lineTo(-15,22); cx.lineTo(-22,15); cx.lineTo(-22,-15); cx.closePath(); cx.fill(); cx.stroke();
+    cx.fillStyle=color; cx.shadowBlur=5;
+    if(p.kind==="life"){
+      cx.beginPath(); cx.moveTo(0,12); cx.bezierCurveTo(-28,-5,-9,-23,0,-9); cx.bezierCurveTo(9,-23,28,-5,0,12); cx.fill();
+    } else {
+      cx.beginPath(); cx.moveTo(2,-16); cx.lineTo(-12,3); cx.lineTo(-2,3); cx.lineTo(-5,17); cx.lineTo(13,-5); cx.lineTo(3,-5); cx.closePath(); cx.fill();
+    }
+    cx.shadowBlur=0; cx.font="700 10px Orbitron, sans-serif"; cx.textAlign="center"; cx.textBaseline="top";
+    cx.fillStyle="#020817"; cx.fillRect(-36,26,72,17); cx.fillStyle=color; cx.fillText(p.kind==="life"?"+1 LIFE":"+5 AMMO",0,29);
+    cx.restore();
+  }
+}
+
 // ── Loop ─────────────────────────────────────────────────────────────────────
 function loop(ts){
+  loopFrame=null;
   if(G.phase==="idle"||G.phase==="over") return;
-  const dt=Math.min(.05,(ts-(G.last||ts))/1000); G.last=ts; G.t+=dt;
+  const dt=Math.min(.05,(ts-(G.last||ts))/1000); G.last=ts;
   const active = G.phase==="play"||G.phase==="boss";
   if(active){
+    G.t+=dt;
     // ship
     const dir=(G.keys.right?1:0)-(G.keys.left?1:0);
     G.ship.vx += (dir*3.2 - G.ship.vx)*Math.min(1,dt*12); G.ship.x=Math.max(.05,Math.min(.95,G.ship.x+G.ship.vx*dt));
+    updatePickups(dt);
+    // If an ammo pickup refills an empty clip, no question is needed yet.
+    if(G.phase==="play" && G.ammo===0 && reloadDelay===null){ startChallenge(); }
     // bullets
     for(const b of G.bullets){ b.y-=H*1.1*dt; }
     G.bullets=G.bullets.filter(b=>b.y>-20);
     if(G.phase==="play"){
-      if(G.t>=G.spawnAt && G.rocks.length<6+G.wave){ spawnRock(); G.spawnAt=G.t+Math.max(.7,1.7-G.wave*.2); }
+      if(G.kills<KILLS_PER_WAVE && G.t>=G.spawnAt && G.rocks.length<6+G.wave){ spawnRock(); G.spawnAt=G.t+Math.max(.7,1.7-G.wave*.2); }
       for(const r of G.rocks){ r.y+=r.vy*dt; r.x+=r.vx*dt; r.rot+=r.spin*dt; if(r.x<r.r||r.x>W-r.r) r.vx*=-1; r.flash=Math.max(0,r.flash-dt*4);
         for(const b of G.bullets){ if(!b.dead && Math.hypot(b.x-r.x,b.y-r.y)<r.r*.9){ b.dead=true; r.hp--; r.flash=1; burst(b.x,b.y,"#2DE2E6",8,90); if(r.hp<=0){ r.dead=true; G.kills++; const p=Math.round(r.pts*mult()); G.score+=p; burst(r.x,r.y,"#8B6CFF",28,170); sfx.rock(); float(r.x,r.y,"+"+fmt(p)); hud(); pulse("tScore"); } } }
-        if(!r.dead && r.y+r.r*.6>shipY()){ r.dead=true; shipHit(); }
+        if(!r.dead && r.y+r.r*.6>shipY()){ r.dead=true; shipHit(); if(G.phase==="over") return; }
       }
       G.bullets=G.bullets.filter(b=>!b.dead); G.rocks=G.rocks.filter(r=>!r.dead);
       if(G.kills>=KILLS_PER_WAVE && G.rocks.length===0){ G.phase="boss"; G.bullets=[]; spawnBoss(); }
@@ -1023,7 +1084,7 @@ function loop(ts){
   G.parts=G.parts.filter(p=>p.l>0);
   for(const f of G.floats){ f.y-=40*dt; f.l-=dt; } G.floats=G.floats.filter(f=>f.l>0);
   draw(dt);
-  requestAnimationFrame(loop);
+  loopFrame=requestAnimationFrame(loop);
 }
 G.floats=[]; function float(x,y,t){ G.floats.push({x,y,t,l:1}); }
 
@@ -1040,6 +1101,7 @@ function draw(dt){
   // rocks
   for(const r of G.rocks) drawRock(r, WAVES[G.wave].color);
   if(G.boss) drawRock(G.boss, "#ff496c", true);
+  drawPickups();
   // bullets
   cx.fillStyle="#70faff"; cx.shadowColor="#19b8ff"; cx.shadowBlur=18; for(const b of G.bullets){ const beam=cx.createLinearGradient(b.x,b.y-17,b.x,b.y+6); beam.addColorStop(0,"rgba(255,255,255,0)"); beam.addColorStop(.32,"#ffffff"); beam.addColorStop(1,"#1c7dff"); cx.fillStyle=beam; cx.fillRect(b.x-2.5,b.y-17,5,24); } cx.shadowBlur=0;
   // ship
@@ -1074,10 +1136,10 @@ function fire(){
   if(G.phase==="boss"){ G.bullets.push({x:G.ship.x*W,y:shipY()-24}); sfx.shoot(); return; } // free shots vs boss, they bounce
   if(G.ammo<=0){ sfx.empty(); return; }
   G.ammo--; G.bullets.push({x:G.ship.x*W,y:shipY()-24}); sfx.shoot(); renderAmmo();
-  if(G.ammo===0) setTimeout(startChallenge, 350);
+  if(G.ammo===0){ clearTimeout(reloadDelay); reloadDelay=setTimeout(()=>{ reloadDelay=null; if(G.ammo===0) startChallenge(); },350); }
 }
-function renderAmmo(){ const p=$("pips"); p.innerHTML=Array.from({length:CLIP},(_,i)=>`<i class="${i<G.ammo?"":"off"}"></i>`).join(""); p.classList.toggle("low",G.ammo<=3); }
-function hud(){ $("score").textContent=fmt(G.score); $("streak").textContent="×"+mult().toFixed(2).replace(/0$/,""); $("wave").textContent=G.wave+1; $("waveProgress").style.width=Math.min(100,G.kills/KILLS_PER_WAVE*100)+"%"; $("lives").textContent="♥".repeat(G.lives)+"♡".repeat(LIVES-G.lives); $("lives").classList.toggle("danger",G.lives<=1); }
+function renderAmmo(){ const p=$("pips"); p.innerHTML=Array.from({length:Math.max(CLIP,G.ammo)},(_,i)=>`<i class="${i<G.ammo?"":"off"}"></i>`).join(""); p.classList.toggle("low",G.ammo<=3); $("ammoCount").textContent=G.ammo; $("ammoBar").setAttribute("aria-label",G.ammo+" shots remaining"); }
+function hud(){ $("score").textContent=fmt(G.score); $("streak").textContent="×"+mult().toFixed(2).replace(/0$/,""); $("wave").textContent=G.wave+1; $("waveProgress").style.width=Math.min(100,G.kills/KILLS_PER_WAVE*100)+"%"; $("lives").textContent=G.lives>LIVES?"♥ ×"+G.lives:"♥".repeat(Math.max(0,G.lives))+"♡".repeat(Math.max(0,LIVES-G.lives)); $("lives").setAttribute("aria-label",G.lives+" lives"); $("lives").classList.toggle("danger",G.lives<=1); }
 function pulse(id){ const el=$(id); el.classList.remove("pulse"); void el.offsetWidth; el.classList.add("pulse"); }
 function banner(text,sub,boss){ const b=$("banner"); b.querySelector(".w").textContent=text; b.querySelector(".w").classList.toggle("boss",!!boss); $("bsub").textContent=sub||""; b.classList.remove("on"); void b.offsetWidth; b.classList.add("on"); }
 function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2400); }
@@ -1109,7 +1171,8 @@ function nextQuestionIndex(waveIndex){
   return idx;
 }
 function startChallenge(){
-  if(G.phase!=="play") return;
+  if(G.phase!=="play"||G.ammo>0) return;
+  G.challengeResolved=false;
   G.phase="challenge"; G.keys.left=G.keys.right=false;
   const w=WAVES[G.wave]; const idx=nextQuestionIndex(G.wave); const item=w.items[idx]; G.current=item;
   $("cCat").textContent=w.name; $("cText").textContent="“"+item.t+"”"; $("coach").textContent=""; $("cNext").style.display="none";
@@ -1123,13 +1186,16 @@ function startChallenge(){
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function pick(btn){ if(G.phase!=="challenge") return; clearInterval(G.challengeTimer); resolveChallenge(btn, btn.dataset.type); }
 function resolveChallenge(btn,type){
+  if(G.phase!=="challenge"||G.challengeResolved) return;
+  G.challengeResolved=true;
   const item=G.current; G.answered++;
   $("options").querySelectorAll(".opt").forEach(b=>{ b.disabled=true; if(b.dataset.type==="R" && type!=="R"){ b.classList.add("good"); b.insertAdjacentHTML("beforeend",`<span class="tag">The move</span>`);} });
   if(type==="R"){
     G.correct++; G.streak++; G.bestStreak=Math.max(G.bestStreak,G.streak); const bonus=Math.round(150*mult()); G.score+=bonus;
     G.ammo=CLIP + (G.streak>=3?2:0); if(G.ammo>CLIP){ $("pips").innerHTML=""; }
     btn.classList.add("good"); btn.insertAdjacentHTML("beforeend",`<span class="tag">Reloaded · +${fmt(bonus)}</span>`);
-    $("coach").innerHTML=`<b>Acknowledge + ask.</b> ${item.why}`; sfx.reload(); hud(); pulse("tScore"); pulse("tStreak");
+    G.pendingPickup=G.correct%2===0?"life":"ammo";
+    $("coach").innerHTML=`<b>Acknowledge + ask.</b> ${item.why}<p style="color:${G.pendingPickup==="life"?"#ff8fb0":"#ffe35c"};margin:10px 0 0"><b>${G.pendingPickup==="life"?"♥ +1 life":"⚡ +5 ammo"} drop earned.</b> Return to the fight, then catch it with your ship.</p>`; sfx.reload(); hud(); pulse("tScore"); pulse("tStreak");
   } else {
     G.streak=0; G.wrongTypes[type]++; G.lives--; G.ammo=4;
     if(btn){ btn.classList.add("bad"); btn.insertAdjacentHTML("beforeend",`<span class="tag">${TYPE_LABEL[type]}</span>`); }
@@ -1138,7 +1204,7 @@ function resolveChallenge(btn,type){
   }
   $("cNext").style.display="inline-block"; $("cNext").focus();
 }
-$("cNext").onclick=()=>{ $("challenge").classList.remove("on"); if(G.lives<=0) return gameOver(false); G.phase="play"; renderAmmo(); G.last=performance.now(); requestAnimationFrame(loop); };
+$("cNext").onclick=()=>{ if(G.phase!=="challenge"||!G.challengeResolved) return; $("challenge").classList.remove("on"); if(G.lives<=0) return gameOver(false); G.phase="play"; dropEarnedPickup(); renderAmmo(); G.last=performance.now(); };
 
 // ── Boss ─────────────────────────────────────────────────────────────────────
 $("bossInput").addEventListener("input",()=>$("charCount").textContent=$("bossInput").value.length);
@@ -1175,7 +1241,7 @@ function showReveal(w,g,outcome){
 function nextWave(){
   G.wave++; G.grading=false; G.boss=null;
   if(G.wave>=WAVES.length) return gameOver(true);
-  G.kills=0; G.waveStartScore=G.score; G.waveStartLives=G.lives; G.rocks=[]; G.bullets=[]; G.ammo=CLIP; renderAmmo(); hud(); G.phase="play"; G.spawnAt=G.t+1.2;
+  G.kills=0; G.waveStartScore=G.score; G.waveStartLives=G.lives; G.rocks=[]; G.bullets=[]; G.ammo=Math.max(CLIP,G.ammo); renderAmmo(); hud(); G.phase="play"; G.spawnAt=G.t+1.2;
   banner("Wave "+(G.wave+1)+": "+WAVES[G.wave].name, KILLS_PER_WAVE+" rocks, then the boss");
 }
 
@@ -1221,9 +1287,10 @@ function start(){
   document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on")); document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("on"));
   document.body.classList.add("is-playing");
   $("hud").style.display="grid"; $("ammoBar").style.display="flex"; renderAmmo(); hud(); resize();
-  G.phase="play"; G.spawnAt=.8; G.last=performance.now(); banner("Wave 1: "+WAVES[0].name, KILLS_PER_WAVE+" rocks, then the boss"); requestAnimationFrame(loop);
+  G.phase="play"; G.spawnAt=.8; G.last=performance.now(); banner("Wave 1: "+WAVES[0].name, KILLS_PER_WAVE+" rocks, then the boss"); loopFrame=requestAnimationFrame(loop);
 }
 function gameOver(cleared){
+  G.pickups=[]; G.pendingPickup=null; clearTimeout(reloadDelay); reloadDelay=null; clearInterval(G.challengeTimer);
   G.phase="over"; G.rocks=[]; G.bullets=[]; G.parts=[]; G.floats=[]; G.boss=null; cx.clearRect(0,0,W,H); sfx.over(); document.body.classList.remove("is-playing"); $("hud").style.display="none"; $("ammoBar").style.display="none"; document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("on"));
   const best=Number(store.get(KEYS_LS.best)||0); const nb=G.score>best; if(nb) store.set(KEYS_LS.best,String(G.score));
   const finalWave=Math.min(G.wave,WAVES.length-1), finalWaveName=WAVES[finalWave].name;
@@ -1279,6 +1346,7 @@ function closePause(){
   $("pauseOverlay").classList.remove("on"); G.phase=pausedFrom||"play"; pausedFrom=null; G.last=performance.now(); $("pauseBtn").focus();
 }
 function restartWave(){
+  G.pickups=[]; G.pendingPickup=null; clearTimeout(reloadDelay); reloadDelay=null;
   clearInterval(G.challengeTimer); document.querySelectorAll(".overlay").forEach(o=>o.classList.remove("on"));
   G.phase="play"; G.score=G.waveStartScore; G.lives=G.waveStartLives; G.kills=0; G.streak=0; G.ammo=CLIP; G.rocks=[]; G.bullets=[]; G.parts=[]; G.floats=[]; G.boss=null; G.grading=false; G.bossAttempt=0;
   G.bossResults=G.bossResults.filter(result=>result.wave!==WAVES[G.wave].name); G.spawnAt=G.t+.8; G.last=performance.now(); pausedFrom=null;
