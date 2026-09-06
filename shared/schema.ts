@@ -1,4 +1,4 @@
-import { pgTable, serial, text, boolean, timestamp, integer, jsonb, json, varchar, index, customType } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, boolean, timestamp, integer, jsonb, json, varchar, index, uniqueIndex, customType } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -41,7 +41,8 @@ export const leadMagnets = pgTable("lead_magnets", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  // "download" = email-gated resource | "external" = app/product link | "game" = playable experience
+  // "download" = free email-gated resource | "paid_download" = Stripe purchase
+  // "external" = app/product link | "game" = playable experience
   productType: text("product_type").notNull().default("download"),
   resourceUrl: text("resource_url"),
   deliveryMethod: text("delivery_method").notNull().default("email"),
@@ -58,6 +59,10 @@ export const leadMagnets = pgTable("lead_magnets", {
   // Optional YouTube overview video, embedded on the product detail page
   videoUrl: text("video_url"),
   nextSteps: text("next_steps"),
+  // Paid digital-product fields. Price is stored in the smallest currency unit.
+  priceCents: integer("price_cents"),
+  currency: text("currency").default("usd"),
+  stripePriceId: text("stripe_price_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -115,6 +120,46 @@ export const broadcasts = pgTable("broadcasts", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Paid digital-product orders. Purchase access is intentionally separate from
+// subscribers so opting out of marketing never removes something a buyer paid for.
+export const orders = pgTable(
+  "orders",
+  {
+    id: serial("id").primaryKey(),
+    productId: integer("product_id").notNull().references(() => leadMagnets.id),
+    customerEmail: text("customer_email").notNull(),
+    customerName: text("customer_name"),
+    stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+    stripePaymentIntentId: text("stripe_payment_intent_id"),
+    amountTotal: integer("amount_total").notNull(),
+    currency: text("currency").notNull().default("usd"),
+    paymentStatus: text("payment_status").notNull().default("pending"),
+    fulfillmentStatus: text("fulfillment_status").notNull().default("pending"),
+    downloadToken: text("download_token"),
+    downloadExpiresAt: timestamp("download_expires_at"),
+    downloadCount: integer("download_count").notNull().default(0),
+    maxDownloads: integer("max_downloads").notNull().default(5),
+    lastDownloadedAt: timestamp("last_downloaded_at"),
+    paidAt: timestamp("paid_at"),
+    refundedAt: timestamp("refunded_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("orders_checkout_session_unique").on(t.stripeCheckoutSessionId),
+    uniqueIndex("orders_download_token_unique").on(t.downloadToken),
+    index("orders_product_idx").on(t.productId),
+    index("orders_customer_email_idx").on(t.customerEmail),
+  ],
+);
+
+// Stripe retries webhook events. Recording event IDs keeps fulfillment idempotent.
+export const stripeEvents = pgTable("stripe_events", {
+  eventId: text("event_id").primaryKey(),
+  eventType: text("event_type").notNull(),
+  processedAt: timestamp("processed_at").notNull().defaultNow(),
+});
+
 export const questionnaireFieldSchema = z.object({
   id: z.string(),
   label: z.string(),
@@ -131,7 +176,7 @@ export const insertLeadMagnetSchema = createInsertSchema(leadMagnets).omit({
   submissionCount: true,
   createdAt: true,
 }).extend({
-  productType: z.enum(["download", "external", "game"]),
+  productType: z.enum(["download", "paid_download", "external", "game"]),
   questionnaireFields: z.array(questionnaireFieldSchema).optional(),
   previewImages: z.array(z.string()).optional().nullable(),
   videoUrl: z.string().url().optional().nullable(),
@@ -139,6 +184,9 @@ export const insertLeadMagnetSchema = createInsertSchema(leadMagnets).omit({
   externalUrl: z.string().url().optional().nullable(),
   buttonLabel: z.string().optional().nullable(),
   iconPath: z.string().optional().nullable(),
+  priceCents: z.number().int().min(0).optional().nullable(),
+  currency: z.string().regex(/^[a-z]{3}$/).optional().nullable(),
+  stripePriceId: z.string().startsWith("price_").optional().nullable(),
 });
 
 export const insertLeadSchema = createInsertSchema(leads).omit({
@@ -186,6 +234,7 @@ export const insertBroadcastSchema = z.object({
 });
 
 export type Broadcast = typeof broadcasts.$inferSelect;
+export type Order = typeof orders.$inferSelect;
 
 export type LeadMagnet = typeof leadMagnets.$inferSelect;
 export type InsertLeadMagnet = z.infer<typeof insertLeadMagnetSchema>;

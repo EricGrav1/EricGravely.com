@@ -8,6 +8,7 @@ import About from "@/pages/about";
 import Bio from "@/pages/bio";
 import Products from "@/pages/products";
 import ProductDetail from "@/pages/product-detail";
+import PurchaseSuccess from "@/pages/purchase-success";
 import ThankYou from "@/pages/thank-you";
 import Coaching from "@/pages/coaching";
 import Assessment from "@/pages/assessment";
@@ -42,6 +43,7 @@ function Router() {
       <Route path="/bio" component={Bio} />
       <Route path="/products" component={Products} />
       <Route path="/products/:slug" component={ProductDetail} />
+      <Route path="/purchase/success" component={PurchaseSuccess} />
       <Route path="/thank-you" component={ThankYou} />
       <Route path="/coaching" component={Coaching} />
       <Route path="/assessment" component={Assessment} />

@@ -11,6 +11,16 @@ const BRAND_TAGLINE = "Coach. Develop. Transform.";
 const REPLY_TO = "eric@ericgravely.com";
 const BRAND_URL = getSiteBaseUrl(); // used only when no request context available
 
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  }[character] || character));
+}
+
 async function getCredentials() {
   // Preferred: explicit secrets (set in Replit Secrets). Falls back to the
   // Resend connector below only when RESEND_API_KEY is not set.
@@ -170,7 +180,7 @@ function leadMagnetEmailHtml(
 </html>`;
 }
 
-function newsletterEmailHtml(firstName: string, siteBaseUrl: string): string {
+function newsletterEmailHtml(email: string, firstName: string, siteBaseUrl: string): string {
   const greeting = firstName ? `, ${firstName}` : "";
   return `<!DOCTYPE html>
 <html>
@@ -192,7 +202,7 @@ function newsletterEmailHtml(firstName: string, siteBaseUrl: string): string {
       </a>
 
       <div style="margin-top:32px;">
-        ${emailFooter("", siteBaseUrl).replace(/unsubscribe[\s\S]*<\/p>/, "")}
+        ${emailFooter(email, siteBaseUrl)}
       </div>
     </div>
   </div>
@@ -223,6 +233,76 @@ export async function sendLeadMagnetEmail(
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error("Email send failed:", msg);
+    return { success: false, error: msg };
+  }
+}
+
+// Transactional delivery for paid products. This intentionally has no
+// unsubscribe link and does not enroll the buyer in marketing emails.
+export async function sendPurchaseDeliveryEmail({
+  email,
+  customerName,
+  productName,
+  downloadUrl,
+  siteBaseUrl,
+}: {
+  email: string;
+  customerName: string;
+  productName: string;
+  downloadUrl: string;
+  siteBaseUrl: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const { client, fromEmail } = await getUncachableResendClient();
+    if (!fromEmail) return { success: false, error: "From email not configured" };
+    const firstName = escapeHtml(customerName.trim().split(/\s+/)[0] || "there");
+    const safeProductName = escapeHtml(productName);
+    const { error } = await client.emails.send({
+      from: fromEmail,
+      replyTo: REPLY_TO,
+      to: email,
+      subject: `Your ${productName} is ready`,
+      html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#F3F3F1;margin:0;padding:0;">
+  <div style="max-width:600px;margin:0 auto;padding:40px 20px;">
+    <div style="background:#ffffff;border:1px solid rgba(0,0,0,0.10);border-radius:12px;padding:48px 40px;">
+      ${brandBadge()}
+      <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#B08D1E;text-align:center;margin-bottom:12px;">Purchase confirmed</div>
+      <h1 style="font-size:26px;font-weight:700;color:#0D0D0D;margin:0 0 12px;line-height:1.3;text-align:center;">
+        Your coaching tool is ready, ${firstName}
+      </h1>
+      <p style="font-size:15px;color:#555550;margin:0 0 30px;line-height:1.65;text-align:center;">
+        Thanks for purchasing ${safeProductName}. Your download includes the Excel tool and the quick-start guide.
+      </p>
+      <div style="text-align:center;margin-bottom:30px;">
+        <a href="${downloadUrl}" style="display:inline-block;background:#0D0D0D;color:#ffffff;text-decoration:none;padding:16px 34px;border-radius:8px;font-weight:700;font-size:16px;">
+          Download your files
+        </a>
+      </div>
+      <div style="background:#F8F1E2;border:1px solid #E4C982;border-radius:8px;padding:18px 20px;margin-bottom:28px;">
+        <p style="color:#3A3A36;font-size:13px;line-height:1.65;margin:0;">
+          This secure link expires in 30 days and allows up to five downloads. Save the files somewhere you can find them. If you need the link reset, reply to this email.
+        </p>
+      </div>
+      <p style="color:#555550;font-size:14px;line-height:1.7;margin:0 0 28px;">
+        Start with the <strong>Start Here</strong> tab, then review the completed example before using the blank scorecard with your team.
+      </p>
+      <div style="border-top:1px solid rgba(0,0,0,0.08);padding-top:20px;text-align:center;">
+        <p style="color:#999994;font-size:12px;margin:0;line-height:1.6;">${BRAND_NAME} · <a href="${siteBaseUrl}" style="color:#999994;text-decoration:none;">${siteBaseUrl.replace(/^https?:\/\//, "")}</a></p>
+        <p style="color:#999994;font-size:11px;margin:5px 0 0;line-height:1.6;">Transactional purchase email - you were not added to a marketing list.</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`,
+    });
+    if (error) return { success: false, error: error.message };
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error("Purchase email failed:", msg);
     return { success: false, error: msg };
   }
 }
@@ -301,7 +381,7 @@ export async function sendNewsletterConfirmationEmail(
       replyTo: REPLY_TO,
       to: email,
       subject: `You're in — ${BRAND_NAME}`,
-      html: newsletterEmailHtml(firstName, siteBaseUrl),
+      html: newsletterEmailHtml(email, firstName, siteBaseUrl),
     });
     if (error) return { success: false, error: error.message };
     return { success: true };

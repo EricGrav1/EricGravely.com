@@ -331,4 +331,207 @@
   .social-feed-marquee:hover {
     animation-play-state: paused;
   }
+
+  /* ── Admin control center ── */
+  .admin-login-shell {
+    background:
+      radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.08), transparent 28%),
+      #080808;
+  }
+
+  .admin-login-intro {
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.035), transparent 52%),
+      #0e0e0e;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .admin-grid-noise {
+    position: absolute;
+    inset: 0;
+    opacity: 0.25;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+    background-size: 52px 52px;
+    mask-image: linear-gradient(to bottom right, black, transparent 72%);
+    pointer-events: none;
+  }
+
+  .admin-shell {
+    background:
+      radial-gradient(circle at 82% 0%, var(--c-accent-06), transparent 30rem),
+      var(--c-bg);
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 50;
+    width: 248px;
+    transform: translateX(-100%);
+    color: white;
+    background: #0c0c0c;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    transition: transform 220ms ease;
+  }
+
+  .admin-sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .admin-nav-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.75rem;
+    border-radius: 0.65rem;
+    padding: 0.7rem 0.75rem;
+    text-align: left;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.46);
+    transition: color 160ms ease, background-color 160ms ease, transform 160ms ease;
+  }
+
+  .admin-nav-item:hover {
+    color: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 255, 0.055);
+  }
+
+  .admin-nav-item.is-active {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.105);
+    box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.88);
+  }
+
+  .admin-mobile-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(3px);
+  }
+
+  .admin-main {
+    min-height: 100vh;
+  }
+
+  .admin-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    height: 62px;
+    align-items: center;
+    gap: 1rem;
+    padding: 0 1.25rem;
+    border-bottom: 1px solid var(--c-border);
+    background: color-mix(in srgb, var(--c-bg) 88%, transparent);
+    backdrop-filter: blur(18px);
+  }
+
+  .admin-menu-button {
+    display: inline-flex;
+    height: 36px;
+    width: 36px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.6rem;
+    border: 1px solid var(--c-border);
+    color: var(--c-fg);
+    background: var(--c-card);
+  }
+
+  .admin-workspace {
+    width: 100%;
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 5rem;
+  }
+
+  .admin-action-card {
+    position: relative;
+    min-height: 168px;
+    overflow: hidden;
+    border-radius: 1rem;
+    padding: 1rem;
+    border: 1px solid var(--c-card-border);
+    background: var(--c-card);
+    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .admin-action-card::after {
+    content: "";
+    position: absolute;
+    right: -32px;
+    bottom: -42px;
+    width: 110px;
+    height: 110px;
+    border-radius: 999px;
+    border: 1px solid var(--c-border);
+    opacity: 0.6;
+  }
+
+  .admin-action-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--c-fg-20);
+    background: var(--c-accent-06);
+  }
+
+  .admin-action-icon,
+  .admin-callout-icon {
+    display: inline-flex;
+    height: 34px;
+    width: 34px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.65rem;
+    color: var(--c-fg);
+    border: 1px solid var(--c-border);
+    background: var(--c-bg);
+  }
+
+  .admin-action-arrow {
+    position: absolute;
+    right: 1rem;
+    top: 1rem;
+    height: 1rem;
+    width: 1rem;
+    color: var(--c-fg-30);
+    transition: transform 180ms ease, color 180ms ease;
+  }
+
+  .admin-action-card:hover .admin-action-arrow {
+    transform: translate(2px, -2px);
+    color: var(--c-fg);
+  }
+
+  .admin-callout {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+    padding: 1rem;
+    border-radius: 1rem;
+    border: 1px solid var(--c-border);
+    background: var(--c-accent-06);
+  }
+
+  @media (min-width: 1024px) {
+    .admin-sidebar {
+      transform: translateX(0);
+    }
+
+    .admin-main {
+      margin-left: 248px;
+    }
+
+    .admin-topbar {
+      padding: 0 2rem;
+    }
+
+    .admin-workspace {
+      padding: 3rem 2rem 6rem;
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { PackageOpen, ExternalLink, Eye, ArrowRight, Gamepad2, Play } from "lucide-react";
+import { PackageOpen, ExternalLink, Eye, ArrowRight, Gamepad2, Play, FileSpreadsheet, ShieldCheck } from "lucide-react";
 import { SiApple } from "react-icons/si";
 import { Link } from "wouter";
 import { SiteNav } from "@/components/SiteNav";
@@ -224,8 +224,74 @@ function DownloadProductCard({ product, index }: { product: LeadMagnet; index: n
   );
 }
 
+function formatPrice(product: LeadMagnet) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: (product.currency ?? "usd").toUpperCase(),
+  }).format((product.priceCents ?? 0) / 100);
+}
+
+// ── Paid digital tool card ──────────────────────────────────────────────────
+function PaidProductCard({ product, index }: { product: LeadMagnet; index: number }) {
+  const previews = (product.previewImages as string[] | null) ?? [];
+  const href = `/products/${slugify(product.title)}`;
+
+  return (
+    <motion.article
+      initial={{ opacity: 0, y: 28 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ duration: 0.55, delay: index * 0.1, ease: [0.22, 1, 0.36, 1] }}
+      className="rounded-2xl overflow-hidden grid lg:grid-cols-[1.05fr,0.95fr]"
+      style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}
+      data-testid={`card-paid-${product.id}`}
+    >
+      <Link href={href} className="block min-h-72 overflow-hidden" style={{ background: "#f5f2ec" }}>
+        {previews[0] ? (
+          <img
+            src={previews[0]}
+            alt={`${product.title} workbook preview`}
+            className="w-full h-full min-h-72 object-cover object-top transition-transform duration-500 hover:scale-[1.02]"
+          />
+        ) : (
+          <div className="min-h-72 h-full flex items-center justify-center">
+            <FileSpreadsheet className="w-14 h-14" style={{ color: "var(--c-accent)" }} />
+          </div>
+        )}
+      </Link>
+
+      <div className="p-7 md:p-9 flex flex-col justify-center">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+          <span className="label-track">Manager Development Tool</span>
+          <span className="font-display text-2xl font-bold" style={{ color: "var(--c-fg)" }}>
+            {formatPrice(product)}
+          </span>
+        </div>
+        <Link href={href}>
+          <h2 className="font-display text-3xl font-bold leading-tight mb-4 hover:text-accent transition-colors" style={{ color: "var(--c-fg)" }}>
+            {product.title}
+          </h2>
+        </Link>
+        <p className="text-base leading-relaxed mb-6" style={{ color: "var(--c-fg-55)" }}>
+          {product.description}
+        </p>
+        <div className="space-y-2.5 mb-7 text-sm" style={{ color: "var(--c-fg-70)" }}>
+          <div className="flex items-center gap-2.5"><FileSpreadsheet className="w-4 h-4" style={{ color: "var(--c-accent)" }} /> Excel scorecard + quick-start guide</div>
+          <div className="flex items-center gap-2.5"><ShieldCheck className="w-4 h-4" style={{ color: "var(--c-accent)" }} /> Secure checkout and instant delivery</div>
+        </div>
+        <Link href={href} className="btn-accent w-full sm:w-auto px-6 py-3.5 rounded-lg font-bold text-sm inline-flex items-center justify-center gap-2">
+          See what&apos;s inside <ArrowRight className="w-4 h-4" />
+        </Link>
+      </div>
+    </motion.article>
+  );
+}
+
 // ── Smart dispatcher ──────────────────────────────────────────────────────────
 function ProductCard({ product, index }: { product: LeadMagnet; index: number }) {
+  if (product.productType === "paid_download") {
+    return <PaidProductCard product={product} index={index} />;
+  }
   if (product.productType === "game") {
     return <GameCard product={product} index={index} />;
   }
@@ -270,6 +336,7 @@ export default function Products() {
   const gameProducts = products?.filter((p) => p.productType === "game") ?? [];
   const appProducts = products?.filter((p) => p.productType === "external") ?? [];
   const downloadProducts = products?.filter((p) => p.productType === "download") ?? [];
+  const paidProducts = products?.filter((p) => p.productType === "paid_download") ?? [];
 
   return (
     <div style={{ backgroundColor: "var(--c-bg)", minHeight: "100vh" }}>
@@ -294,17 +361,32 @@ export default function Products() {
                 <span className="gold-underline">That's why I know what works.</span>
               </h1>
               <p className="text-lg leading-relaxed" style={{ color: "var(--c-fg-55)" }}>
-                Free frameworks and tools I use with the reps and managers I coach. Answer a few quick questions and they're delivered straight to your inbox.
+                Practical tools built from the systems I use with the reps and managers I coach — from free resources to ready-to-use coaching systems.
               </p>
             </motion.div>
           </div>
         </section>
 
+        {(isLoading || paidProducts.length > 0) && (
+          <section className="py-16 md:py-20" style={{ background: "var(--c-bg2)", borderTop: "1px solid var(--c-border)" }}>
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="label-track mb-8">Manager Tools</div>
+              {isLoading ? (
+                <div className="rounded-2xl h-96 animate-pulse" style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }} />
+              ) : (
+                <div className="space-y-6">
+                  {paidProducts.map((product, i) => <ProductCard key={product.id} product={product} index={i} />)}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Free Resources section */}
         <section
           id="free-resources"
           className="py-16 md:py-20"
-          style={{ background: "var(--c-bg2)", borderTop: "1px solid var(--c-border)", scrollMarginTop: "5rem" }}
+          style={{ background: "var(--c-bg)", borderTop: "1px solid var(--c-border)", scrollMarginTop: "5rem" }}
         >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="label-track mb-8">Free Resources</div>

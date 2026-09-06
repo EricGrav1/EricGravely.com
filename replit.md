@@ -19,10 +19,11 @@ Preferred communication style: Simple, everyday language.
 
 Pages under `client/src/pages/`:
 - Home (`/`), About (`/about`), Coaching (`/coaching`) — brand/marketing pages
-- Products (`/products`) — resource cards with multi-step questionnaire (auto-advance selects, progress bar), contact step with nurture-sequence opt-in checkbox (unchecked by default), and view-only preview lightbox (renders `previewImages` when present). The signup flow lives in `components/ProductSignupFlow.tsx` (shared with detail pages).
-- Product detail (`/products/:slug`) — per-product page with its own meta tags; slug is derived from the title via `shared/slug.ts` (renaming a product changes its URL). Records a view on open.
+- Products (`/products`) — paid tools, free resource cards with multi-step questionnaire, apps, and games. Paid tools use hosted Stripe Checkout; free downloads use the shared `components/ProductSignupFlow.tsx` email-gated flow.
+- Product detail (`/products/:slug`) — per-product page with its own meta tags; paid downloads show price, included files, license/refund terms, previews, and a Stripe buy button. Slugs are derived from the title.
+- Purchase success (`/purchase/success`) — confirms the Stripe session and exposes the same secure, limited download link sent by email.
 - Thank you (`/thank-you`), Unsubscribe (`/unsubscribe`)
-- Admin (`/admin`) — five tabs: Dashboard (stat tiles, 30-day signups chart, per-product conversion table), Signups (expandable questionnaire answers), Products (create/edit products, active toggle, resource file upload), Sequence (CRUD editor), Questions (per-resource questionnaire editor)
+- Admin (`/admin`) — password-gated control center with grouped navigation including Orders & delivery (Stripe readiness, paid orders, revenue, delivery status, and secure-link reset/resend), plus subscribers, email automation, broadcasts, products, and signup questions.
 - Per-page SEO titles/descriptions via `usePageMeta` in `client/src/lib/seo.ts`; `robots.txt` + `sitemap.xml` served by Express (sitemap includes product slugs)
 
 ### Backend Architecture
@@ -35,6 +36,11 @@ Key API endpoints:
 - `GET /api/unsubscribe` — Token-validated unsubscribe
 - `GET /api/lead-magnets` — Active resources (public)
 - `POST /api/lead-magnets/:id/view` — View tracking (fired from detail pages and card signup opens; powers dashboard conversion stats)
+- `POST /api/checkout/session` — creates a hosted Stripe Checkout Session from the server-side product price
+- `POST /api/stripe/webhook` — signature-verified payment fulfillment and refund revocation
+- `GET /api/checkout/session/:sessionId` — confirms a completed checkout and returns buyer download status
+- `GET /api/purchases/download?token=` — limited, expiring paid-product delivery
+- `GET /api/admin/orders`, `POST /api/admin/orders/:id/resend` — order visibility and buyer delivery support
 - `GET /api/admin/stats` — Dashboard aggregates (totals, 7-day deltas, 30-day daily signups, per-product conversion)
 - `GET /api/admin/leads` — Signups joined with subscriber state + resource title
 - `GET/POST/PATCH /api/admin/lead-magnets` — Resource management incl. questionnaireFields editing; GET adds `fileUploaded` per product
@@ -48,7 +54,7 @@ Key API endpoints:
 - TWO sequences, split by `sequence_emails.audience`: "resource" (free-resource signups) and "newsletter" (footer signups). Managed as two sections in /admin → Sequence.
 - **Auto-enrollment**: every signup is enrolled in the matching sequence (no opt-in checkbox — forms show a consent disclaimer: "By submitting, you agree to receive emails from Eric Gravely"). `subscribers.sequenceAudience` records which sequence (null = legacy, treated as "resource"); first enrollment sticks — progress never resets and a later signup via the other path doesn't switch sequences.
 - `server/sequence.ts` — scheduler started from `server/index.ts`; ticks every 10 min (first pass 15s after boot), max 25 sends/run, 1 email per subscriber per tick, per-audience email ordering. Failed sends do NOT advance the step (retried next tick).
-- Seeded with 4 default resource emails (day 1/3/5/7) only when the table is empty; the newsletter series starts empty (add via /admin).
+- Seeded independently per audience: 4 default resource emails (day 1/3/5/7) and 3 default newsletter emails (day 1/3/6). Existing edits are never overwritten; each series remains fully editable in /admin.
 - **Broadcasts** (`server/broadcast.ts`): one-off emails to ALL active subscribers from /admin → Broadcast. Test-send to any address first; sends throttled 600ms apart (Resend rate limit), progress persisted to the `broadcasts` table and polled by the UI; one broadcast at a time (in-memory lock). Unsubscribe footer included automatically.
 
 ### Data Layer
@@ -56,7 +62,9 @@ Key API endpoints:
 - **Seed**: `server/seed.ts` runs on startup (products, default 5-question questionnaire backfill, sequence emails)
 
 Data models:
-- `lead_magnets`: id, title, description, productType (download|external), resourceUrl, externalUrl, buttonLabel, iconPath, deliveryMethod, active, viewCount, submissionCount, questionnaireFields (jsonb: id/label/required/type("text"|"select")/options), previewImages (jsonb string[]), nextSteps, createdAt
+- `lead_magnets`: includes `productType` (`download|paid_download|external|game`), price/currency/Stripe Price ID, resource and preview fields, and engagement counts
+- `orders`: Stripe session/payment references, buyer contact, paid/fulfillment status, expiring download token, download limits, and timestamps
+- `stripe_events`: processed Stripe event IDs for idempotent webhook handling
 - `subscribers`: id, email, firstName, tag, unsubscribed, sequenceOptIn, sequenceOptInAt, sequenceStep, lastSequenceSentAt, createdAt
 - `leads`: id, email, leadMagnetId (FK), questionnaireAnswers (jsonb), unsubscribed, createdAt
 - `sequence_emails`: id, dayOffset, subject, body (plain text, {{first_name}} personalization), active, createdAt
@@ -85,5 +93,8 @@ Data models:
 ### Required Environment Variables
 - `DATABASE_URL`, `SESSION_SECRET`, `UNSUBSCRIBE_SECRET` (falls back to a default — should be set in production)
 - `ADMIN_PASSWORD` — admin panel login (set as a secret)
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_SALES_MANAGER_TOOL_PRICE_ID` — paid product checkout and fulfillment
+- `SITE_BASE_URL=https://ericgravely.com` — canonical checkout, email, and download links
+- `RESEND_API_KEY`, `RESEND_FROM_EMAIL` — transactional and marketing email delivery
 - `MATRIX_URL` — legacy resource URL
 - Resend credentials come from the Replit Connector, not env vars
