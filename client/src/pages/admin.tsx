@@ -5,6 +5,8 @@ import {
   Users, Mail, ListChecks, ChevronDown, ChevronUp,
   Plus, Trash2, Loader2, Save, X, Pencil, Lock, LogOut,
   LayoutDashboard, Package, Upload, CheckCircle2, AlertTriangle, ExternalLink, Send,
+  Globe2, ArrowUpRight, ShieldCheck, Radio, Menu, Activity,
+  ShoppingBag, RefreshCw, CreditCard,
 } from "lucide-react";
 import { Link } from "wouter";
 import {
@@ -29,6 +31,12 @@ interface AdminLead {
   createdAt: string;
 }
 
+function isAdminDesignPreview(): boolean {
+  if (!import.meta.env.DEV || typeof window === "undefined") return false;
+  const localHost = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+  return localHost && new URLSearchParams(window.location.search).get("preview") === "1";
+}
+
 function formatDate(d: string | Date): string {
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
@@ -45,6 +53,46 @@ interface AdminStats {
   perProduct: { id: number; title: string; viewCount: number; submissionCount: number; conversionRate: number }[];
   signupsByDay: { date: string; count: number }[];
 }
+
+const PREVIEW_STATS: AdminStats = {
+  totalLeads: 0,
+  leadsLast7: 0,
+  leadsPrev7: 0,
+  totalSubscribers: 0,
+  activeSubscribers: 0,
+  sequenceOptIns: 0,
+  unsubscribed: 0,
+  perProduct: [
+    { id: 1, title: "The Ask & Close Playbook", viewCount: 0, submissionCount: 0, conversionRate: 0 },
+    { id: 2, title: "Sales Rep Self-Coaching Tool", viewCount: 0, submissionCount: 0, conversionRate: 0 },
+    { id: 3, title: "Sales Coach AI", viewCount: 0, submissionCount: 0, conversionRate: 0 },
+  ],
+  signupsByDay: Array.from({ length: 30 }, (_, index) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (29 - index));
+    return { date: date.toISOString().slice(0, 10), count: 0 };
+  }),
+};
+
+const PREVIEW_LEADS: AdminLead[] = [];
+
+const PREVIEW_PRODUCTS: Array<LeadMagnet & { fileUploaded: boolean | null }> = [
+  { id: 1, title: "The Ask & Close Playbook", description: "A question-based selling framework for every stage of the deal.", productType: "download", resourceUrl: "/downloads/ask-close-playbook.pdf", deliveryMethod: "email", externalUrl: null, buttonLabel: "Get the free playbook", iconPath: null, active: true, viewCount: 0, submissionCount: 0, questionnaireFields: [], previewImages: ["/ask-close-playbook-preview.jpg"], videoUrl: null, nextSteps: null, priceCents: null, currency: "usd", stripePriceId: null, createdAt: new Date(), fileUploaded: true },
+  { id: 2, title: "Sales Rep Self-Coaching Tool", description: "Score your sales calls and see exactly where performance leaks.", productType: "download", resourceUrl: "/downloads/salesrep-coaching-tool.xlsx", deliveryMethod: "email", externalUrl: null, buttonLabel: "Get the free tool", iconPath: null, active: true, viewCount: 0, submissionCount: 0, questionnaireFields: [], previewImages: ["/sales-rep-self-coaching-preview.png"], videoUrl: null, nextSteps: null, priceCents: null, currency: "usd", stripePriceId: null, createdAt: new Date(), fileUploaded: true },
+  { id: 3, title: "Sales Coach AI", description: "On-demand AI coaching for sales calls, objections, and performance.", productType: "external", resourceUrl: null, deliveryMethod: "email", externalUrl: "https://apps.apple.com/us/app/sales-coach-ai/id6748286535", buttonLabel: "View on the App Store", iconPath: "/sales-coach-ai-icon.png", active: true, viewCount: 0, submissionCount: 0, questionnaireFields: null, previewImages: null, videoUrl: null, nextSteps: null, priceCents: null, currency: "usd", stripePriceId: null, createdAt: new Date(), fileUploaded: null },
+  { id: 4, title: "Sales Manager Coaching Tool", description: "A structured scorecard for focused, measurable sales coaching.", productType: "paid_download", resourceUrl: "/downloads/Sales-Manager-Coaching-Tool-Bundle.zip", deliveryMethod: "purchase", externalUrl: null, buttonLabel: "Buy now — $39.99", iconPath: null, active: true, viewCount: 0, submissionCount: 0, questionnaireFields: null, previewImages: ["/sales-manager-coaching-tool-preview.png"], videoUrl: null, nextSteps: null, priceCents: 3999, currency: "usd", stripePriceId: null, createdAt: new Date(), fileUploaded: true },
+];
+
+const PREVIEW_SEQUENCE_EMAILS: SequenceEmail[] = [
+  { id: 1, dayOffset: 1, subject: "Did you open it yet, {{first_name}}?", body: "Quick check-in on the resource I sent you.", audience: "resource", active: true, createdAt: new Date() },
+  { id: 2, dayOffset: 3, subject: "The mistake I see on almost every call", body: "A practical sales coaching lesson.", audience: "resource", active: true, createdAt: new Date() },
+  { id: 3, dayOffset: 5, subject: "Steal this: my 3-question close check", body: "Three questions to pressure-test a deal.", audience: "resource", active: true, createdAt: new Date() },
+  { id: 4, dayOffset: 1, subject: "The rule I use before coaching any rep", body: "Diagnose before you prescribe.", audience: "newsletter", active: true, createdAt: new Date() },
+  { id: 5, dayOffset: 3, subject: "Your reps do not need another pep talk", body: "Turn broad feedback into observable behavior.", audience: "newsletter", active: true, createdAt: new Date() },
+  { id: 6, dayOffset: 6, subject: "The three steps behind better rep performance", body: "Read the Rep. Examine the Evidence. Practice to Performance.", audience: "newsletter", active: true, createdAt: new Date() },
+];
+
+const PREVIEW_BROADCASTS: Broadcast[] = [];
 
 function StatTile({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
@@ -78,8 +126,12 @@ function ChartTooltip({ active, payload, label }: {
   );
 }
 
-function DashboardTab() {
-  const { data: stats, isLoading } = useQuery<AdminStats>({ queryKey: ["/api/admin/stats"] });
+function DashboardTab({ onNavigate }: { onNavigate: (tab: Tab) => void }) {
+  const { data: stats, isLoading } = useQuery<AdminStats>({
+    queryKey: ["/api/admin/stats"],
+    placeholderData: isAdminDesignPreview() ? PREVIEW_STATS : undefined,
+    enabled: !isAdminDesignPreview(),
+  });
   const { theme } = useTheme();
   // Brand gold, snapped per surface (validated for lightness + contrast)
   const barColor = theme === "dark" ? "#B08D1E" : "#C9A227";
@@ -97,7 +149,46 @@ function DashboardTab() {
       : `${weekDelta >= 0 ? "+" : ""}${weekDelta} vs. previous 7 days`;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
+      <section className="grid gap-3 md:grid-cols-3">
+        <button
+          onClick={() => onNavigate("sequence")}
+          className="admin-action-card group text-left"
+          data-testid="quick-action-automations"
+        >
+          <div className="admin-action-icon"><Radio className="w-4 h-4" /></div>
+          <div className="mt-5 text-sm font-semibold" style={{ color: "var(--c-fg)" }}>Automated emails</div>
+          <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--c-fg-45)" }}>
+            Review the emails new subscribers receive after signup.
+          </p>
+          <ArrowUpRight className="admin-action-arrow" />
+        </button>
+        <button
+          onClick={() => onNavigate("broadcast")}
+          className="admin-action-card group text-left"
+          data-testid="quick-action-broadcast"
+        >
+          <div className="admin-action-icon"><Send className="w-4 h-4" /></div>
+          <div className="mt-5 text-sm font-semibold" style={{ color: "var(--c-fg)" }}>Send an update</div>
+          <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--c-fg-45)" }}>
+            Write, test, and send a one-time email to your active list.
+          </p>
+          <ArrowUpRight className="admin-action-arrow" />
+        </button>
+        <button
+          onClick={() => onNavigate("products")}
+          className="admin-action-card group text-left"
+          data-testid="quick-action-products"
+        >
+          <div className="admin-action-icon"><Package className="w-4 h-4" /></div>
+          <div className="mt-5 text-sm font-semibold" style={{ color: "var(--c-fg)" }}>Manage products</div>
+          <p className="mt-1 text-xs leading-relaxed" style={{ color: "var(--c-fg-45)" }}>
+            Update offers, downloads, previews, and public visibility.
+          </p>
+          <ArrowUpRight className="admin-action-arrow" />
+        </button>
+      </section>
+
       {/* Stat tiles */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatTile label="Total signups" value={stats.totalLeads} />
@@ -181,7 +272,11 @@ function DashboardTab() {
 
 // ── Signups tab ───────────────────────────────────────────────────────────────
 function SignupsTab() {
-  const { data: leads, isLoading } = useQuery<AdminLead[]>({ queryKey: ["/api/admin/leads"] });
+  const { data: leads, isLoading } = useQuery<AdminLead[]>({
+    queryKey: ["/api/admin/leads"],
+    placeholderData: isAdminDesignPreview() ? PREVIEW_LEADS : undefined,
+    enabled: !isAdminDesignPreview(),
+  });
   const [expanded, setExpanded] = useState<number | null>(null);
 
   if (isLoading) {
@@ -270,6 +365,9 @@ interface ProductFormData {
   resourceUrl: string;
   videoUrl: string;
   previewImages: string[];
+  priceCents: number | null;
+  currency: string;
+  stripePriceId: string;
   active: boolean;
 }
 
@@ -277,12 +375,14 @@ function emptyProductForm(): ProductFormData {
   return {
     title: "", description: "", productType: "download",
     buttonLabel: "", externalUrl: "", iconPath: "", resourceUrl: "",
-    videoUrl: "", previewImages: [], active: true,
+    videoUrl: "", previewImages: [], priceCents: null, currency: "usd", stripePriceId: "", active: true,
   };
 }
 
 function toApiPayload(f: ProductFormData) {
   const isOutbound = f.productType === "external" || f.productType === "game";
+  const isDownload = f.productType === "download" || f.productType === "paid_download";
+  const isPaid = f.productType === "paid_download";
   return {
     title: f.title.trim(),
     description: f.description.trim(),
@@ -290,9 +390,12 @@ function toApiPayload(f: ProductFormData) {
     buttonLabel: f.buttonLabel.trim() || null,
     externalUrl: isOutbound ? (f.externalUrl.trim() || null) : null,
     iconPath: f.iconPath.trim() || null,
-    resourceUrl: f.productType === "download" ? (f.resourceUrl || null) : null,
+    resourceUrl: isDownload ? (f.resourceUrl || null) : null,
     videoUrl: f.videoUrl.trim() || null,
     previewImages: f.previewImages.length > 0 ? f.previewImages : null,
+    priceCents: isPaid ? f.priceCents : null,
+    currency: isPaid ? f.currency.toLowerCase() : "usd",
+    stripePriceId: isPaid ? (f.stripePriceId.trim() || null) : null,
     active: f.active,
   };
 }
@@ -441,7 +544,7 @@ function PreviewImagesManager({
       />
       {error && <p className="text-xs" style={{ color: "#B4552D" }}>{error}</p>}
       <p className="text-[11px]" style={{ color: "var(--c-fg-45)" }}>
-        Screenshots of a few pages work great. Shown as a view-only "Peek inside" — visitors still have to sign up for the real file.
+        Screenshots of a few pages work great. They are view-only previews; the downloadable file remains gated by the product&apos;s signup or purchase flow.
       </p>
     </div>
   );
@@ -463,8 +566,16 @@ function ProductForm({
   const handleSave = () => {
     if (!form.title.trim()) { setError("Title is required."); return; }
     if (!form.description.trim()) { setError("Description is required."); return; }
-    if (form.productType !== "download" && !form.externalUrl.trim()) {
+    if ((form.productType === "external" || form.productType === "game") && !form.externalUrl.trim()) {
       setError("Apps and games need a destination link.");
+      return;
+    }
+    if (form.productType === "paid_download" && (!form.priceCents || form.priceCents < 50)) {
+      setError("Paid downloads need a valid price.");
+      return;
+    }
+    if (form.productType === "paid_download" && form.stripePriceId.trim() && !form.stripePriceId.trim().startsWith("price_")) {
+      setError("Stripe Price IDs start with price_. Leave this blank to use the price entered here.");
       return;
     }
     if (form.videoUrl.trim() && !youtubeVideoId(form.videoUrl.trim())) {
@@ -519,6 +630,7 @@ function ProductForm({
             data-testid="select-product-type"
           >
             <option value="download">Free download (email-gated)</option>
+            <option value="paid_download">Paid digital download (Stripe)</option>
             <option value="external">External link (app, paid product)</option>
             <option value="game">Sales game (playable link)</option>
           </select>
@@ -541,13 +653,13 @@ function ProductForm({
           type="text"
           value={form.buttonLabel}
           onChange={(e) => set({ buttonLabel: e.target.value })}
-          placeholder={form.productType === "game" ? "e.g. Play the game" : form.productType === "external" ? "e.g. Download on the App Store" : "e.g. Get the free playbook"}
+          placeholder={form.productType === "game" ? "e.g. Play the game" : form.productType === "external" ? "e.g. Download on the App Store" : form.productType === "paid_download" ? "e.g. Buy the coaching tool" : "e.g. Get the free playbook"}
           className="input-dark w-full px-3.5 py-2.5 rounded-lg text-sm"
           data-testid="input-product-button"
         />
       </div>
 
-      {form.productType !== "download" ? (
+      {form.productType === "external" || form.productType === "game" ? (
         <>
           <div>
             <label className="text-xs block mb-1" style={labelStyle}>
@@ -575,13 +687,46 @@ function ProductForm({
           </div>
         </>
       ) : (
-        <div>
-          <label className="text-xs block mb-1" style={labelStyle}>Resource file (delivered by email)</label>
-          <FileUploader
-            currentUrl={form.resourceUrl}
-            onUploaded={(resourceUrl) => set({ resourceUrl })}
-          />
-        </div>
+        <>
+          {form.productType === "paid_download" && (
+            <div className="grid sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs block mb-1" style={labelStyle}>Price (USD)</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-sm" style={{ color: "var(--c-fg-45)" }}>$</span>
+                  <input
+                    type="number"
+                    min="0.50"
+                    step="0.01"
+                    value={form.priceCents == null ? "" : (form.priceCents / 100).toFixed(2)}
+                    onChange={(e) => set({ priceCents: e.target.value ? Math.round(Number(e.target.value) * 100) : null })}
+                    className="input-dark w-full pl-7 pr-3.5 py-2.5 rounded-lg text-sm"
+                    data-testid="input-product-price"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs block mb-1" style={labelStyle}>Stripe Price ID (optional)</label>
+                <input
+                  type="text"
+                  value={form.stripePriceId}
+                  onChange={(e) => set({ stripePriceId: e.target.value })}
+                  placeholder="price_…"
+                  className="input-dark w-full px-3.5 py-2.5 rounded-lg text-sm"
+                />
+              </div>
+            </div>
+          )}
+          <div>
+            <label className="text-xs block mb-1" style={labelStyle}>
+              {form.productType === "paid_download" ? "Purchase bundle (private ZIP)" : "Resource file (delivered by email)"}
+            </label>
+            <FileUploader
+              currentUrl={form.resourceUrl}
+              onUploaded={(resourceUrl) => set({ resourceUrl })}
+            />
+          </div>
+        </>
       )}
 
       <div>
@@ -633,7 +778,11 @@ function ProductForm({
 }
 
 function ProductsTab() {
-  const { data: magnets, isLoading } = useQuery<AdminMagnet[]>({ queryKey: ["/api/admin/lead-magnets"] });
+  const { data: magnets, isLoading } = useQuery<AdminMagnet[]>({
+    queryKey: ["/api/admin/lead-magnets"],
+    placeholderData: isAdminDesignPreview() ? PREVIEW_PRODUCTS : undefined,
+    enabled: !isAdminDesignPreview(),
+  });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -659,13 +808,13 @@ function ProductsTab() {
   return (
     <div className="space-y-3">
       <p className="text-xs leading-relaxed" style={{ color: "var(--c-fg-45)" }}>
-        Everything shown on /products. Free downloads are email-gated; apps and games link straight out.
+        Everything shown on /products. Free downloads are email-gated, paid downloads use Stripe, and apps and games link straight out.
         Each product also gets its own page at /products/&lt;name&gt;.
       </p>
 
       {(magnets ?? []).map((m) => {
         const isOpen = editingId === m.id;
-        const needsFile = m.productType === "download" && m.fileUploaded === false;
+        const needsFile = (m.productType === "download" || m.productType === "paid_download") && m.fileUploaded === false;
         return (
           <div
             key={m.id}
@@ -678,7 +827,7 @@ function ProductsTab() {
                 className="text-[11px] font-bold px-2 py-1 rounded-lg flex-shrink-0"
                 style={{ background: "var(--c-accent-10)", color: "var(--c-accent)", border: "1px solid var(--c-accent-15)" }}
               >
-                {m.productType === "game" ? "Game" : m.productType === "external" ? "Link" : "Download"}
+                {m.productType === "game" ? "Game" : m.productType === "external" ? "Link" : m.productType === "paid_download" ? "Paid" : "Download"}
               </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -695,6 +844,9 @@ function ProductsTab() {
                   </div>
                 ) : (
                   <div className="text-[11px] mt-0.5" style={{ color: "var(--c-fg-45)" }}>
+                    {m.productType === "paid_download" && m.priceCents != null
+                      ? `${new Intl.NumberFormat("en-US", { style: "currency", currency: (m.currency ?? "usd").toUpperCase() }).format(m.priceCents / 100)} · `
+                      : ""}
                     {m.submissionCount} signup{m.submissionCount === 1 ? "" : "s"} · {m.viewCount} view{m.viewCount === 1 ? "" : "s"}
                   </div>
                 )}
@@ -735,6 +887,9 @@ function ProductsTab() {
                   resourceUrl: m.resourceUrl ?? "",
                   videoUrl: m.videoUrl ?? "",
                   previewImages: (m.previewImages as string[] | null) ?? [],
+                  priceCents: m.priceCents,
+                  currency: m.currency ?? "usd",
+                  stripePriceId: m.stripePriceId ?? "",
                   active: m.active,
                 }}
                 onSave={(data) => updateMutation.mutate({ id: m.id, data })}
@@ -767,6 +922,133 @@ function ProductsTab() {
         >
           <Plus className="w-4 h-4" /> Add product
         </button>
+      )}
+    </div>
+  );
+}
+
+// ── Orders tab ───────────────────────────────────────────────────────────────
+interface AdminOrder {
+  id: number;
+  productTitle: string;
+  customerEmail: string;
+  customerName: string | null;
+  amountTotal: number;
+  currency: string;
+  paymentStatus: string;
+  fulfillmentStatus: string;
+  downloadCount: number;
+  maxDownloads: number;
+  downloadExpiresAt: string | null;
+  paidAt: string | null;
+  createdAt: string;
+}
+
+interface AdminOrdersResponse {
+  checkoutConfigured: boolean;
+  webhookConfigured: boolean;
+  orders: AdminOrder[];
+}
+
+const PREVIEW_ORDERS: AdminOrdersResponse = {
+  checkoutConfigured: false,
+  webhookConfigured: false,
+  orders: [],
+};
+
+function OrdersTab() {
+  const designPreview = isAdminDesignPreview();
+  const { data, isLoading } = useQuery<AdminOrdersResponse>({
+    queryKey: ["/api/admin/orders"],
+    placeholderData: designPreview ? PREVIEW_ORDERS : undefined,
+    enabled: !designPreview,
+  });
+  const [message, setMessage] = useState("");
+
+  const resendMutation = useMutation({
+    mutationFn: (orderId: number) => apiRequest("POST", `/api/admin/orders/${orderId}/resend`),
+    onSuccess: () => {
+      setMessage("A fresh 30-day download link was emailed to the buyer.");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+    },
+    onError: (error: Error) => setMessage(error.message.replace(/^\d+:\s*/, "")),
+  });
+
+  if (isLoading) {
+    return <div className="py-16 text-center"><Loader2 className="w-5 h-5 animate-spin mx-auto" style={{ color: "var(--c-accent)" }} /></div>;
+  }
+
+  const orders = data?.orders ?? [];
+  const paidOrders = orders.filter((order) => order.paymentStatus === "paid");
+  const revenue = paidOrders.reduce((sum, order) => sum + order.amountTotal, 0);
+
+  return (
+    <div className="space-y-5">
+      <div className="grid sm:grid-cols-3 gap-3">
+        <StatTile label="Paid orders" value={paidOrders.length} />
+        <StatTile label="Gross sales" value={new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(revenue / 100)} />
+        <StatTile label="Delivery issues" value={orders.filter((order) => order.fulfillmentStatus === "failed").length} />
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-3">
+        <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}>
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "var(--c-accent-10)" }}><CreditCard className="w-4 h-4" style={{ color: "var(--c-accent)" }} /></div>
+          <div>
+            <div className="text-sm font-semibold" style={{ color: "var(--c-fg)" }}>Stripe checkout</div>
+            <div className="text-xs" style={{ color: data?.checkoutConfigured ? "#4fa675" : "#b87836" }}>{data?.checkoutConfigured ? "Connected" : "Needs STRIPE_SECRET_KEY"}</div>
+          </div>
+        </div>
+        <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}>
+          <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: "var(--c-accent-10)" }}><Radio className="w-4 h-4" style={{ color: "var(--c-accent)" }} /></div>
+          <div>
+            <div className="text-sm font-semibold" style={{ color: "var(--c-fg)" }}>Payment webhook</div>
+            <div className="text-xs" style={{ color: data?.webhookConfigured ? "#4fa675" : "#b87836" }}>{data?.webhookConfigured ? "Connected" : "Needs STRIPE_WEBHOOK_SECRET"}</div>
+          </div>
+        </div>
+      </div>
+
+      {message && <div className="rounded-lg px-4 py-3 text-xs" style={{ background: "var(--c-accent-10)", border: "1px solid var(--c-accent-15)", color: "var(--c-fg-70)" }}>{message}</div>}
+
+      {orders.length === 0 ? (
+        <div className="rounded-xl py-16 px-5 text-center" style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}>
+          <ShoppingBag className="w-8 h-8 mx-auto mb-4" style={{ color: "var(--c-accent)" }} />
+          <h3 className="font-display text-lg font-bold mb-2" style={{ color: "var(--c-fg)" }}>No purchases yet</h3>
+          <p className="text-sm" style={{ color: "var(--c-fg-45)" }}>Paid orders will appear here as soon as Stripe confirms them.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {orders.map((order) => (
+            <div key={order.id} className="rounded-xl p-4" style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm font-semibold" style={{ color: "var(--c-fg)" }}>{order.customerName || order.customerEmail}</span>
+                    <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full" style={{ background: "var(--c-accent-10)", color: "var(--c-accent)" }}>{order.paymentStatus}</span>
+                    <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded-full" style={{ background: "var(--c-bg2)", color: "var(--c-fg-45)", border: "1px solid var(--c-border)" }}>{order.fulfillmentStatus}</span>
+                  </div>
+                  <div className="text-xs mt-1" style={{ color: "var(--c-fg-45)" }}>{order.customerEmail} · {order.productTitle}</div>
+                  <div className="text-[11px] mt-1" style={{ color: "var(--c-fg-45)" }}>
+                    {formatDate(order.paidAt || order.createdAt)} · {order.downloadCount}/{order.maxDownloads} downloads
+                  </div>
+                </div>
+                <div className="sm:text-right">
+                  <div className="font-display text-lg font-bold mb-2" style={{ color: "var(--c-fg)" }}>{new Intl.NumberFormat("en-US", { style: "currency", currency: order.currency.toUpperCase() }).format(order.amountTotal / 100)}</div>
+                  {order.paymentStatus === "paid" && (
+                    <button
+                      type="button"
+                      onClick={() => { setMessage(""); resendMutation.mutate(order.id); }}
+                      disabled={resendMutation.isPending}
+                      className="text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-50"
+                      style={{ color: "var(--c-accent)" }}
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${resendMutation.isPending ? "animate-spin" : ""}`} /> Reset &amp; resend link
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -870,17 +1152,21 @@ const AUDIENCES = [
   {
     id: "resource",
     label: "Resource signups",
-    description: "Sent to everyone who grabs a free resource, starting the day after they sign up.",
+    description: "Follow-up series for people who request a free resource. Their download email is sent immediately.",
   },
   {
     id: "newsletter",
     label: "Newsletter signups",
-    description: "Sent to everyone who subscribes through the newsletter form (footer).",
+    description: "Welcome series for people who join through the newsletter form in the site footer.",
   },
 ] as const;
 
 function SequenceTab() {
-  const { data: emails, isLoading } = useQuery<SequenceEmail[]>({ queryKey: ["/api/admin/sequence-emails"] });
+  const { data: emails, isLoading } = useQuery<SequenceEmail[]>({
+    queryKey: ["/api/admin/sequence-emails"],
+    placeholderData: isAdminDesignPreview() ? PREVIEW_SEQUENCE_EMAILS : undefined,
+    enabled: !isAdminDesignPreview(),
+  });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [creating, setCreating] = useState<string | null>(null); // audience id or null
 
@@ -907,10 +1193,16 @@ function SequenceTab() {
 
   return (
     <div className="space-y-8">
-      <p className="text-xs leading-relaxed" style={{ color: "var(--c-fg-45)" }}>
-        Everyone who signs up is automatically enrolled in the matching series (the forms show a consent note).
-        Day 1 = one day after signup. Use {"{{first_name}}"} to personalize.
-      </p>
+      <div className="admin-callout">
+        <div className="admin-callout-icon"><Activity className="w-4 h-4" /></div>
+        <div>
+          <div className="text-sm font-semibold" style={{ color: "var(--c-fg)" }}>Runs automatically after signup</div>
+          <p className="text-xs leading-relaxed mt-1" style={{ color: "var(--c-fg-45)" }}>
+            Each person enters the series that matches where they signed up. Day 1 means one day after signup.
+            Use {"{{first_name}}"} anywhere you want their name to appear.
+          </p>
+        </div>
+      </div>
 
       {AUDIENCES.map((aud) => {
         const audEmails = (emails ?? []).filter((e) => (e.audience ?? "resource") === aud.id);
@@ -1021,6 +1313,10 @@ interface BroadcastData {
 function BroadcastTab() {
   const { data, isLoading } = useQuery<BroadcastData>({
     queryKey: ["/api/admin/broadcasts"],
+    placeholderData: isAdminDesignPreview()
+      ? { broadcasts: PREVIEW_BROADCASTS, isSending: false, activeSubscribers: PREVIEW_STATS.activeSubscribers }
+      : undefined,
+    enabled: !isAdminDesignPreview(),
     refetchInterval: (query) => (query.state.data?.isSending ? 3000 : false),
   });
   const [subject, setSubject] = useState("");
@@ -1074,8 +1370,8 @@ function BroadcastTab() {
           New broadcast
         </div>
         <p className="text-xs leading-relaxed" style={{ color: "var(--c-fg-45)" }}>
-          A one-off email to all {recipients} active subscribers. Plain text with {"{{first_name}}"} personalization —
-          the unsubscribe link is added automatically. Always send yourself a test first.
+          A one-time email to all {recipients} active subscribers. Use {"{{first_name}}"} for personalization.
+          Your branded layout and unsubscribe link are added automatically. Send yourself a test before the final send.
         </p>
         <input
           type="text"
@@ -1313,7 +1609,11 @@ function QuestionsEditor({ magnet }: { magnet: LeadMagnet }) {
 }
 
 function QuestionsTab() {
-  const { data: magnets, isLoading } = useQuery<LeadMagnet[]>({ queryKey: ["/api/admin/lead-magnets"] });
+  const { data: magnets, isLoading } = useQuery<LeadMagnet[]>({
+    queryKey: ["/api/admin/lead-magnets"],
+    placeholderData: isAdminDesignPreview() ? PREVIEW_PRODUCTS : undefined,
+    enabled: !isAdminDesignPreview(),
+  });
   const downloadable = (magnets ?? []).filter((m) => m.productType === "download");
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
@@ -1381,84 +1681,150 @@ function AdminLogin() {
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: "var(--c-bg)" }}>
-      <div
-        className="w-full max-w-sm rounded-2xl p-8"
-        style={{ background: "var(--c-card)", border: "1px solid var(--c-card-border)" }}
-      >
-        <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center mb-5"
-          style={{ background: "var(--c-accent-10)", border: "1px solid var(--c-accent)" }}
-        >
-          <Lock className="w-5 h-5" style={{ color: "var(--c-accent)" }} />
-        </div>
-        <h1 className="font-display text-xl font-bold mb-1" style={{ color: "var(--c-fg)" }} data-testid="text-login-title">
-          Admin access
-        </h1>
-        <p className="text-xs mb-6" style={{ color: "var(--c-fg-45)" }}>
-          Enter the admin password to manage signups and emails.
-        </p>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (password) loginMutation.mutate();
-          }}
-        >
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            autoFocus
-            className="w-full rounded-lg px-3.5 py-2.5 text-sm mb-3 outline-none"
-            style={{ background: "var(--c-bg2)", border: "1px solid var(--c-border)", color: "var(--c-fg)" }}
-            data-testid="input-admin-password"
-          />
-          {error && (
-            <p className="text-xs mb-3" style={{ color: "#c0392b" }} data-testid="text-login-error">
-              {error}
+    <div className="admin-login-shell min-h-screen px-5 py-8 lg:px-10">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-6xl flex-col overflow-hidden rounded-[28px] lg:grid lg:grid-cols-[1.15fr_0.85fr]">
+        <section className="admin-login-intro relative flex min-h-[380px] flex-col justify-between overflow-hidden p-8 sm:p-12 lg:p-16">
+          <div className="admin-grid-noise" />
+          <Link href="/" className="relative z-10 inline-flex w-fit items-center gap-2 text-xs font-semibold tracking-wide" style={{ color: "rgba(255,255,255,.62)" }}>
+            <img src="/nav-logo.png" alt="Eric Gravely" className="h-12 w-auto brightness-0 invert" />
+          </Link>
+          <div className="relative z-10 max-w-lg">
+            <div className="mb-5 text-[11px] font-semibold uppercase tracking-[0.24em]" style={{ color: "rgba(255,255,255,.48)" }}>
+              Private operations
+            </div>
+            <h1 className="font-display text-4xl font-semibold leading-[1.02] text-white sm:text-5xl lg:text-6xl">
+              Run the site.<br />Grow the audience.
+            </h1>
+            <p className="mt-6 max-w-md text-sm leading-7" style={{ color: "rgba(255,255,255,.6)" }}>
+              Products, subscribers, automated follow-ups, and broadcasts—all in one focused control center.
             </p>
-          )}
-          <button
-            type="submit"
-            disabled={loginMutation.isPending || !password}
-            className="w-full rounded-lg py-2.5 text-sm font-semibold disabled:opacity-50"
-            style={{ background: "var(--c-accent)", color: "#141311" }}
-            data-testid="button-admin-login"
-          >
-            {loginMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : "Log in"}
-          </button>
-        </form>
-        <Link
-          href="/"
-          className="block text-center text-xs font-semibold mt-5"
-          style={{ color: "var(--c-fg-45)" }}
-          data-testid="link-login-back-home"
-        >
-          ← Back to site
-        </Link>
+          </div>
+        </section>
+
+        <section className="flex items-center bg-[#f2f2ef] p-8 sm:p-12 lg:p-16">
+          <div className="w-full max-w-sm mx-auto">
+            <div className="mb-8 flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#111] text-white">
+                <Lock className="h-4 w-4" />
+              </div>
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-black/40">Restricted</div>
+                <div className="text-sm font-semibold text-black">Authorized access only</div>
+              </div>
+            </div>
+            <h2 className="font-display text-3xl font-semibold tracking-tight text-[#111]" data-testid="text-login-title">
+              Enter the control center
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-black/50">
+              Use your admin password to continue. Your session stays private and expires automatically.
+            </p>
+            <form
+              className="mt-8"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (password) loginMutation.mutate();
+              }}
+            >
+              <label htmlFor="admin-password" className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.16em] text-black/50">
+                Password
+              </label>
+              <input
+                id="admin-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter password"
+                autoFocus
+                autoComplete="current-password"
+                className="w-full rounded-xl border border-black/15 bg-white px-4 py-3.5 text-sm text-black outline-none transition focus:border-black"
+                data-testid="input-admin-password"
+              />
+              {error && (
+                <p className="mt-3 text-xs text-[#a23c2a]" data-testid="text-login-error">{error}</p>
+              )}
+              <button
+                type="submit"
+                disabled={loginMutation.isPending || !password}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-[#111] py-3.5 text-sm font-semibold text-white transition hover:bg-[#2c2c2c] disabled:opacity-40"
+                data-testid="button-admin-login"
+              >
+                {loginMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ShieldCheck className="h-4 w-4" /> Unlock dashboard</>}
+              </button>
+            </form>
+            <Link
+              href="/"
+              className="mt-7 inline-flex items-center gap-1.5 text-xs font-semibold text-black/45 transition hover:text-black"
+              data-testid="link-login-back-home"
+            >
+              ← Return to ericgravely.com
+            </Link>
+          </div>
+        </section>
       </div>
     </div>
   );
 }
 
 // ── Page ──────────────────────────────────────────────────────────────────────
-type Tab = "dashboard" | "signups" | "products" | "sequence" | "broadcast" | "questions";
+type Tab = "dashboard" | "signups" | "orders" | "products" | "sequence" | "broadcast" | "questions";
 
-const TABS: { id: Tab; label: string; icon: typeof Users }[] = [
-  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "signups", label: "Signups", icon: Users },
-  { id: "products", label: "Products", icon: Package },
-  { id: "sequence", label: "Sequence", icon: Mail },
-  { id: "broadcast", label: "Broadcast", icon: Send },
-  { id: "questions", label: "Questions", icon: ListChecks },
+const TABS: { id: Tab; label: string; icon: typeof Users; group: "Overview" | "Audience" | "Commerce" | "Email" | "Site" }[] = [
+  { id: "dashboard", label: "Command center", icon: LayoutDashboard, group: "Overview" },
+  { id: "signups", label: "Subscribers", icon: Users, group: "Audience" },
+  { id: "orders", label: "Orders & delivery", icon: ShoppingBag, group: "Commerce" },
+  { id: "sequence", label: "Automated emails", icon: Radio, group: "Email" },
+  { id: "broadcast", label: "Send an email", icon: Send, group: "Email" },
+  { id: "products", label: "Products & resources", icon: Package, group: "Site" },
+  { id: "questions", label: "Signup questions", icon: ListChecks, group: "Site" },
 ];
+
+const TAB_DETAILS: Record<Tab, { eyebrow: string; title: string; description: string }> = {
+  dashboard: {
+    eyebrow: "Overview",
+    title: "Command center",
+    description: "A live view of your audience, offers, and email engine.",
+  },
+  signups: {
+    eyebrow: "Audience",
+    title: "Subscribers",
+    description: "See who joined, what they requested, and how they answered.",
+  },
+  orders: {
+    eyebrow: "Commerce",
+    title: "Orders & delivery",
+    description: "Track paid purchases, delivery status, and resend secure download links.",
+  },
+  sequence: {
+    eyebrow: "Email automation",
+    title: "Automated emails",
+    description: "Control the messages people receive after joining your list.",
+  },
+  broadcast: {
+    eyebrow: "Email broadcast",
+    title: "Send an email",
+    description: "Create a timely update and send it to every active subscriber.",
+  },
+  products: {
+    eyebrow: "Site content",
+    title: "Products & resources",
+    description: "Manage the offers and downloads shown on your public site.",
+  },
+  questions: {
+    eyebrow: "Lead capture",
+    title: "Signup questions",
+    description: "Edit what you ask before delivering each free resource.",
+  },
+};
 
 export default function Admin() {
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const designPreview = isAdminDesignPreview();
 
   const { data: sessionData, isLoading: sessionLoading } = useQuery<{ authenticated: boolean }>({
     queryKey: ["/api/admin/session"],
+    placeholderData: designPreview ? { authenticated: true } : undefined,
+    enabled: !designPreview,
   });
 
   const logoutMutation = useMutation({
@@ -1471,7 +1837,7 @@ export default function Admin() {
     },
   });
 
-  if (sessionLoading) {
+  if (sessionLoading && !designPreview) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "var(--c-bg)" }}>
         <Loader2 className="w-5 h-5 animate-spin" style={{ color: "var(--c-accent)" }} />
@@ -1479,70 +1845,124 @@ export default function Admin() {
     );
   }
 
-  if (!sessionData?.authenticated) {
+  if (!designPreview && !sessionData?.authenticated) {
     return <AdminLogin />;
   }
 
+  const activeDetails = TAB_DETAILS[tab];
+  const navigate = (nextTab: Tab) => {
+    setTab(nextTab);
+    setMobileNavOpen(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
-    <div style={{ backgroundColor: "var(--c-bg)", minHeight: "100vh" }}>
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="font-display text-2xl font-bold" style={{ color: "var(--c-fg)" }} data-testid="text-admin-title">
-              Admin
-            </h1>
-            <p className="text-xs mt-1" style={{ color: "var(--c-fg-45)" }}>
-              Stats, signups, products, sequences, broadcasts, and questionnaires
-            </p>
+    <div className="admin-shell min-h-screen">
+      <aside className={`admin-sidebar ${mobileNavOpen ? "is-open" : ""}`}>
+        <div className="flex h-full flex-col">
+          <div className="px-5 pb-8 pt-6">
+            <img src="/nav-logo.png" alt="Eric Gravely" className="h-12 w-auto brightness-0 invert" />
+            <div className="mt-4 flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/35">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Site operations
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <Link
+
+          <nav className="flex-1 overflow-y-auto px-3 pb-5" aria-label="Admin navigation">
+            {(["Overview", "Audience", "Commerce", "Email", "Site"] as const).map((group) => (
+              <div key={group} className="mb-6">
+                <div className="px-3 pb-2 text-[9px] font-semibold uppercase tracking-[0.22em] text-white/25">{group}</div>
+                <div className="space-y-1">
+                  {TABS.filter((item) => item.group === group).map(({ id, label, icon: Icon }) => (
+                    <button
+                      key={id}
+                      onClick={() => navigate(id)}
+                      className={`admin-nav-item ${tab === id ? "is-active" : ""}`}
+                      data-testid={`tab-${id}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </nav>
+
+          <div className="border-t border-white/[0.07] p-3">
+            <a
               href="/"
-              className="text-sm font-semibold"
-              style={{ color: "var(--c-accent)" }}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="admin-nav-item"
               data-testid="link-back-home"
             >
-              ← Back to site
-            </Link>
-            <button
-              onClick={() => logoutMutation.mutate()}
-              disabled={logoutMutation.isPending}
-              className="flex items-center gap-1.5 text-sm font-semibold"
-              style={{ color: "var(--c-fg-45)" }}
-              data-testid="button-admin-logout"
-            >
-              <LogOut className="w-4 h-4" />
-              Log out
-            </button>
+              <Globe2 className="h-4 w-4" />
+              <span>View live site</span>
+              <ArrowUpRight className="ml-auto h-3.5 w-3.5 opacity-50" />
+            </a>
+            {designPreview ? (
+              <a href="/admin" className="admin-nav-item mt-1">
+                <Lock className="h-4 w-4" />
+                <span>Return to login</span>
+              </a>
+            ) : (
+              <button
+                onClick={() => logoutMutation.mutate()}
+                disabled={logoutMutation.isPending}
+                className="admin-nav-item mt-1"
+                data-testid="button-admin-logout"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Lock & log out</span>
+              </button>
+            )}
           </div>
         </div>
+      </aside>
 
-        <div className="flex gap-1.5 mb-6 rounded-xl p-1" style={{ background: "var(--c-bg2)", border: "1px solid var(--c-border)" }}>
-          {TABS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold transition-colors"
-              style={{
-                background: tab === id ? "var(--c-card)" : "transparent",
-                color: tab === id ? "var(--c-fg)" : "var(--c-fg-45)",
-                border: tab === id ? "1px solid var(--c-card-border)" : "1px solid transparent",
-              }}
-              data-testid={`tab-${id}`}
-            >
-              <Icon className="w-4 h-4" />
-              <span className="hidden sm:inline">{label}</span>
-            </button>
-          ))}
+      {mobileNavOpen && <button className="admin-mobile-scrim" aria-label="Close menu" onClick={() => setMobileNavOpen(false)} />}
+
+      <main className="admin-main">
+        <header className="admin-topbar">
+          <button
+            className="admin-menu-button lg:hidden"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="Open admin menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: "var(--c-fg-45)" }}>
+            <ShieldCheck className="h-3.5 w-3.5" /> Secure session
+          </div>
+          {designPreview && (
+            <span className="rounded-full border px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.14em]" style={{ borderColor: "var(--c-border)", color: "var(--c-fg-55)", background: "var(--c-card)" }}>
+              Design preview · no live data
+            </span>
+          )}
+          <a href="/" target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: "var(--c-fg-55)" }}>
+            ericgravely.com <ArrowUpRight className="h-3.5 w-3.5" />
+          </a>
+        </header>
+
+        <div className="admin-workspace">
+          <div className="mb-8 border-b pb-7" style={{ borderColor: "var(--c-border)" }}>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: "var(--c-fg-45)" }}>{activeDetails.eyebrow}</div>
+            <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl" style={{ color: "var(--c-fg)" }} data-testid="text-admin-title">
+              {activeDetails.title}
+            </h1>
+            <p className="mt-2 max-w-xl text-sm leading-6" style={{ color: "var(--c-fg-45)" }}>{activeDetails.description}</p>
+          </div>
+
+          {tab === "dashboard" && <DashboardTab onNavigate={navigate} />}
+          {tab === "signups" && <SignupsTab />}
+          {tab === "orders" && <OrdersTab />}
+          {tab === "products" && <ProductsTab />}
+          {tab === "sequence" && <SequenceTab />}
+          {tab === "broadcast" && <BroadcastTab />}
+          {tab === "questions" && <QuestionsTab />}
         </div>
-
-        {tab === "dashboard" && <DashboardTab />}
-        {tab === "signups" && <SignupsTab />}
-        {tab === "products" && <ProductsTab />}
-        {tab === "sequence" && <SequenceTab />}
-        {tab === "broadcast" && <BroadcastTab />}
-        {tab === "questions" && <QuestionsTab />}
-      </div>
+      </main>
     </div>
   );
 }

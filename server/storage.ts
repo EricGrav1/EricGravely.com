@@ -1,12 +1,12 @@
 import { eq, and, sql, asc, desc } from "drizzle-orm";
 import { db } from "./db";
 import {
-  leadMagnets, leads, subscribers, sequenceEmails, resourceFiles, broadcasts,
+  leadMagnets, leads, subscribers, sequenceEmails, resourceFiles, broadcasts, orders, stripeEvents,
   type LeadMagnet, type InsertLeadMagnet,
   type Lead, type InsertLead,
   type Subscriber, type InsertSubscriber,
   type SequenceEmail, type InsertSequenceEmail,
-  type ResourceFile, type Broadcast,
+  type ResourceFile, type Broadcast, type Order,
 } from "@shared/schema";
 
 export interface AnalyticsStat {
@@ -55,6 +55,19 @@ export interface IStorage {
   createBroadcast(subject: string, body: string, totalRecipients: number): Promise<Broadcast>;
   updateBroadcast(id: number, updates: Partial<Broadcast>): Promise<void>;
   listBroadcasts(): Promise<Broadcast[]>;
+  // Paid digital-product orders
+  createOrder(data: { productId: number; amountTotal: number; currency: string }): Promise<Order>;
+  attachCheckoutSession(id: number, sessionId: string): Promise<Order | undefined>;
+  getOrderById(id: number): Promise<Order | undefined>;
+  getOrderByCheckoutSessionId(sessionId: string): Promise<Order | undefined>;
+  getOrderByDownloadToken(token: string): Promise<Order | undefined>;
+  markOrderPaid(id: number, data: { customerEmail: string; customerName?: string | null; paymentIntentId?: string | null; downloadToken: string; downloadExpiresAt: Date }): Promise<Order | undefined>;
+  markOrderFulfillment(id: number, status: "delivered" | "failed"): Promise<void>;
+  markOrderRefundedByPaymentIntent(paymentIntentId: string): Promise<void>;
+  incrementOrderDownload(id: number): Promise<void>;
+  resetOrderDownload(id: number, token: string, expiresAt: Date): Promise<Order | undefined>;
+  listOrders(): Promise<Order[]>;
+  recordStripeEvent(eventId: string, eventType: string): Promise<boolean>;
 }
 
 export class DbStorage implements IStorage {
@@ -255,6 +268,95 @@ export class DbStorage implements IStorage {
 
   async listBroadcasts(): Promise<Broadcast[]> {
     return db.select().from(broadcasts).orderBy(desc(broadcasts.createdAt));
+  }
+
+  async createOrder(data: { productId: number; amountTotal: number; currency: string }): Promise<Order> {
+    const [row] = await db.insert(orders).values({
+      productId: data.productId,
+      customerEmail: "pending@checkout.invalid",
+      amountTotal: data.amountTotal,
+      currency: data.currency.toLowerCase(),
+    }).returning();
+    return row;
+  }
+
+  async attachCheckoutSession(id: number, sessionId: string): Promise<Order | undefined> {
+    const [row] = await db.update(orders)
+      .set({ stripeCheckoutSessionId: sessionId, updatedAt: new Date() })
+      .where(eq(orders.id, id))
+      .returning();
+    return row;
+  }
+
+  async getOrderById(id: number): Promise<Order | undefined> {
+    const [row] = await db.select().from(orders).where(eq(orders.id, id));
+    return row;
+  }
+
+  async getOrderByCheckoutSessionId(sessionId: string): Promise<Order | undefined> {
+    const [row] = await db.select().from(orders).where(eq(orders.stripeCheckoutSessionId, sessionId));
+    return row;
+  }
+
+  async getOrderByDownloadToken(token: string): Promise<Order | undefined> {
+    const [row] = await db.select().from(orders).where(eq(orders.downloadToken, token));
+    return row;
+  }
+
+  async markOrderPaid(id: number, data: { customerEmail: string; customerName?: string | null; paymentIntentId?: string | null; downloadToken: string; downloadExpiresAt: Date }): Promise<Order | undefined> {
+    const [row] = await db.update(orders)
+      .set({
+        customerEmail: data.customerEmail.toLowerCase(),
+        customerName: data.customerName ?? null,
+        stripePaymentIntentId: data.paymentIntentId ?? null,
+        paymentStatus: "paid",
+        fulfillmentStatus: "ready",
+        downloadToken: sql`COALESCE(${orders.downloadToken}, ${data.downloadToken})`,
+        downloadExpiresAt: sql`COALESCE(${orders.downloadExpiresAt}, ${data.downloadExpiresAt})`,
+        paidAt: sql`COALESCE(${orders.paidAt}, now())`,
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, id))
+      .returning();
+    return row;
+  }
+
+  async markOrderFulfillment(id: number, status: "delivered" | "failed"): Promise<void> {
+    await db.update(orders)
+      .set({ fulfillmentStatus: status, updatedAt: new Date() })
+      .where(eq(orders.id, id));
+  }
+
+  async markOrderRefundedByPaymentIntent(paymentIntentId: string): Promise<void> {
+    await db.update(orders)
+      .set({ paymentStatus: "refunded", fulfillmentStatus: "revoked", refundedAt: new Date(), updatedAt: new Date() })
+      .where(eq(orders.stripePaymentIntentId, paymentIntentId));
+  }
+
+  async incrementOrderDownload(id: number): Promise<void> {
+    await db.update(orders)
+      .set({ downloadCount: sql`${orders.downloadCount} + 1`, lastDownloadedAt: new Date(), updatedAt: new Date() })
+      .where(eq(orders.id, id));
+  }
+
+  async resetOrderDownload(id: number, token: string, expiresAt: Date): Promise<Order | undefined> {
+    const [row] = await db.update(orders)
+      .set({ downloadToken: token, downloadExpiresAt: expiresAt, downloadCount: 0, fulfillmentStatus: "ready", updatedAt: new Date() })
+      .where(eq(orders.id, id))
+      .returning();
+    return row;
+  }
+
+  async listOrders(): Promise<Order[]> {
+    return db.select().from(orders).orderBy(desc(orders.createdAt));
+  }
+
+  async recordStripeEvent(eventId: string, eventType: string): Promise<boolean> {
+    const inserted = await db.insert(stripeEvents)
+      .values({ eventId, eventType })
+      .onConflictDoNothing()
+      .returning({ eventId: stripeEvents.eventId });
+    return inserted.length > 0;
   }
 }
 

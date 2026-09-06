@@ -78,13 +78,29 @@ const PRODUCTS = [
     iconPath: "/sales-coach-ai-icon.png",
     active: true,
   },
+  {
+    title: "Sales Manager Coaching Tool",
+    description: "Score a coaching conversation across six critical stages, identify the first manager behavior to strengthen, and leave with one measurable action to practice and review.",
+    productType: "paid_download",
+    resourceUrl: "/downloads/Sales-Manager-Coaching-Tool-Bundle.zip",
+    deliveryMethod: "purchase",
+    buttonLabel: "Buy now - $39.99",
+    priceCents: 3999,
+    currency: "usd",
+    previewImages: [
+      "/sales-manager-coaching-tool-preview.png",
+      "/sales-manager-coaching-tool-example.png",
+    ],
+    nextSteps: "Start with the quick-start guide, review the completed example, then score one real coaching conversation using the blank scorecard.",
+    active: true,
+  },
 ];
 
 // Default nurture sequence — sent only to subscribers who checked the opt-in
 // box. Day offsets are relative to the moment they opted in. Day 0 is the
 // resource delivery email itself, so the sequence starts on day 1.
 // Fully editable in the admin panel.
-const SEQUENCE: { dayOffset: number; subject: string; body: string }[] = [
+const RESOURCE_SEQUENCE: { dayOffset: number; subject: string; body: string }[] = [
   {
     dayOffset: 1,
     subject: "Did you open it yet, {{first_name}}?",
@@ -147,6 +163,55 @@ I'm rooting for you either way.`,
   },
 ];
 
+// Newsletter subscribers receive the confirmation email immediately, then
+// this short authority-building series. It is deliberately distinct from the
+// resource follow-up sequence and remains fully editable in /admin.
+const NEWSLETTER_SEQUENCE: { dayOffset: number; subject: string; body: string }[] = [
+  {
+    dayOffset: 1,
+    subject: "The rule I use before coaching any rep",
+    body: `Hey {{first_name}},
+
+Before I coach a rep, I separate the person from the performance problem.
+
+Too many managers see a missed number and jump straight to motivation: work harder, make more calls, push the deal. But the number is only the symptom. The real constraint might be skill, confidence, organization, or a gap in how the rep understands the customer.
+
+My rule is simple: diagnose before you prescribe.
+
+The next time a rep misses, ask one more question before giving advice. You will coach the real problem faster.`,
+  },
+  {
+    dayOffset: 3,
+    subject: "Your reps do not need another pep talk",
+    body: `Hey {{first_name}},
+
+Most struggling reps do not need more motivation. They need a manager who can name the exact behavior that is costing them deals.
+
+"Improve discovery" is not coachable. "Ask one impact question before presenting" is.
+
+Specific behavior gives the rep something they can practice, and it gives you something you can actually inspect on the next call.
+
+Pick one rep today. Replace the broad feedback you were going to give with one observable behavior. Then coach only that until it sticks.`,
+  },
+  {
+    dayOffset: 6,
+    subject: "The three steps behind better rep performance",
+    body: `Hey {{first_name}},
+
+The best coaching systems are not complicated. Mine comes down to three moves:
+
+Read the Rep — understand the person before assuming the problem.
+
+Examine the Evidence — use calls, activity, and results to find the real constraint.
+
+Practice to Performance — coach one behavior until it shows up when it counts.
+
+That is the REP Development System. It gives managers a repeatable way to build stronger reps instead of relying on instinct and generic advice.
+
+I will keep sharing the tools and coaching breakdowns I use in the field. If there is a sales-management problem you want me to unpack, reply and tell me.`,
+  },
+];
+
 export async function seedDatabase() {
   try {
     // Seed default products only when the table is completely empty. Products
@@ -172,16 +237,35 @@ export async function seedDatabase() {
           console.log(`[seed] Added default questionnaire to: ${row.title}`);
         }
       }
+      if (!existing.some((row) => row.productType === "paid_download")) {
+        const paidProduct = PRODUCTS.find((product) => product.productType === "paid_download");
+        if (paidProduct) {
+          await db.insert(leadMagnets).values(paidProduct);
+          console.log(`[seed] Created paid product: ${paidProduct.title}`);
+        }
+      }
     }
 
-    // Seed the nurture sequence only if the table is completely empty,
-    // so admin edits/deletions are never overwritten.
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(sequenceEmails);
-    if (count === 0) {
-      await db.insert(sequenceEmails).values(SEQUENCE.map((s) => ({ ...s, active: true })));
-      console.log(`[seed] Created ${SEQUENCE.length} sequence emails`);
+    // Seed each audience independently. This lets an existing installation
+    // gain the newsletter series without disturbing an edited resource series.
+    const sequenceCounts = await db
+      .select({ audience: sequenceEmails.audience, count: sql<number>`count(*)::int` })
+      .from(sequenceEmails)
+      .groupBy(sequenceEmails.audience);
+    const countByAudience = new Map(sequenceCounts.map((row) => [row.audience ?? "resource", row.count]));
+
+    if ((countByAudience.get("resource") ?? 0) === 0) {
+      await db.insert(sequenceEmails).values(
+        RESOURCE_SEQUENCE.map((email) => ({ ...email, audience: "resource", active: true })),
+      );
+      console.log(`[seed] Created ${RESOURCE_SEQUENCE.length} resource sequence emails`);
+    }
+
+    if ((countByAudience.get("newsletter") ?? 0) === 0) {
+      await db.insert(sequenceEmails).values(
+        NEWSLETTER_SEQUENCE.map((email) => ({ ...email, audience: "newsletter", active: true })),
+      );
+      console.log(`[seed] Created ${NEWSLETTER_SEQUENCE.length} newsletter sequence emails`);
     }
   } catch (error) {
     console.error("[seed] Seed failed:", error);

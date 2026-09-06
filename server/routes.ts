@@ -25,6 +25,14 @@ import { startBroadcast, isBroadcastSending } from "./broadcast";
 import { subscribeToConvertKit } from "./convertkit";
 import { getSiteBaseUrl, PRODUCT_CK_TAGS } from "./config";
 import { setupAdminAuth, requireAdmin } from "./adminAuth";
+import {
+  checkoutConfigured,
+  createCheckoutSession,
+  fulfillCheckoutSession,
+  getStripe,
+  resetOrderDelivery,
+  stripeConfigured,
+} from "./commerce";
 
 // Legacy tag → resource title map (homepage lead capture used tags historically).
 // Resolved against the DB so delivery always goes through the tokenized flow.
@@ -72,12 +80,45 @@ const subscribeExtrasSchema = z.object({
   sequenceOptIn: z.boolean().optional(),
 });
 
+const checkoutSchema = z.object({
+  productId: z.number().int().positive(),
+});
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
 
   await setupAdminAuth(app);
+
+  // ── Stripe webhook ─────────────────────────────────────────────────────────
+  // server/index.ts preserves the exact JSON bytes as req.rawBody so Stripe's
+  // signature can be verified even though the rest of the app uses express.json.
+  app.post("/api/stripe/webhook", async (req, res) => {
+    try {
+      const signature = req.headers["stripe-signature"];
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      if (typeof signature !== "string" || !webhookSecret || !Buffer.isBuffer(req.rawBody)) {
+        return res.status(400).send("Webhook is not configured correctly.");
+      }
+      const event = getStripe().webhooks.constructEvent(req.rawBody, signature, webhookSecret);
+
+      if (event.type === "checkout.session.completed" || event.type === "checkout.session.async_payment_succeeded") {
+        const session = event.data.object;
+        await fulfillCheckoutSession(session.id, getSiteBaseUrl(req as any));
+      } else if (event.type === "charge.refunded") {
+        const charge = event.data.object;
+        const paymentIntentId = typeof charge.payment_intent === "string" ? charge.payment_intent : charge.payment_intent?.id;
+        if (paymentIntentId) await storage.markOrderRefundedByPaymentIntent(paymentIntentId);
+      }
+
+      await storage.recordStripeEvent(event.id, event.type);
+      return res.json({ received: true });
+    } catch (err) {
+      console.error("Stripe webhook error:", err instanceof Error ? err.message : err);
+      return res.status(400).send("Webhook processing failed.");
+    }
+  });
 
   // ── Main subscribe endpoint ──────────────────────────────────────────────────
   // Accepts:
@@ -112,6 +153,9 @@ export async function registerRoutes(
       if (leadMagnetId && !isNaN(leadMagnetId)) {
         magnet = await storage.getLeadMagnet(leadMagnetId);
         if (!magnet) return res.status(404).json({ message: "Product not found." });
+        if (magnet.productType === "paid_download") {
+          return res.status(400).json({ message: "This product must be purchased before it can be downloaded." });
+        }
 
         if (!(await resourceFileAvailable(magnet.resourceUrl))) {
           console.warn(`[subscribe] File missing for "${magnet.title}" — email not sent`);
@@ -209,6 +253,9 @@ export async function registerRoutes(
       if (!magnet || !magnet.resourceUrl) {
         return res.status(404).send("Resource not found.");
       }
+      if (magnet.productType === "paid_download") {
+        return res.status(403).send("A paid-order download link is required for this product.");
+      }
 
       // Prefer the DB copy (uploaded via admin, survives redeploys), then disk.
       const filename = basename(magnet.resourceUrl);
@@ -249,6 +296,123 @@ export async function registerRoutes(
       return res.json({ success: true, message: "You have been unsubscribed." });
     } catch {
       return res.status(500).json({ message: "Something went wrong." });
+    }
+  });
+
+  // ── Paid digital products ──────────────────────────────────────────────────
+  app.post("/api/checkout/session", async (req, res) => {
+    try {
+      if (!checkoutConfigured()) {
+        return res.status(503).json({ message: "Checkout is being configured. Please check back shortly." });
+      }
+      const parsed = checkoutSchema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: "Invalid product." });
+      const product = await storage.getLeadMagnet(parsed.data.productId);
+      if (!product || !product.active || product.productType !== "paid_download") {
+        return res.status(404).json({ message: "Product not found." });
+      }
+      if (!product.resourceUrl || !(await resourceFileAvailable(product.resourceUrl))) {
+        return res.status(503).json({ message: "This product is not ready for delivery yet." });
+      }
+      if (!product.priceCents || product.priceCents < 1) {
+        return res.status(503).json({ message: "This product's price has not been configured." });
+      }
+
+      const order = await storage.createOrder({
+        productId: product.id,
+        amountTotal: product.priceCents,
+        currency: product.currency || "usd",
+      });
+      const session = await createCheckoutSession(product, order, getSiteBaseUrl(req as any));
+      await storage.attachCheckoutSession(order.id, session.id);
+      return res.json({ url: session.url });
+    } catch (err) {
+      console.error("Checkout creation failed:", err instanceof Error ? err.message : err);
+      return res.status(500).json({ message: "Checkout could not be started. Please try again." });
+    }
+  });
+
+  app.get("/api/checkout/session/:sessionId", async (req, res) => {
+    try {
+      if (!checkoutConfigured()) return res.status(503).json({ message: "Checkout is not configured." });
+      const sessionId = req.params.sessionId;
+      if (!sessionId.startsWith("cs_")) return res.status(400).json({ message: "Invalid checkout session." });
+
+      const session = await getStripe().checkout.sessions.retrieve(sessionId);
+      let order = await storage.getOrderByCheckoutSessionId(session.id);
+      if (!order) return res.status(404).json({ message: "Order not found." });
+
+      if ((session.payment_status === "paid" || session.payment_status === "no_payment_required") && order.fulfillmentStatus !== "delivered") {
+        try {
+          order = await fulfillCheckoutSession(session.id, getSiteBaseUrl(req as any));
+        } catch (err) {
+          console.error("Immediate fulfillment failed:", err instanceof Error ? err.message : err);
+          order = (await storage.getOrderByCheckoutSessionId(session.id)) || order;
+        }
+      }
+
+      const product = await storage.getLeadMagnet(order.productId);
+      return res.json({
+        status: order.paymentStatus === "paid" ? "paid" : "processing",
+        orderId: order.id,
+        productName: product?.title || "Digital product",
+        customerEmail: order.paymentStatus === "paid" ? order.customerEmail : undefined,
+        paymentStatus: order.paymentStatus,
+        fulfillmentStatus: order.fulfillmentStatus,
+        amountTotal: order.amountTotal,
+        currency: order.currency,
+        downloadUrl: order.paymentStatus === "paid" && order.downloadToken
+          ? `/api/purchases/download?token=${encodeURIComponent(order.downloadToken)}`
+          : null,
+        expiresAt: order.downloadExpiresAt,
+        downloadsRemaining: Math.max(0, order.maxDownloads - order.downloadCount),
+      });
+    } catch (err) {
+      console.error("Checkout status failed:", err instanceof Error ? err.message : err);
+      return res.status(500).json({ message: "We couldn't verify the order yet. Please refresh in a moment." });
+    }
+  });
+
+  app.get("/api/purchases/download", async (req, res) => {
+    try {
+      const token = typeof req.query.token === "string" ? req.query.token : "";
+      if (!/^[a-f0-9]{64}$/.test(token)) return res.status(400).send("Invalid download link.");
+      const order = await storage.getOrderByDownloadToken(token);
+      if (!order || order.paymentStatus !== "paid" || order.fulfillmentStatus === "revoked") {
+        return res.status(403).send("This download link is not active.");
+      }
+      if (!order.downloadExpiresAt || order.downloadExpiresAt.getTime() < Date.now()) {
+        return res.status(410).send("This download link has expired. Reply to your purchase email for help.");
+      }
+      if (order.downloadCount >= order.maxDownloads) {
+        return res.status(410).send("This download link has reached its limit. Reply to your purchase email for help.");
+      }
+      const product = await storage.getLeadMagnet(order.productId);
+      if (!product?.resourceUrl || product.productType !== "paid_download") {
+        return res.status(404).send("Purchased file not found.");
+      }
+      const filename = basename(product.resourceUrl);
+      let dbFile: Awaited<ReturnType<typeof storage.getResourceFile>>;
+      try {
+        dbFile = await storage.getResourceFile(filename);
+      } catch {
+        // Database file storage is optional; fall back to the private disk copy.
+      }
+      const filePath = privateFilePath(product.resourceUrl);
+      if (!dbFile && !existsSync(filePath)) return res.status(404).send("Purchased file not found.");
+      await storage.incrementOrderDownload(order.id);
+      if (dbFile) {
+        res.setHeader("Content-Type", dbFile.mimeType);
+        res.setHeader("Content-Length", String(dbFile.size));
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+        res.setHeader("Cache-Control", "private, no-store");
+        return res.send(dbFile.data);
+      }
+      res.setHeader("Cache-Control", "private, no-store");
+      return res.download(filePath, filename);
+    } catch (err) {
+      console.error("Paid download failed:", err instanceof Error ? err.message : err);
+      return res.status(500).send("The download could not be started.");
     }
   });
 
@@ -389,6 +553,39 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/orders", requireAdmin, async (_req, res) => {
+    try {
+      const [allOrders, products] = await Promise.all([
+        storage.listOrders(),
+        storage.listLeadMagnets(),
+      ]);
+      const titleById = new Map(products.map((product) => [product.id, product.title]));
+      return res.json({
+        checkoutConfigured: checkoutConfigured(),
+        webhookConfigured: stripeConfigured(),
+        orders: allOrders.map((order) => ({
+          ...order,
+          productTitle: titleById.get(order.productId) || "Unknown product",
+          downloadToken: undefined,
+        })),
+      });
+    } catch {
+      return res.status(500).json({ message: "Failed to load orders." });
+    }
+  });
+
+  app.post("/api/admin/orders/:id/resend", requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id < 1) return res.status(400).json({ message: "Invalid order." });
+      const order = await resetOrderDelivery(id, getSiteBaseUrl(req as any));
+      return res.json({ success: true, orderId: order.id });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Delivery email could not be resent.";
+      return res.status(400).json({ message });
+    }
+  });
+
   // ── Admin: lead magnets (incl. inactive) + question editor ──────────────────
   app.get("/api/admin/lead-magnets", requireAdmin, async (_req, res) => {
     try {
@@ -398,7 +595,9 @@ export async function registerRoutes(
       const withFileState = await Promise.all(
         magnets.map(async (m) => ({
           ...m,
-          fileUploaded: m.productType === "download" ? await resourceFileAvailable(m.resourceUrl) : null,
+          fileUploaded: m.productType === "download" || m.productType === "paid_download"
+            ? await resourceFileAvailable(m.resourceUrl)
+            : null,
         })),
       );
       return res.json(withFileState);
