@@ -1,0 +1,31 @@
+# Wakes the site every 10 minutes so sequence emails and scheduled broadcasts
+# go out. Needed because Replit Autoscale puts the server to sleep when nobody
+# is visiting, and a sleeping server can't send anything on its own.
+#
+# Setup: add a repository secret named CRON_SECRET (Settings → Secrets and
+# variables → Actions) with the same value as the CRON_SECRET secret in Replit.
+# Optional: a repository variable SITE_URL if the site moves off ericgravely.com.
+name: Email cron
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Run due email jobs
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://ericgravely.com' }}
+        run: |
+          if [ -z "$CRON_SECRET" ]; then
+            echo "::notice::CRON_SECRET secret isn't set yet — skipping."
+            exit 0
+          fi
+          curl -fsS --max-time 60 --retry 2 --retry-delay 5 -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            "$SITE_URL/api/cron/email"
