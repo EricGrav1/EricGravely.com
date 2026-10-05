@@ -101,9 +101,21 @@ function brandBadge(): string {
     </div>`;
 }
 
+function unsubscribeQuery(email: string): string {
+  return `email=${encodeURIComponent(email)}&token=${generateUnsubscribeToken(email)}`;
+}
+
+// RFC 8058 one-click unsubscribe. Gmail and Yahoo require these headers from
+// bulk senders, and mail clients show a native "Unsubscribe" button for them.
+function listUnsubscribeHeaders(email: string, siteBaseUrl: string): Record<string, string> {
+  return {
+    "List-Unsubscribe": `<${siteBaseUrl}/api/unsubscribe?${unsubscribeQuery(email)}>, <mailto:${REPLY_TO}?subject=unsubscribe>`,
+    "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+  };
+}
+
 function emailFooter(email: string, siteBaseUrl: string): string {
-  const unsubToken = generateUnsubscribeToken(email);
-  const unsubLink = `${siteBaseUrl}/unsubscribe?email=${encodeURIComponent(email)}&token=${unsubToken}`;
+  const unsubLink = `${siteBaseUrl}/unsubscribe?${unsubscribeQuery(email)}`;
   return `
     <div style="border-top:1px solid rgba(0,0,0,0.07);padding-top:20px;text-align:center;">
       <p style="color:#999994;font-size:12px;margin:0 0 6px;line-height:1.6;">
@@ -227,16 +239,44 @@ export async function sendLeadMagnetEmail(
   }
 }
 
-// ── Sequence (nurture) emails ─────────────────────────────────────────────────
+// ── Sequence (nurture) + broadcast emails ─────────────────────────────────────
 // Body is stored as plain text in the DB (editable in the admin panel).
-// {{first_name}} is replaced, blank lines become paragraphs.
-function sequenceEmailHtml(email: string, bodyText: string, siteBaseUrl: string): string {
-  const paragraphs = bodyText
+// {{first_name}} is replaced, blank lines become paragraphs, and a light
+// formatting syntax is supported:
+//   [link text](https://…)          → inline link
+//   a [text](https://…) link alone on its own paragraph → gold CTA button
+//   **bold**                         → bold
+//   bare https://… URLs              → clickable
+const LINK_STYLE = "color:#B08D1E;text-decoration:underline;";
+const MD_LINK = /\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g;
+
+function formatInline(text: string): string {
+  // Bare URLs first (skipping ones inside [text](url) syntax), then markdown
+  // links, then bold.
+  let out = text.replace(/(?<!\]\()(?<![\w"'=\/])https?:\/\/[^\s<)]*[^\s<).,!?;:'"]/g,
+    (url) => `<a href="${url}" style="${LINK_STYLE}">${url}</a>`);
+  out = out.replace(MD_LINK, (_m, label: string, url: string) => `<a href="${url}" style="${LINK_STYLE}">${label}</a>`);
+  out = out.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  return out.replace(/\n/g, "<br>");
+}
+
+export function formatEmailBody(bodyText: string): string {
+  return bodyText
     .split(/\n\s*\n/)
     .map(p => p.trim())
     .filter(Boolean)
-    .map(p => `<p style="color:#3A3A36;font-size:15px;line-height:1.75;margin:0 0 18px;">${p.replace(/\n/g, "<br>")}</p>`)
+    .map(p => {
+      const button = p.match(/^\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)$/);
+      if (button) {
+        return `<div style="text-align:center;margin:28px 0;"><a href="${button[2]}" style="display:inline-block;background:#C9A227;color:#0D0D0D;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:700;font-size:15px;">${button[1]}</a></div>`;
+      }
+      return `<p style="color:#3A3A36;font-size:15px;line-height:1.75;margin:0 0 18px;">${formatInline(p)}</p>`;
+    })
     .join("\n");
+}
+
+export function sequenceEmailHtml(email: string, bodyText: string, siteBaseUrl: string): string {
+  const paragraphs = formatEmailBody(bodyText);
 
   return `<!DOCTYPE html>
 <html>
@@ -266,24 +306,79 @@ export async function sendSequenceEmail(
   subject: string,
   body: string,
   siteBaseUrl: string = BRAND_URL,
-): Promise<{ success: boolean; error?: string }> {
+): Promise<SendResult> {
   try {
     const { client, fromEmail } = await getUncachableResendClient();
-    if (!fromEmail) return { success: false, error: "From email not configured" };
+    if (!fromEmail) return { success: false, error: "From email not configured", systemic: true };
 
-    const { error } = await client.emails.send({
-      from: fromEmail,
-      replyTo: REPLY_TO,
-      to: email,
-      subject: personalize(subject, firstName),
-      html: sequenceEmailHtml(email, personalize(body, firstName), siteBaseUrl),
-    });
-    if (error) return { success: false, error: error.message };
+    const { error } = await client.emails.send(
+      buildSequenceMessage(fromEmail, { email, firstName }, subject, body, siteBaseUrl),
+    );
+    if (error) return { success: false, error: error.message, systemic: SYSTEMIC_ERRORS.has(error.name) };
     return { success: true };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Unknown error";
     console.error("Sequence email failed:", msg);
-    return { success: false, error: msg };
+    return { success: false, error: msg, systemic: true };
+  }
+}
+
+// systemic = the problem is the account/config/rate limit, not this
+// recipient — retrying later (rather than marking the person failed) is right.
+export interface SendResult {
+  success: boolean;
+  error?: string;
+  systemic?: boolean;
+}
+
+const SYSTEMIC_ERRORS = new Set<string>([
+  "rate_limit_exceeded", "missing_api_key", "invalid_api_Key", "invalid_from_address",
+  "application_error", "internal_server_error", "invalid_access",
+]);
+
+function buildSequenceMessage(
+  fromEmail: string,
+  to: { email: string; firstName: string },
+  subject: string,
+  body: string,
+  siteBaseUrl: string,
+) {
+  return {
+    from: fromEmail,
+    replyTo: REPLY_TO,
+    to: to.email,
+    subject: personalize(subject, to.firstName),
+    html: sequenceEmailHtml(to.email, personalize(body, to.firstName), siteBaseUrl),
+    headers: listUnsubscribeHeaders(to.email, siteBaseUrl),
+  };
+}
+
+// Sends the same email to many people in ONE Resend API call (max 100), each
+// personalized with their own name and unsubscribe link. Resend validates the
+// whole batch together, so a failure fails every message in it.
+export const MAX_BATCH_SIZE = 100;
+
+export async function sendSequenceEmailBatch(
+  recipients: { email: string; firstName: string }[],
+  subject: string,
+  body: string,
+  siteBaseUrl: string = BRAND_URL,
+): Promise<SendResult> {
+  if (recipients.length === 0) return { success: true };
+  if (recipients.length > MAX_BATCH_SIZE) return { success: false, error: `Batch too large (max ${MAX_BATCH_SIZE})` };
+  try {
+    const { client, fromEmail } = await getUncachableResendClient();
+    if (!fromEmail) return { success: false, error: "From email not configured", systemic: true };
+
+    const { error } = await client.batch.send(
+      recipients.map((r) => buildSequenceMessage(fromEmail, r, subject, body, siteBaseUrl)),
+    );
+    if (error) return { success: false, error: error.message, systemic: SYSTEMIC_ERRORS.has(error.name) };
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    console.error("Batch email failed:", msg);
+    return { success: false, error: msg, systemic: true };
   }
 }
 

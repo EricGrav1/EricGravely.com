@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { leadMagnets, sequenceEmails, type QuestionnaireField } from "@shared/schema";
+import { leadMagnets, sequenceEmails, sequences, type QuestionnaireField } from "@shared/schema";
 import { eq, isNull, sql } from "drizzle-orm";
 
 // Default 5-question questionnaire shown before the contact step.
@@ -174,12 +174,16 @@ export async function seedDatabase() {
       }
     }
 
-    // Seed the nurture sequence only if the table is completely empty,
-    // so admin edits/deletions are never overwritten.
+    // Seed the nurture sequence only on a brand-new database (no emails and
+    // no named sequences yet), so admin edits/deletions are never overwritten.
+    // migrateToNamedSequences() then files these under "Free resource follow-up".
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(sequenceEmails);
-    if (count === 0) {
+    const [{ count: sequenceCount }] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(sequences);
+    if (count === 0 && sequenceCount === 0) {
       await db.insert(sequenceEmails).values(SEQUENCE.map((s) => ({ ...s, active: true })));
       console.log(`[seed] Created ${SEQUENCE.length} sequence emails`);
     }

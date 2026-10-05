@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { type Server } from "http";
 import { existsSync } from "fs";
+import { createHash, timingSafeEqual } from "crypto";
 import { join, basename, extname } from "path";
 import { z } from "zod";
 import multer from "multer";
@@ -11,17 +12,25 @@ import {
   insertLeadSchema,
   insertLeadMagnetSchema,
   insertSequenceEmailSchema,
+  insertSequenceSchema,
   insertBroadcastSchema,
+  emailAudienceSchema,
+  emailContentSchema,
+  type EmailAudience,
+  type Sequence,
 } from "@shared/schema";
 import {
   sendLeadMagnetEmail,
   sendNewsletterConfirmationEmail,
   sendSequenceEmail,
+  sequenceEmailHtml,
+  personalize,
   validateUnsubscribeToken,
   validateDownloadToken,
   buildDownloadUrl,
 } from "./email";
-import { startBroadcast, isBroadcastSending } from "./broadcast";
+import { createBroadcast } from "./broadcast";
+import { runEmailJobs, LAST_RUN_KEY, type EmailJobsResult } from "./emailJobs";
 import { subscribeToConvertKit } from "./convertkit";
 import { getSiteBaseUrl, PRODUCT_CK_TAGS } from "./config";
 import { setupAdminAuth, requireAdmin } from "./adminAuth";
@@ -66,6 +75,22 @@ const ALLOWED_UPLOAD_EXTENSIONS = new Set([
 ]);
 
 const IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif"]);
+
+// The audience a sequence's trigger enrolls — also used to backfill existing
+// subscribers into a new sequence. Manual sequences backfill from everyone.
+function sequenceAudience(seq: Sequence): EmailAudience {
+  if (seq.trigger === "resource_signup") return { type: "resource", leadMagnetId: seq.leadMagnetId };
+  if (seq.trigger === "newsletter_signup") return { type: "newsletter" };
+  return { type: "all" };
+}
+
+function cronKeyMatches(supplied: string, expected: string): boolean {
+  const a = createHash("sha256").update(supplied).digest();
+  const b = createHash("sha256").update(expected).digest();
+  return timingSafeEqual(a, b);
+}
+
+const MAX_SCHEDULE_AHEAD_MS = 366 * 24 * 60 * 60 * 1000;
 
 const subscribeExtrasSchema = z.object({
   questionnaireAnswers: z.record(z.string()).optional(),
@@ -141,6 +166,12 @@ export async function registerRoutes(
       // enrollment.
       void sequenceOptIn;
       await storage.setSequenceOptIn(email, magnet ? "resource" : "newsletter");
+      // Never let sequence enrollment break the signup itself (e.g. if the
+      // sequence tables haven't been created yet).
+      await storage.enrollForSignup(
+        email,
+        magnet ? { kind: "resource", leadMagnetId: magnet.id } : { kind: "newsletter" },
+      ).catch((err) => console.error("[subscribe] Sequence enrollment failed:", err instanceof Error ? err.message : err));
 
       // Store the lead + questionnaire answers per resource
       if (magnet) {
@@ -252,6 +283,42 @@ export async function registerRoutes(
     }
   });
 
+  // One-click unsubscribe (RFC 8058) — mail clients POST here from the
+  // List-Unsubscribe header without opening a page.
+  app.post("/api/unsubscribe", async (req, res) => {
+    try {
+      const email = req.query.email as string;
+      const token = req.query.token as string;
+      if (!email || !token || !validateUnsubscribeToken(email, token)) {
+        return res.status(400).json({ message: "Invalid unsubscribe link." });
+      }
+      await storage.markUnsubscribed(email);
+      return res.json({ success: true });
+    } catch {
+      return res.status(500).json({ message: "Something went wrong." });
+    }
+  });
+
+  // ── Email jobs cron ─────────────────────────────────────────────────────────
+  // Pinged every ~10 min by .github/workflows/email-cron.yml (or any external
+  // cron) with "Authorization: Bearer <CRON_SECRET>". Sends due sequence
+  // emails and works through scheduled/sending broadcasts.
+  app.post("/api/cron/email", async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) return res.status(503).json({ message: "CRON_SECRET is not set." });
+    const header = req.headers.authorization ?? "";
+    const supplied = header.startsWith("Bearer ") ? header.slice(7) : String(req.query.key ?? "");
+    if (!supplied || !cronKeyMatches(supplied, secret)) {
+      return res.status(401).json({ message: "Not authorized." });
+    }
+    try {
+      return res.json(await runEmailJobs("cron", 25_000));
+    } catch (err) {
+      console.error("[cron] email jobs failed:", err instanceof Error ? err.message : err);
+      return res.status(500).json({ message: "Email jobs failed." });
+    }
+  });
+
   // ── Lead magnets list (public) ───────────────────────────────────────────────
   app.get("/api/lead-magnets", async (_req, res) => {
     try {
@@ -322,13 +389,18 @@ export async function registerRoutes(
   // ── Admin: signups + questionnaire answers ──────────────────────────────────
   app.get("/api/admin/leads", requireAdmin, async (_req, res) => {
     try {
-      const [allLeads, allSubscribers, magnets] = await Promise.all([
+      const [allLeads, allSubscribers, magnets, enrollments] = await Promise.all([
         storage.listLeads(),
         storage.listSubscribers(),
         storage.listLeadMagnets(),
+        storage.listEnrollmentSummaries(),
       ]);
       const magnetTitles = new Map(magnets.map((m) => [m.id, m.title]));
       const subByEmail = new Map(allSubscribers.map((s) => [s.email, s]));
+      const sequencesByEmail = new Map<string, { name: string; emailsSent: number }[]>();
+      for (const e of enrollments) {
+        sequencesByEmail.set(e.email, [...(sequencesByEmail.get(e.email) ?? []), { name: e.sequenceName, emailsSent: e.emailsSent }]);
+      }
       return res.json(
         allLeads.map((l) => {
           const sub = subByEmail.get(l.email);
@@ -336,8 +408,7 @@ export async function registerRoutes(
             ...l,
             resourceTitle: l.leadMagnetId ? magnetTitles.get(l.leadMagnetId) ?? "Unknown" : "—",
             firstName: sub?.firstName ?? null,
-            sequenceOptIn: sub?.sequenceOptIn ?? false,
-            sequenceStep: sub?.sequenceStep ?? 0,
+            sequences: sequencesByEmail.get(l.email) ?? [],
             unsubscribed: sub?.unsubscribed ?? l.unsubscribed,
           };
         })
@@ -350,10 +421,11 @@ export async function registerRoutes(
   // ── Admin: dashboard stats ──────────────────────────────────────────────────
   app.get("/api/admin/stats", requireAdmin, async (_req, res) => {
     try {
-      const [allLeads, allSubscribers, perProduct] = await Promise.all([
+      const [allLeads, allSubscribers, perProduct, enrollments] = await Promise.all([
         storage.listLeads(),
         storage.listSubscribers(),
         storage.getAnalytics(),
+        storage.listEnrollmentSummaries(),
       ]);
 
       const now = Date.now();
@@ -373,13 +445,14 @@ export async function registerRoutes(
       }
 
       const activeSubscribers = allSubscribers.filter((s) => !s.unsubscribed);
+      const activeEmails = new Set(activeSubscribers.map((s) => s.email));
       return res.json({
         totalLeads: allLeads.length,
         leadsLast7: since(7),
         leadsPrev7: since(14) - since(7),
         totalSubscribers: allSubscribers.length,
         activeSubscribers: activeSubscribers.length,
-        sequenceOptIns: activeSubscribers.filter((s) => s.sequenceOptIn).length,
+        inSequences: new Set(enrollments.map((e) => e.email).filter((email) => activeEmails.has(email))).size,
         unsubscribed: allSubscribers.length - activeSubscribers.length,
         perProduct,
         signupsByDay,
@@ -496,20 +569,89 @@ export async function registerRoutes(
     }
   });
 
-  // ── Admin: sequence email CRUD ──────────────────────────────────────────────
-  app.get("/api/admin/sequence-emails", requireAdmin, async (_req, res) => {
+  // ── Admin: named sequences ──────────────────────────────────────────────────
+  app.get("/api/admin/sequences", requireAdmin, async (_req, res) => {
     try {
-      return res.json(await storage.listSequenceEmails());
+      const [list, emails, stats] = await Promise.all([
+        storage.listSequences(),
+        storage.listSequenceEmails(),
+        storage.getSequenceStats(),
+      ]);
+      const statsById = new Map(stats.map((st) => [st.sequenceId, st]));
+      return res.json(list.map((seq) => ({
+        ...seq,
+        inProgress: statsById.get(seq.id)?.inProgress ?? 0,
+        totalEnrolled: statsById.get(seq.id)?.total ?? 0,
+        emails: emails.filter((e) => e.sequenceId === seq.id),
+      })));
     } catch {
-      return res.status(500).json({ message: "Failed to load sequence." });
+      return res.status(500).json({ message: "Failed to load sequences." });
     }
   });
 
+  app.post("/api/admin/sequences", requireAdmin, async (req, res) => {
+    try {
+      const result = insertSequenceSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid data" });
+      }
+      return res.json(await storage.createSequence(result.data));
+    } catch {
+      return res.status(500).json({ message: "Failed to create sequence." });
+    }
+  });
+
+  app.patch("/api/admin/sequences/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid id." });
+      const result = insertSequenceSchema.partial().safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid data" });
+      }
+      const updated = await storage.updateSequence(id, result.data);
+      if (!updated) return res.status(404).json({ message: "Sequence not found." });
+      return res.json(updated);
+    } catch {
+      return res.status(500).json({ message: "Failed to update sequence." });
+    }
+  });
+
+  app.delete("/api/admin/sequences/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid id." });
+      await storage.deleteSequence(id);
+      return res.json({ success: true });
+    } catch {
+      return res.status(500).json({ message: "Failed to delete sequence." });
+    }
+  });
+
+  // Enroll everyone already on the list who matches the sequence's trigger.
+  // { dryRun: true } just returns how many people that would be.
+  app.post("/api/admin/sequences/:id/enroll-existing", requireAdmin, async (req, res) => {
+    try {
+      const seq = await storage.getSequence(Number(req.params.id));
+      if (!seq) return res.status(404).json({ message: "Sequence not found." });
+      const audience = sequenceAudience(seq);
+      if (req.body?.dryRun) return res.json({ matching: await storage.countAudience(audience) });
+      const enrolled = await storage.enrollAudience(seq.id, audience);
+      return res.json({ enrolled });
+    } catch {
+      return res.status(500).json({ message: "Failed to enroll subscribers." });
+    }
+  });
+
+  // ── Admin: sequence email CRUD ──────────────────────────────────────────────
   app.post("/api/admin/sequence-emails", requireAdmin, async (req, res) => {
     try {
       const result = insertSequenceEmailSchema.safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid data" });
+      }
+      if (!(await storage.getSequence(result.data.sequenceId))) {
+        return res.status(404).json({ message: "Sequence not found." });
       }
       return res.json(await storage.createSequenceEmail(result.data));
     } catch {
@@ -521,7 +663,7 @@ export async function registerRoutes(
     try {
       const id = Number(req.params.id);
       if (isNaN(id)) return res.status(400).json({ message: "Invalid id." });
-      const result = insertSequenceEmailSchema.partial().safeParse(req.body);
+      const result = insertSequenceEmailSchema.omit({ sequenceId: true }).partial().safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid data" });
       }
@@ -544,34 +686,89 @@ export async function registerRoutes(
     }
   });
 
-  // ── Admin: one-off broadcasts ───────────────────────────────────────────────
-  app.get("/api/admin/broadcasts", requireAdmin, async (_req, res) => {
+  // ── Admin: shared email tools ───────────────────────────────────────────────
+  app.post("/api/admin/audience/count", requireAdmin, async (req, res) => {
     try {
-      const [list, active] = await Promise.all([
-        storage.listBroadcasts(),
-        storage.listActiveSubscribers(),
-      ]);
-      return res.json({ broadcasts: list, isSending: isBroadcastSending(), activeSubscribers: active.length });
+      const result = emailAudienceSchema.safeParse(req.body);
+      if (!result.success) return res.status(400).json({ message: "Invalid audience." });
+      return res.json({ count: await storage.countAudience(result.data) });
     } catch {
-      return res.status(500).json({ message: "Failed to load broadcasts." });
+      return res.status(500).json({ message: "Failed to count audience." });
     }
   });
 
+  // Renders an email exactly as subscribers will see it (sample name "Eric").
+  app.post("/api/admin/email/preview", requireAdmin, (req, res) => {
+    const result = emailContentSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid data" });
+    }
+    const name = "Eric";
+    return res.json({
+      subject: personalize(result.data.subject, name),
+      html: sequenceEmailHtml("preview@example.com", personalize(result.data.body, name), getSiteBaseUrl(req as any)),
+    });
+  });
+
   // Test send — goes only to the given address, nothing is recorded
-  app.post("/api/admin/broadcasts/test", requireAdmin, async (req, res) => {
+  app.post("/api/admin/email/test", requireAdmin, async (req, res) => {
     try {
-      const result = insertBroadcastSchema.safeParse(req.body);
+      const result = emailContentSchema.safeParse(req.body);
       if (!result.success) {
         return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid data" });
       }
-      const to = typeof req.body?.to === "string" && req.body.to.includes("@") ? req.body.to : null;
-      if (!to) return res.status(400).json({ message: "A test email address is required." });
+      const to = z.string().email().safeParse(req.body?.to);
+      if (!to.success) return res.status(400).json({ message: "A valid test email address is required." });
 
-      const sendResult = await sendSequenceEmail(to, "there", result.data.subject, result.data.body, getSiteBaseUrl(req as any));
+      const sendResult = await sendSequenceEmail(to.data, "Eric", result.data.subject, result.data.body, getSiteBaseUrl(req as any));
       if (!sendResult.success) return res.status(500).json({ message: sendResult.error || "Test send failed." });
       return res.json({ success: true });
     } catch {
       return res.status(500).json({ message: "Test send failed." });
+    }
+  });
+
+  // Runs the email jobs for a few seconds inside this request. The admin page
+  // calls this in a loop while a broadcast is sending, and from the "Send due
+  // emails now" button.
+  app.post("/api/admin/email/process", requireAdmin, async (_req, res) => {
+    try {
+      return res.json(await runEmailJobs("admin", 8_000));
+    } catch {
+      return res.status(500).json({ message: "Failed to process emails." });
+    }
+  });
+
+  app.get("/api/admin/email/status", requireAdmin, async (_req, res) => {
+    try {
+      const [cron, timer] = await Promise.all([
+        storage.getAppState<EmailJobsResult>(`${LAST_RUN_KEY}:cron`),
+        storage.getAppState<EmailJobsResult>(`${LAST_RUN_KEY}:timer`),
+      ]);
+      return res.json({
+        cronConfigured: Boolean(process.env.CRON_SECRET),
+        lastCronRun: cron ? { at: cron.updatedAt, ...cron.value } : null,
+        lastTimerRun: timer ? { at: timer.updatedAt, ...timer.value } : null,
+      });
+    } catch {
+      return res.status(500).json({ message: "Failed to load email status." });
+    }
+  });
+
+  // ── Admin: broadcasts ───────────────────────────────────────────────────────
+  app.get("/api/admin/broadcasts", requireAdmin, async (_req, res) => {
+    try {
+      const [list, active] = await Promise.all([
+        storage.listBroadcasts(),
+        storage.countAudience({ type: "all" }),
+      ]);
+      return res.json({
+        broadcasts: list,
+        isSending: list.some((b) => b.status === "sending"),
+        activeSubscribers: active,
+      });
+    } catch {
+      return res.status(500).json({ message: "Failed to load broadcasts." });
     }
   });
 
@@ -581,11 +778,35 @@ export async function registerRoutes(
       if (!result.success) {
         return res.status(400).json({ message: result.error.errors[0]?.message || "Invalid data" });
       }
-      const started = await startBroadcast(result.data.subject, result.data.body, getSiteBaseUrl(req as any));
-      if ("error" in started) return res.status(409).json({ message: started.error });
-      return res.json({ success: true, ...started });
+      const { subject, body, audience } = result.data;
+      const scheduledAt = result.data.scheduledAt ? new Date(result.data.scheduledAt) : null;
+      if (scheduledAt && scheduledAt.getTime() - Date.now() > MAX_SCHEDULE_AHEAD_MS) {
+        return res.status(400).json({ message: "Schedule it within the next year." });
+      }
+      const sendsNow = !scheduledAt || scheduledAt.getTime() <= Date.now();
+      if (sendsNow && (await storage.countAudience(audience)) === 0) {
+        return res.status(409).json({ message: "Nobody in that audience yet." });
+      }
+
+      const broadcast = await createBroadcast({ subject, body, audience, scheduledAt });
+      // Snapshot the list right away for "send now"; the admin page then
+      // drives the sending via /api/admin/email/process.
+      if (sendsNow) await storage.activateDueBroadcasts();
+      return res.json(await storage.getBroadcast(broadcast.id));
     } catch {
-      return res.status(500).json({ message: "Failed to start broadcast." });
+      return res.status(500).json({ message: "Failed to create broadcast." });
+    }
+  });
+
+  app.post("/api/admin/broadcasts/:id/cancel", requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Invalid id." });
+      const canceled = await storage.cancelBroadcast(id);
+      if (!canceled) return res.status(409).json({ message: "That broadcast already finished." });
+      return res.json(canceled);
+    } catch {
+      return res.status(500).json({ message: "Failed to cancel broadcast." });
     }
   });
 
