@@ -5,6 +5,19 @@ import { SiteNav } from "@/components/SiteNav";
 import { games } from "@/config/games";
 import { usePageMeta } from "@/lib/seo";
 
+function ImagePreview({ src }: { src: string }) {
+  return (
+    <div className="relative h-full min-h-[220px] overflow-hidden bg-[#0b070c] sm:min-h-[380px]" aria-hidden="true">
+      <img
+        src={src}
+        alt=""
+        loading="lazy"
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+      />
+    </div>
+  );
+}
+
 function GamePreview() {
   return (
     <div
@@ -133,8 +146,8 @@ export default function Games() {
                   style={{ background: "var(--c-bg)", borderColor: "var(--c-card-border)" }}
                   data-testid={`card-game-${game.slug}`}
                 >
-                  <a href={game.href} aria-label={`Play ${game.title}`} tabIndex={-1}>
-                    <GamePreview />
+                  <a href={game.href} aria-label={`Play ${game.title}`} tabIndex={-1} className="block h-full">
+                    {game.previewImage ? <ImagePreview src={game.previewImage} /> : <GamePreview />}
                   </a>
 
                   <div className="flex flex-col p-6 sm:p-9 lg:p-11">
@@ -200,7 +213,7 @@ export default function Games() {
             </div>
 
             <div className="mt-12 flex items-center gap-3 border-t pt-8" style={{ borderColor: "var(--c-border)", color: "var(--c-fg-30)" }}>
-              <span className="font-mono text-xs">02</span>
+              <span className="font-mono text-xs">{(games.length + 1).toString().padStart(2, "0")}</span>
               <span className="text-sm">More sales challenges are in the lab.</span>
             </div>
           </div>
